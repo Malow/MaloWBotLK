@@ -1,7 +1,7 @@
 # MaloWBotLK
 3.3.5 version of MaloWBot, very barebones atm
 
-Has OnLoad and OnUpdate functions for each (which if you're using LuaUnlock you can use to cast spells through etc.)
+Has OnLoad and OnUpdate functions for each class (which if you're using LuaUnlock you can use to cast spells through etc.)
 
 Has a system to handle chat commands through /mb X
 

@@ -1,0 +1,22 @@
+## Interface: 30300
+## Title: MaloWBotLK
+## DefaultState: enabled
+## Notes: MaloWBotLK
+## Version 1
+## Author: MaloW
+## Dependencies: MaloWUtils
+
+Functions.lua
+MaloWBotLK.lua
+classes\Deathknight.lua
+classes\Druid.lua
+classes\Hunter.lua
+classes\Mage.lua
+classes\Paladin.lua
+classes\Priest.lua
+classes\Rogue.lua
+classes\Shaman.lua
+classes\Warlock.lua
+classes\Warrior.lua
+
+

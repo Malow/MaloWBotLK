@@ -6,6 +6,8 @@
 ## Author: MaloW
 ## Dependencies: MaloWUtils
 
+TrustedCharacters.lua
+MessageHandlers.lua
 Functions.lua
 MaloWBotLK.lua
 classes\Deathknight.lua

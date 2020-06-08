@@ -210,7 +210,7 @@ function mb_isUnitValidFriendlyTarget(unit)
 end
 
 -- Scans through the raid or party for the unit missing the most health.
-function mb_GetMostDamagedFriendly()
+function mb_getMostDamagedFriendly()
     local healTarget = 0
     local missingHealthOfTarget = mb_getMissingHealth("player")
     local members = mb_getNumPartyOrRaidMembers()
@@ -231,6 +231,10 @@ function mb_GetMostDamagedFriendly()
     end
 end
 
+function mb_unitHealthPercentage(unit)
+	return (UnitHealth(unit) * 100) / UnitHealthMax(unit)
+end
+
 
 
 -------------------------------------------------------------------
@@ -245,6 +249,7 @@ mb_commanderUnit = nil
 mb_shouldFollow = true
 mb_enabled = false
 mb_isAutoAttacking = false
+mb_time = GetTime()
 
 -- OnUpdate
 function mb_onUpdate()
@@ -258,7 +263,8 @@ function mb_onUpdate()
 		mb_init()
 		return
 	end
-	
+	mb_time = GetTime()
+	mb_requestDesiredBuffsThrottled()
 	if mb_commanderUnit ~= nil and mb_shouldFollow then
 		FollowUnit(mb_commanderUnit)
 	end
@@ -299,15 +305,40 @@ function mb_handleIncomingMessage(mbCom)
 	end
 	
 	if mb_registeredMessageHandlers[messageType] ~= nil then
-		mb_registeredMessageHandlers[messageType](message)
-		return
+		mb_registeredMessageHandlers[messageType](message, mbCom.from)
 	end
-	mb_sayRaid("I don't have a MessageHandler registered for: " .. messageType)
 end
 
 function mb_initAsLeader()
 	mb_sendMessage("enable")
 	mb_sendMessage("setCommander", UnitName("player"))
 end
+
+BUFF_KINGS = {requestType = "buff:kings", auraName = "Blessing of Kings"}
+BUFF_SANC = {requestType = "buff:sanc", auraName = "Blessing of Sanctuary"}
+BUFF_WISDOM = {requestType = "buff:wisdom", auraName = "Blessing of Wisdom"}
+BUFF_MIGHT = {requestType = "buff:might", auraName = "Blessing of Might"}
+
+mb_desiredBuffs = {}
+function mb_registerDesiredBuff(buff)
+	table.insert(mb_desiredBuffs, buff)
+end
+
+mb_lastBuffRequest = GetTime()
+function mb_requestDesiredBuffsThrottled()
+	if mb_lastBuffRequest + 3 > mb_time then
+		return
+	end
+	mb_lastBuffRequest = mb_time
+	for _, buff in pairs(mb_desiredBuffs) do
+		if not UnitAura("player", buff.auraName) then
+			mb_sendMessage(buff.requestType)
+		end
+	end
+end
+
+
+
+
 
 

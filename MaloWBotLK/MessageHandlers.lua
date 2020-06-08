@@ -1,6 +1,7 @@
 function mb_registerMessageHandlers()
     mb_registerMessageHandler("remoteExecute", mb_remoteExecuteHandler)
     mb_registerMessageHandler("setCommander", mb_setCommanderHandler)
+    mb_registerMessageHandler("mount", mb_mountHandler)
 end
 
 function mb_remoteExecuteHandler(msg)
@@ -18,6 +19,12 @@ end
 
 function mb_setCommanderHandler(msg)
 	mb_commanderUnit = mb_getUnitForPlayerName(msg)
+end
+
+function mb_mountHandler(msg)
+	if not UnitBuff("player", "Swift Palomino") then 
+		CastSpellByName("Swift Palomino")
+	end
 end
 
 

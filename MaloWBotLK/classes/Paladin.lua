@@ -31,17 +31,17 @@ function mb_Paladin_OnUpdate()
 		return
 	end
 	
+	if not UnitBuff("player", "Seal of Command") then
+		CastSpellByName("Seal of Command")
+		return
+	end
+	
 	if not mb_hasValidOffensiveTarget() then
 		return
 	end
 	
 	if not mb_isAutoAttacking then
 		CastSpellByName("Auto Attack")
-	end
-	
-	if not UnitBuff("player", "Seal of Command") then
-		CastSpellByName("Seal of Command")
-		return
 	end
 	
 	if GetSpellCooldown("Judgement of Wisdom") == 0 then
@@ -59,14 +59,14 @@ function mb_Paladin_OnUpdate()
 		return
 	end
 	
-	if GetSpellCooldown("Divine Storm") == 0 then
+	if GetSpellCooldown("Divine Storm") == 0 and CheckInteractDistance("target", 3) then
 		CastSpellByName("Divine Storm")
 		return
 	end	
 end
 
 function mb_Paladin_FlashOfLightRaid()
-	local healUnit, missingHealth = mb_getMostDamagedFriendly()
+	local healUnit, missingHealth = mb_getMostDamagedFriendly("Flash of Light")
 	if missingHealth > 500 then
 		TargetUnit(healUnit)
 		CastSpellByName("Flash of Light")

@@ -4,12 +4,12 @@ function mb_registerMessageHandlers()
     mb_registerMessageHandler("mount", mb_mountHandler)
 end
 
-function mb_remoteExecuteHandler(msg)
-	if not mb_isTrustedCharacter(mbCom.from) then
-		mb_print(mbCom.from .. " tried to make me remoteExecute but I don't trust him/her")
+function mb_remoteExecuteHandler(msg, from)
+	if not mb_isTrustedCharacter(from) then
+		mb_print(from .. " tried to make me remoteExecute but I don't trust him/her")
 		return
 	end
-	local func = loadstring(remainingString)
+	local func = loadstring(msg)
 	if func == nil then
 		SendChatMessage("Bad Code: " .. code, "RAID", "Common")
 	else

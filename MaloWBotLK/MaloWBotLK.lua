@@ -209,8 +209,8 @@ function mb_isUnitValidFriendlyTarget(unit)
 	return true
 end
 
--- Scans through the raid or party for the unit missing the most health.
-function mb_getMostDamagedFriendly()
+-- Scans through the raid or party for the unit missing the most health. If "spell" is provided it will make sure the spell is within range of the target
+function mb_getMostDamagedFriendly(spell)
     local healTarget = 0
     local missingHealthOfTarget = mb_getMissingHealth("player")
     local members = mb_getNumPartyOrRaidMembers()
@@ -219,8 +219,10 @@ function mb_getMostDamagedFriendly()
         local missingHealth = mb_getMissingHealth(unit)
         if missingHealth > missingHealthOfTarget then
             if mb_isUnitValidFriendlyTarget(unit) then
-                missingHealthOfTarget = missingHealth
-                healTarget = i
+				if spell == nil or IsSpellInRange(spell, unit) then
+					missingHealthOfTarget = missingHealth
+					healTarget = i
+				end
             end
         end
     end

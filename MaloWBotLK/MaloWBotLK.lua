@@ -1,6 +1,11 @@
 local MY_NAME = "MaloWBotLK"
 local MY_ABBREVIATION = "MB"
 
+-- Prints message in chatbox
+function mb_print(msg)
+	MaloWUtils_Print(MY_ABBREVIATION .. ": " .. tostring(msg))
+end
+
 -- Frame setup for update
 local total = 0
 local function mb_update(self, elapsed)
@@ -54,6 +59,10 @@ mb_hasInitiated = false
 mb_classSpecificRunFunction = nil
 function mb_init()
 	mb_registerMessageHandlers()
+	
+	-- Set Class Order
+	mb_updateClassOrder()
+	
 	local playerClass = mb_GetClass("player")
 	if playerClass == "DEATHKNIGHT" then
 		mb_Deathknight_OnLoad()
@@ -88,152 +97,43 @@ function mb_init()
 	else
 		mb_print("Error, playerClass " .. tostring(playerClass) .. " not supported")
 	end
+	
 	mb_createMacro("MBReload", "/run ReloadUI()", 1)
+	SetCVar("autoSelfCast", 0) -- Disable auto self-casting to allow directly casting spells on raid-members
+	
 	mb_hasInitiated = true
 end
 
 
-
-
-
--------------------------------------------------------------------
--- Lib stuff
--------------------------------------------------------------------
-
-function mb_getNumPartyOrRaidMembers()
-	if UnitInRaid("player") then
-		return GetNumRaidMembers()
-	else
-		return GetNumPartyMembers()
-	end
-	return 0
-end
-
--- Returns the unit that has specified raidIndex
-function mb_getUnitFromPartyOrRaidIndex(index)
-	if index ~= 0 then
-		if UnitInRaid("player") then
-			return "raid" .. index
-		else
-			return "party" .. index
-		end
-	end
-	return "player"
-end
-
--- Turns a playerName into a unit-reference, nil if not found
-function mb_getUnitForPlayerName(playerName)
-	local members = mb_getNumPartyOrRaidMembers()
-	for i = 1, members do
-		local unit = mb_getUnitFromPartyOrRaidIndex(i)
-		if UnitName(unit) == playerName then
-			return unit
-		end
-	end
-	if UnitName("player") == playerName then
-		return "player"
-	end
-	return nil
-end
-
--- Returns a bool, and the substring of the remaining string
-function mb_stringStartsWith(fullString, startString)
-	if string.sub(fullString, 1, string.len(startString)) == startString then
-		return true, string.sub(fullString, string.len(startString) + 2)
-	end
-	return false, nil
-end
-
--- Prints message in chatbox
-function mb_print(msg)
-	MaloWUtils_Print(MY_ABBREVIATION .. ": " .. tostring(msg))
-end
-
--- Prints message in raid-chat
-function mb_sayRaid(message)
-	SendChatMessage(message, "RAID", "Common")
-end
-
-function mb_createMacro(name, body, actionSlot)
-	local macroId = GetMacroIndexByName(name)
-	if macroId > 0 then
-		EditMacro(macroId, name, 12, body, 1, 1)
-	else
-		macroId = CreateMacro(name, 12, body, 1, 1)
-	end
-	PickupMacro(macroId)
-	PlaceAction(actionSlot)
-	ClearCursor()
-end
-
-function mb_hasValidOffensiveTarget()
-	if not UnitExists("target") then
-		return false
-	end
-	if UnitIsDeadOrGhost("target") then
-		return false
-	end
-	if UnitIsFriend("player", "target") then
-		return false
-	end
-	if not UnitCanAttack("player", "target") == 1 then
-		return false
-	end
-	return true
-end
-
-function mb_getMissingHealth(unit)
-	return UnitHealthMax(unit) - UnitHealth(unit)
-end
-
--- Checks if target exists, is visible, is friendly and if it's dead or ghost
-function mb_isUnitValidFriendlyTarget(unit)
-    if UnitIsDeadOrGhost(unit) then
-        return false
-    end
-	if not CheckInteractDistance(unit, 4) then
-		return false
-	end
-	return true
-end
-
--- Scans through the raid or party for the unit missing the most health. If "spell" is provided it will make sure the spell is within range of the target
-function mb_getMostDamagedFriendly(spell)
-    local healTarget = 0
-    local missingHealthOfTarget = mb_getMissingHealth("player")
+mb_classOrder = {}
+mb_myClassOrderIndex = nil
+function mb_updateClassOrder()
+	local name = UnitName("player")
+	table.insert(mb_classOrder, name)
     local members = mb_getNumPartyOrRaidMembers()
     for i = 1, members do
         local unit = mb_getUnitFromPartyOrRaidIndex(i)
-        local missingHealth = mb_getMissingHealth(unit)
-        if missingHealth > missingHealthOfTarget then
-            if mb_isUnitValidFriendlyTarget(unit) then
-				if spell == nil or IsSpellInRange(spell, unit) then
-					missingHealthOfTarget = missingHealth
-					healTarget = i
-				end
-            end
-        end
-    end
-    if healTarget == 0 then
-        return "player", missingHealthOfTarget
-    else
-        return mb_getUnitFromPartyOrRaidIndex(healTarget), missingHealthOfTarget
-    end
-end
-
-function mb_unitHealthPercentage(unit)
-	return (UnitHealth(unit) * 100) / UnitHealthMax(unit)
+		if mb_GetClass(unit) == mb_GetClass("player") then
+			name = UnitName(unit)
+			table.insert(mb_classOrder, name)
+		end
+	end
+	table.sort(mb_classOrder)
+	local count = 1
+	for i, v in pairs(mb_classOrder) do
+		if v == UnitName("player") then
+			mb_myClassOrderIndex = i
+			return
+		end
+	end
 end
 
 
 
--------------------------------------------------------------------
--- End of Lib stuff
--------------------------------------------------------------------
 
-
-
-
+-- -------------------
+-- OnUpdate stuff
+-- -------------------
 
 mb_commanderUnit = nil
 mb_shouldFollow = true

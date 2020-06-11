@@ -18,17 +18,23 @@ function mb_remoteExecuteHandler(msg, from)
 	end
 end
 
-function mb_setCommanderHandler(msg)
+function mb_setCommanderHandler(msg, from)
+	if not mb_isTrustedCharacter(from) then
+		return
+	end
 	mb_commanderUnit = mb_getUnitForPlayerName(msg)
 end
 
-function mb_mountHandler(msg)
+function mb_mountHandler(msg, from)
 	if not UnitBuff("player", "Swift Palomino") then 
 		CastSpellByName("Swift Palomino")
 	end
 end
 
-function mb_acceptHandler(msg)
+function mb_acceptHandler(msg, from)
+	if not mb_isTrustedCharacter(from) then
+		return
+	end
     AcceptGuild()
     AcceptGroup()
     RetrieveCorpse()

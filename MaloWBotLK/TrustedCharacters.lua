@@ -7,8 +7,12 @@ table.insert(mb_TrustedCharacters, "Elweald")
 table.insert(mb_TrustedCharacters, "Ceolmar")
 table.insert(mb_TrustedCharacters, "Riffin")
 table.insert(mb_TrustedCharacters, "Tunbert")
-table.insert(mb_TrustedCharacters, "Lewill")
-table.insert(mb_TrustedCharacters, "Conbert")
+table.insert(mb_TrustedCharacters, "Ninki")
+table.insert(mb_TrustedCharacters, "Abith")
+table.insert(mb_TrustedCharacters, "Puabi")
+table.insert(mb_TrustedCharacters, "Igal")
+table.insert(mb_TrustedCharacters, "Verne")
+
 
 
 function mb_isTrustedCharacter(charName)

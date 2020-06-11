@@ -2,23 +2,24 @@ function mb_Paladin_OnLoad()
 	mb_registerDesiredBuff(BUFF_KINGS)
 	mb_registerDesiredBuff(BUFF_WISDOM)
 	mb_registerDesiredBuff(BUFF_MIGHT)
-	local name, iconPath, tier, column, currentRank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(3, 5)
-	if currentRank == 2 then
-		mb_registerMessageHandler(BUFF_MIGHT.requestType, mb_mightHandler)
+	if mb_myClassOrderIndex == 1 then
+		mb_registerMessageHandler(BUFF_MIGHT.requestType, mb_Paladin_mightHandler)
 		return
 	end
-	if UnitName("player") == "Warde" then
-		mb_registerMessageHandler(BUFF_WISDOM.requestType, mb_wisdomHandler)
+	if mb_myClassOrderIndex == 2 then
+		mb_registerMessageHandler(BUFF_WISDOM.requestType, mb_Paladin_wisdomHandler)
 		return
 	end
-	if UnitName("player") == "Tunbert" then
-		mb_registerMessageHandler(BUFF_KINGS.requestType, mb_kingsHandler)
+	if mb_myClassOrderIndex == 3 then
+		mb_registerMessageHandler(BUFF_KINGS.requestType, mb_Paladin_kingsHandler)
 		return
 	end
 end
 
 function mb_Paladin_OnUpdate()
-	AssistUnit(mb_commanderUnit)
+	if mb_resurrectRaid("Redemption") then
+		return
+	end
 	
 	if UnitBuff("player", "The Art of War") then
 		if mb_Paladin_FlashOfLightRaid() then
@@ -26,7 +27,7 @@ function mb_Paladin_OnUpdate()
 		end
 	end
 	
-	if UnitName("player") == "Aerer" and not UnitBuff("player", "Retribution Aura") then
+	if mb_myClassOrderIndex == 1 and not UnitBuff("player", "Retribution Aura") then
 		CastSpellByName("Retribution Aura")
 		return
 	end
@@ -36,31 +37,28 @@ function mb_Paladin_OnUpdate()
 		return
 	end
 	
+	AssistUnit(mb_commanderUnit)
 	if not mb_hasValidOffensiveTarget() then
 		return
 	end
 	
 	if not mb_isAutoAttacking then
-		CastSpellByName("Auto Attack")
+		InteractUnit("target")
 	end
 	
-	if GetSpellCooldown("Judgement of Wisdom") == 0 then
-		CastSpellByName("Judgement of Wisdom")
+	if mb_castSpellOnTarget("Judgement of Wisdom") then
 		return
 	end	
 	
-	if GetSpellCooldown("Hammer of Wrath") == 0 and mb_unitHealthPercentage("target") < 21 then
-		CastSpellByName("Hammer of Wrath")
+	if mb_unitHealthPercentage("target") < 21 and mb_castSpellOnTarget("Hammer of Wrath") then
 		return
 	end	
 	
-	if GetSpellCooldown("Crusader Strike") == 0 then
-		CastSpellByName("Crusader Strike")
+	if mb_castSpellOnTarget("Crusader Strike") then
 		return
 	end
 	
-	if GetSpellCooldown("Divine Storm") == 0 and CheckInteractDistance("target", 3) then
-		CastSpellByName("Divine Storm")
+	if CheckInteractDistance("target", 3) and mb_castSpellOnTarget("Divine Storm") then
 		return
 	end	
 end
@@ -68,26 +66,22 @@ end
 function mb_Paladin_FlashOfLightRaid()
 	local healUnit, missingHealth = mb_getMostDamagedFriendly("Flash of Light")
 	if missingHealth > 500 then
-		TargetUnit(healUnit)
-		CastSpellByName("Flash of Light")
+		mb_castSpellOnFriendly(healUnit, "Flash of Light")
 		return true
 	end
 	return false
 end
 
-function mb_mightHandler(msg, from)
-	TargetUnit(mb_getUnitForPlayerName(from))
-	CastSpellByName("Blessing of Might")
+function mb_Paladin_mightHandler(msg, from)
+	mb_castSpellOnFriendly(mb_getUnitForPlayerName(from), "Blessing of Might")
 end
 
-function mb_wisdomHandler(msg, from)
-	TargetUnit(mb_getUnitForPlayerName(from))
-	CastSpellByName("Blessing of Wisdom")
+function mb_Paladin_wisdomHandler(msg, from)
+	mb_castSpellOnFriendly(mb_getUnitForPlayerName(from), "Blessing of Wisdom")
 end
 
-function mb_kingsHandler(msg, from)
-	TargetUnit(mb_getUnitForPlayerName(from))
-	CastSpellByName("Blessing of Kings")
+function mb_Paladin_kingsHandler(msg, from)
+	mb_castSpellOnFriendly(mb_getUnitForPlayerName(from), "Blessing of Kings")
 end
 
 

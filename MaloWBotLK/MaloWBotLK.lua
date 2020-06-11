@@ -121,18 +121,6 @@ function mb_getUnitFromPartyOrRaidIndex(index)
 	return "player"
 end
 
--- Returns the unit that has specified raidIndex
-function mb_getUnitFromPartyOrRaidIndex(index)
-	if index ~= 0 then
-		if UnitInRaid("player") then
-			return "raid" .. index
-		else
-			return "party" .. index
-		end
-	end
-	return "player"
-end
-
 -- Turns a playerName into a unit-reference, nil if not found
 function mb_getUnitForPlayerName(playerName)
 	local members = mb_getNumPartyOrRaidMembers()

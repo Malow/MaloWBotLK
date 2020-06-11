@@ -2,6 +2,7 @@ function mb_registerMessageHandlers()
     mb_registerMessageHandler("remoteExecute", mb_remoteExecuteHandler)
     mb_registerMessageHandler("setCommander", mb_setCommanderHandler)
     mb_registerMessageHandler("mount", mb_mountHandler)
+    mb_registerMessageHandler("accept", mb_acceptHandler)
 end
 
 function mb_remoteExecuteHandler(msg, from)
@@ -27,5 +28,13 @@ function mb_mountHandler(msg)
 	end
 end
 
-
-
+function mb_acceptHandler(msg)
+    AcceptGuild()
+    AcceptGroup()
+    RetrieveCorpse()
+    ConfirmAcceptQuest()
+    ConfirmSummon()
+    AcceptQuest()
+	AcceptTrade()
+	AcceptResurrect()
+end

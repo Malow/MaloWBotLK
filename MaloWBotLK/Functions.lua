@@ -213,9 +213,19 @@ function mb_targetHasMyDebuff(spellName)
 	return name ~= nil
 end
 
+function mb_acceptSummon()
+	if GetSummonConfirmTimeLeft() ~= 0 and StaticPopup1:IsShown() then
+		ConfirmSummon()
+		StaticPopup1:Hide()
+	end
+end
 
-
-
+function mb_acceptResurrection()
+	if ResurrectGetOfferer() ~= nil and StaticPopup1:IsShown() then
+		AcceptResurrect()
+		StaticPopup1:Hide()
+	end
+end
 
 
 

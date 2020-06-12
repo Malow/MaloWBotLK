@@ -3,6 +3,7 @@ function mb_registerMessageHandlers()
     mb_registerMessageHandler("setCommander", mb_setCommanderHandler)
     mb_registerMessageHandler("mount", mb_mountHandler)
     mb_registerMessageHandler("accept", mb_acceptHandler)
+    mb_registerMessageHandler("moveForward", mb_moveForwardHandler)
 end
 
 function mb_remoteExecuteHandler(msg, from)
@@ -39,8 +40,14 @@ function mb_acceptHandler(msg, from)
     AcceptGroup()
     RetrieveCorpse()
     ConfirmAcceptQuest()
-    ConfirmSummon()
     AcceptQuest()
 	AcceptTrade()
-	AcceptResurrect()
+end
+
+function mb_moveForwardHandler(msg, from)
+	if not mb_isTrustedCharacter(from) then
+		return
+	end
+	mb_startedMovingForward = mb_time
+	MoveForwardStart()
 end

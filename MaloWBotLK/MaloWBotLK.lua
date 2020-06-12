@@ -140,6 +140,7 @@ mb_shouldFollow = true
 mb_enabled = false
 mb_isAutoAttacking = false
 mb_time = GetTime()
+mb_startedMovingForward = 0
 
 -- OnUpdate
 function mb_onUpdate()
@@ -157,6 +158,12 @@ function mb_onUpdate()
 	mb_requestDesiredBuffsThrottled()
 	if mb_commanderUnit ~= nil and mb_shouldFollow then
 		FollowUnit(mb_commanderUnit)
+	end
+	mb_acceptSummon()
+	mb_acceptResurrection()
+	if mb_startedMovingForward ~= 0 and mb_startedMovingForward + 2 < mb_time then
+		MoveForwardStop()
+		mb_startedMovingForward = 0
 	end
 	mb_classSpecificRunFunction()
 end
@@ -184,7 +191,7 @@ function mb_handleIncomingMessage(mbCom)
 	local messageType = string.sub(mbCom.message, 1, string.find(mbCom.message, " ") - 1)
 	local message = string.sub(mbCom.message, string.find(mbCom.message, " ") + 1)
 		
-	if messageType == "enable" then
+	if messageType == "enable" and mb_isTrustedCharacter(mbCom.from) then
 		mb_enabled = true
 		mb_init()
 		return

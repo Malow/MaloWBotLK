@@ -27,7 +27,7 @@ SlashCmdList[MY_ABBREVIATION .. "COMMAND"] = function(msg)
 		mb_print("Unrecognized command: " .. msg)
 	end
 end 
-SLASH_MPCOMMAND1 = "/" .. MY_ABBREVIATION;
+SLASH_MBCOMMAND1 = "/" .. MY_ABBREVIATION;
 
 -- Events
 local hasLoaded = false
@@ -37,22 +37,42 @@ function mb_onEvent(self, event, arg1, arg2, arg3, ...)
 	elseif event == "CHAT_MSG_ADDON" and arg1 == "MB" then
 		local message = arg2
 		local from = arg4
-		if from ~= UnitName("player") then
-			local mbCom = {}
-			mbCom.message = message
-			mbCom.from = from
-			mb_handleIncomingMessage(mbCom)
-		end
+		local mbCom = {}
+		mbCom.message = message
+		mbCom.from = from
+		mb_handleIncomingMessage(mbCom)
 	elseif event == "PLAYER_ENTER_COMBAT" then
 		mb_isAutoAttacking = true
 	elseif event == "PLAYER_LEAVE_COMBAT" then
 		mb_isAutoAttacking = false
+	elseif event == "PARTY_INVITE_REQUEST" then
+		if mb_isTrustedCharacter(arg1) then
+			AcceptGroup()
+			StaticPopup1:Hide()
+		end
+	elseif event == "CONFIRM_SUMMON" then
+		if mb_enabled then
+			ConfirmSummon()
+			StaticPopup1:Hide()
+		end
+	elseif event == "RESURRECT_REQUEST" then
+		AcceptResurrect()
+		StaticPopup1:Hide()
+	elseif event == "QUEST_ACCEPT_CONFIRM" or event == "QUEST_DETAIL" then
+		AcceptQuest()
+		ConfirmAcceptQuest()
+		StaticPopup1:Hide()
 	end
 end
 f:RegisterEvent("ADDON_LOADED");
 f:RegisterEvent("CHAT_MSG_ADDON")
 f:RegisterEvent("PLAYER_ENTER_COMBAT")
 f:RegisterEvent("PLAYER_LEAVE_COMBAT")
+f:RegisterEvent("PARTY_INVITE_REQUEST")
+f:RegisterEvent("CONFIRM_SUMMON")
+f:RegisterEvent("RESURRECT_REQUEST")
+f:RegisterEvent("QUEST_ACCEPT_CONFIRM")
+f:RegisterEvent("QUEST_DETAIL")
 f:SetScript("OnEvent", mb_onEvent);
 
 mb_hasInitiated = false
@@ -100,6 +120,12 @@ function mb_init()
 	
 	mb_createMacro("MBReload", "/run ReloadUI()", 1)
 	SetCVar("autoSelfCast", 0) -- Disable auto self-casting to allow directly casting spells on raid-members
+	SetCVar("autoLootDefault", 1) -- Enable autolooting
+	
+	if TI_VersionString ~= nil then -- Turn TurnIn on if it's loaded
+		TI_Switch("on")
+		TI_status.options[7].state = true
+	end
 	
 	mb_hasInitiated = true
 end
@@ -159,8 +185,6 @@ function mb_onUpdate()
 	if mb_commanderUnit ~= nil and mb_shouldFollow then
 		FollowUnit(mb_commanderUnit)
 	end
-	mb_acceptSummon()
-	mb_acceptResurrection()
 	if mb_startedMovingForward ~= 0 and mb_startedMovingForward + 2 < mb_time then
 		MoveForwardStop()
 		mb_startedMovingForward = 0
@@ -190,6 +214,10 @@ end
 function mb_handleIncomingMessage(mbCom)
 	local messageType = string.sub(mbCom.message, 1, string.find(mbCom.message, " ") - 1)
 	local message = string.sub(mbCom.message, string.find(mbCom.message, " ") + 1)
+	
+	if mbCom.from == UnitName("player") and string.sub(messageType, 1, 5) ~= "buff:" then
+		return
+	end
 		
 	if messageType == "enable" and mb_isTrustedCharacter(mbCom.from) then
 		mb_enabled = true

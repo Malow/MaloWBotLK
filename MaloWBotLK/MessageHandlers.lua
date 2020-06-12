@@ -37,10 +37,7 @@ function mb_acceptHandler(msg, from)
 		return
 	end
     AcceptGuild()
-    AcceptGroup()
     RetrieveCorpse()
-    ConfirmAcceptQuest()
-    AcceptQuest()
 	AcceptTrade()
 end
 

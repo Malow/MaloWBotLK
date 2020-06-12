@@ -84,6 +84,11 @@ function mb_getMissingHealth(unit)
 	return UnitHealthMax(unit) - UnitHealth(unit)
 end
 
+-- Runs IsSpellInRange and converts to bool
+function mb_isSpellInRange(spell, unit)
+	return IsSpellInRange(spell, unit) == 1
+end
+
 -- Checks if target exists, is visible, is friendly and if it's dead or ghost, and if the spell is in range if provided
 function mb_isUnitValidFriendlyTarget(unit, spell)
     if UnitIsDeadOrGhost(unit) then
@@ -92,7 +97,10 @@ function mb_isUnitValidFriendlyTarget(unit, spell)
 	if not UnitIsFriend(unit, "player") then
 		return false
 	end
-	if spell ~= nil and not IsSpellInRange(spell, unit) then
+	if spell ~= nil and not mb_isSpellInRange(spell, unit) then
+		return false
+	end
+	if UnitBuff(unit, "Spirit of Redemption") then
 		return false
 	end
 	return true
@@ -108,7 +116,7 @@ function mb_getMostDamagedFriendly(spell)
         local missingHealth = mb_getMissingHealth(unit)
         if missingHealth > missingHealthOfTarget then
             if mb_isUnitValidFriendlyTarget(unit, spell) then
-				if spell == nil or IsSpellInRange(spell, unit) then
+				if spell == nil or mb_isSpellInRange(spell, unit) then
 					missingHealthOfTarget = missingHealth
 					healTarget = i
 				end
@@ -140,7 +148,7 @@ function mb_castSpellOnTarget(spell)
 	if not mb_canCastSpell(spell) then
 		return false
 	end
-	if not IsSpellInRange(spell, "target") then
+	if not mb_isSpellInRange(spell, "target") then
 		return false
 	end
 	CastSpellByName(spell)
@@ -158,7 +166,7 @@ end
 
 -- Casts directly without changing your current target unless required to do so. Returns true on success
 function mb_castSpellOnFriendly(unit, spell)
-	if not IsSpellInRange(spell, unit) then
+	if not mb_isSpellInRange(spell, unit) then
 		return false
 	end
 	if UnitIsFriend("target", "player") then
@@ -198,7 +206,7 @@ function mb_resurrectRaid(resurrectionSpell)
     local members = mb_getNumPartyOrRaidMembers()
     for i = 1, members do
         local unit = mb_getUnitFromPartyOrRaidIndex(i)
-		if UnitIsDead(unit) and not mb_isSomeoneResurrectingUnit(unit) and IsSpellInRange(resurrectionSpell, unit) then
+		if UnitIsDead(unit) and not mb_isSomeoneResurrectingUnit(unit) and mb_isSpellInRange(resurrectionSpell, unit) then
 			TargetUnit(unit)
 			CastSpellByName(resurrectionSpell)
 			mb_sayRaid("I'm resurrecting " .. UnitName(unit))
@@ -213,18 +221,10 @@ function mb_targetHasMyDebuff(spellName)
 	return name ~= nil
 end
 
-function mb_acceptSummon()
-	if GetSummonConfirmTimeLeft() ~= 0 and StaticPopup1:IsShown() then
-		ConfirmSummon()
-		StaticPopup1:Hide()
-	end
-end
-
-function mb_acceptResurrection()
-	if ResurrectGetOfferer() ~= nil and StaticPopup1:IsShown() then
-		AcceptResurrect()
-		StaticPopup1:Hide()
-	end
+-- Checks if unit has a buff from the spell specified that specifically you have cast
+function mb_unitHasMyBuff(unit, spellName)
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spellName, nil, "PLAYER|HELPFUL")
+	return name ~= nil
 end
 
 

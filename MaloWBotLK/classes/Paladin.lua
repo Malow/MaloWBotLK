@@ -58,7 +58,7 @@ function mb_Paladin_OnUpdate()
 		return
 	end
 	
-	if CheckInteractDistance("target", 3) and mb_castSpellOnTarget("Divine Storm") then
+	if mb_isSpellInRange("Crusader Strike", "target") and mb_castSpellOnSelf("Divine Storm") then
 		return
 	end	
 end

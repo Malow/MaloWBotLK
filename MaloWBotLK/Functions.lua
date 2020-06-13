@@ -166,10 +166,14 @@ end
 
 -- Casts directly without changing your current target unless required to do so. Returns true on success
 function mb_castSpellOnFriendly(unit, spell)
+	if not mb_canCastSpell(spell) then
+		return false
+	end
 	if not mb_isSpellInRange(spell, unit) then
 		return false
 	end
-	if UnitIsFriend("target", "player") then
+	-- If we're commanding we want self auto-cast on, which means we always need to target units to cast on them.
+	if mb_isCommanding or UnitIsFriend("target", "player") then
 		TargetUnit(unit)
 	end
 	CastSpellByName(spell)
@@ -216,17 +220,25 @@ function mb_resurrectRaid(resurrectionSpell)
 end
 
 -- Checks if your target has a debuff from the spell specified that specifically you have cast
-function mb_targetHasMyDebuff(spellName)
-	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura("target", spellName, nil, "PLAYER|HARMFUL")
+function mb_targetHasMyDebuff(spell)
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura("target", spell, nil, "PLAYER|HARMFUL")
 	return name ~= nil
 end
 
 -- Checks if unit has a buff from the spell specified that specifically you have cast
-function mb_unitHasMyBuff(unit, spellName)
-	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spellName, nil, "PLAYER|HELPFUL")
+function mb_unitHasMyBuff(unit, spell)
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "PLAYER|HELPFUL")
 	return name ~= nil
 end
 
+-- Returns number of debuff stacks
+function mb_getDebuffStackCount(unit, spell)
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "HARMFUL")
+	if count == nil then
+		return 0
+	end
+	return count
+end
 
 
 

@@ -51,7 +51,7 @@ function mb_onEvent(self, event, arg1, arg2, arg3, ...)
 			StaticPopup1:Hide()
 		end
 	elseif event == "CONFIRM_SUMMON" then
-		if mb_enabled then
+		if mb_isEnabled then
 			ConfirmSummon()
 			StaticPopup1:Hide()
 		end
@@ -62,6 +62,8 @@ function mb_onEvent(self, event, arg1, arg2, arg3, ...)
 		AcceptQuest()
 		ConfirmAcceptQuest()
 		StaticPopup1:Hide()
+	elseif event == "GROUP_ROSTER_CHANGED" then
+		mb_updateClassOrder()
 	end
 end
 f:RegisterEvent("ADDON_LOADED");
@@ -73,6 +75,7 @@ f:RegisterEvent("CONFIRM_SUMMON")
 f:RegisterEvent("RESURRECT_REQUEST")
 f:RegisterEvent("QUEST_ACCEPT_CONFIRM")
 f:RegisterEvent("QUEST_DETAIL")
+f:RegisterEvent("GROUP_ROSTER_CHANGED")
 f:SetScript("OnEvent", mb_onEvent);
 
 mb_hasInitiated = false
@@ -83,40 +86,7 @@ function mb_init()
 	-- Set Class Order
 	mb_updateClassOrder()
 	
-	local playerClass = mb_GetClass("player")
-	if playerClass == "DEATHKNIGHT" then
-		mb_Deathknight_OnLoad()
-		mb_classSpecificRunFunction = mb_Deathknight_OnUpdate
-	elseif playerClass == "DRUID" then
-		mb_Druid_OnLoad()
-		mb_classSpecificRunFunction = mb_Druid_OnUpdate
-	elseif playerClass == "HUNTER" then
-		mb_Hunter_OnLoad()
-		mb_classSpecificRunFunction = mb_Hunter_OnUpdate
-	elseif playerClass == "MAGE" then
-		mb_Mage_OnLoad()
-		mb_classSpecificRunFunction = mb_Mage_OnUpdate
-	elseif playerClass == "PALADIN" then
-		mb_Paladin_OnLoad()
-		mb_classSpecificRunFunction = mb_Paladin_OnUpdate
-	elseif playerClass == "PRIEST" then
-		mb_Priest_OnLoad()
-		mb_classSpecificRunFunction = mb_Priest_OnUpdate
-	elseif playerClass == "ROGUE" then
-		mb_Rogue_OnLoad()
-		mb_classSpecificRunFunction = mb_Rogue_OnUpdate
-	elseif playerClass == "SHAMAN" then
-		mb_Shaman_OnLoad()
-		mb_classSpecificRunFunction = mb_Shaman_OnUpdate
-	elseif playerClass == "WARLOCK" then
-		mb_Warlock_OnLoad()
-		mb_classSpecificRunFunction = mb_Warlock_OnUpdate
-	elseif playerClass == "WARRIOR" then
-		mb_Warrior_OnLoad()
-		mb_classSpecificRunFunction = mb_Warrior_OnUpdate
-	else
-		mb_print("Error, playerClass " .. tostring(playerClass) .. " not supported")
-	end
+	mb_initClass()
 	
 	mb_createMacro("MBReload", "/run ReloadUI()", 1)
 	SetCVar("autoSelfCast", 0) -- Disable auto self-casting to allow directly casting spells on raid-members
@@ -128,6 +98,33 @@ function mb_init()
 	end
 	
 	mb_hasInitiated = true
+end
+
+function mb_initClass()
+	local playerClass = mb_GetClass("player")
+	if playerClass == "DEATHKNIGHT" then
+		mb_Deathknight_OnLoad()
+	elseif playerClass == "DRUID" then
+		mb_Druid_OnLoad()
+	elseif playerClass == "HUNTER" then
+		mb_Hunter_OnLoad()
+	elseif playerClass == "MAGE" then
+		mb_Mage_OnLoad()
+	elseif playerClass == "PALADIN" then
+		mb_Paladin_OnLoad()
+	elseif playerClass == "PRIEST" then
+		mb_Priest_OnLoad()
+	elseif playerClass == "ROGUE" then
+		mb_Rogue_OnLoad()
+	elseif playerClass == "SHAMAN" then
+		mb_Shaman_OnLoad()
+	elseif playerClass == "WARLOCK" then
+		mb_Warlock_OnLoad()
+	elseif playerClass == "WARRIOR" then
+		mb_Warrior_OnLoad()
+	else
+		mb_print("Error, playerClass " .. tostring(playerClass) .. " not supported")
+	end
 end
 
 
@@ -161,19 +158,20 @@ end
 -- OnUpdate stuff
 -- -------------------
 
+mb_isCommanding = false
 mb_commanderUnit = nil
 mb_shouldFollow = true
-mb_enabled = false
+mb_isEnabled = false
 mb_isAutoAttacking = false
 mb_time = GetTime()
 mb_startedMovingForward = 0
 
 -- OnUpdate
 function mb_onUpdate()
-	if GetRealmName() ~= "LichKingMBW" then
+	if not mb_isEnabled then
 		return
 	end
-	if not hasLoaded or not mb_enabled then
+	if GetRealmName() ~= "LichKingMBW" then
 		return
 	end
 	if not mb_hasInitiated then
@@ -182,6 +180,9 @@ function mb_onUpdate()
 	end
 	mb_time = GetTime()
 	mb_requestDesiredBuffsThrottled()
+	if mb_isCommanding then
+		return
+	end
 	if mb_commanderUnit ~= nil and mb_shouldFollow then
 		FollowUnit(mb_commanderUnit)
 	end
@@ -220,12 +221,12 @@ function mb_handleIncomingMessage(mbCom)
 	end
 		
 	if messageType == "enable" and mb_isTrustedCharacter(mbCom.from) then
-		mb_enabled = true
+		mb_isEnabled = true
 		mb_init()
 		return
 	end
 	
-	if not mb_enabled then
+	if not mb_isEnabled then
 		return
 	end
 	
@@ -237,12 +238,14 @@ end
 function mb_initAsLeader()
 	mb_sendMessage("enable")
 	mb_sendMessage("setCommander", UnitName("player"))
+	mb_updateClassOrder()
+	if not mb_hasInitiated then
+		mb_initClass()
+		mb_hasInitiated = true
+	end
+	mb_isCommanding = true
+	mb_isEnabled = true
 end
-
-BUFF_KINGS = {requestType = "buff:kings", auraName = "Blessing of Kings"}
-BUFF_SANC = {requestType = "buff:sanc", auraName = "Blessing of Sanctuary"}
-BUFF_WISDOM = {requestType = "buff:wisdom", auraName = "Blessing of Wisdom"}
-BUFF_MIGHT = {requestType = "buff:might", auraName = "Blessing of Might"}
 
 mb_desiredBuffs = {}
 function mb_registerDesiredBuff(buff)
@@ -256,13 +259,20 @@ function mb_requestDesiredBuffsThrottled()
 	end
 	mb_lastBuffRequest = mb_time
 	for _, buff in pairs(mb_desiredBuffs) do
-		if not UnitAura("player", buff.auraName) then
+		local hasBuff = false
+
+		if buff.singleAuraName ~= nil and UnitAura("player", buff.singleAuraName) then
+			hasBuff = true
+		end
+		if buff.groupAuraName ~= nil and UnitAura("player", buff.groupAuraName) then
+			hasBuff = true
+		end
+
+		if not hasBuff then
 			mb_sendMessage(buff.requestType)
 		end
 	end
 end
-
-
 
 
 

@@ -6,7 +6,8 @@
 ## Author: MaloW
 ## Dependencies: MaloWUtils
 
-TrustedCharacters.lua
+Config.lua
+Buffs.lua
 MessageHandlers.lua
 Functions.lua
 MaloWBotLK.lua

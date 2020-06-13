@@ -3,7 +3,7 @@ function mb_Warrior_OnLoad()
 
 	mb_registerDesiredBuff(BUFF_KINGS)
 	mb_registerDesiredBuff(BUFF_MIGHT)
-	mb_registerDesiredBuff(BUFF_SANC)
+	mb_registerDesiredBuff(BUFF_SANCTUARY)
 end
 
 function mb_Warrior_OnUpdate()

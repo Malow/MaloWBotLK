@@ -19,6 +19,8 @@ classes\Paladin.lua
 classes\Priest.lua
 classes\Rogue.lua
 classes\Shaman.lua
+classes\ShamanEnhancement.lua
+classes\ShamanRestoration.lua
 classes\Warlock.lua
 classes\Warrior.lua
 

@@ -4,7 +4,7 @@ function mb_Paladin_OnLoad()
 	mb_registerDesiredBuff(BUFF_KINGS)
 	mb_registerDesiredBuff(BUFF_WISDOM)
 	mb_registerDesiredBuff(BUFF_MIGHT)
-	mb_registerDesiredBuff(BUFF_SANC)
+	mb_registerDesiredBuff(BUFF_SANCTUARY)
 	if mb_myClassOrderIndex == mb_ClassOrderConfig.mightBlesser then
 		mb_registerMessageHandler(BUFF_MIGHT.requestType, mb_Paladin_mightHandler)
 		return
@@ -18,7 +18,7 @@ function mb_Paladin_OnLoad()
 		return
 	end
 	if mb_myClassOrderIndex == mb_ClassOrderConfig.sancBlesser then
-		mb_registerMessageHandler(BUFF_SANC.requestType, mb_Paladin_sancHandler)
+		mb_registerMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_sancHandler)
 		return
 	end
 end

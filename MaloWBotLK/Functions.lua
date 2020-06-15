@@ -169,7 +169,7 @@ function mb_castSpellOnFriendly(unit, spell)
 	if not mb_canCastSpell(spell) then
 		return false
 	end
-	if not mb_isSpellInRange(spell, unit) then
+	if not mb_isUnitValidFriendlyTarget(unit, spell) then
 		return false
 	end
 	-- If we're commanding we want self auto-cast on, which means we always need to target units to cast on them.
@@ -240,9 +240,36 @@ function mb_getDebuffStackCount(unit, spell)
 	return count
 end
 
+--
+function mb_cleanseRaid(spell, debuffType1, debuffType2, debuffType3)
+	for i = 1, mb_getNumPartyOrRaidMembers() do
+		local unit = mb_getUnitFromPartyOrRaidIndex(i)
+		if mb_unitHasDebuffOfType(unit, debuffType1, debuffType2, debuffType3) and mb_isUnitValidFriendlyTarget(unit, spell) then
+			return mb_castSpellOnFriendly(unit, spell)
+		end
+	end
+	return false
+end
 
-
-
+--
+function mb_unitHasDebuffOfType(unit, debuffType1, debuffType2, debuffType3)
+	for i = 1, 40 do
+		local name, _, _, _, type = UnitDebuff(unit, i)
+		if name == nil then
+			return false
+		end
+		if debuffType1 ~= nil and debuffType1 == type then
+			return true
+		end
+		if debuffType2 ~= nil and debuffType2 == type then
+			return true
+		end
+		if debuffType3 ~= nil and debuffType3 == type then
+			return true
+		end
+	end
+	return false
+end
 
 
 

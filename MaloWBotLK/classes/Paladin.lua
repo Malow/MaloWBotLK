@@ -42,6 +42,10 @@ function mb_Paladin_OnUpdate()
 		CastSpellByName("Seal of Command")
 		return
 	end
+
+	if mb_cleanseRaid("Cleanse", "Magic", "Poison", "Disease") then
+		return
+	end
 	
 	AssistUnit(mb_commanderUnit)
 	if not mb_hasValidOffensiveTarget() then

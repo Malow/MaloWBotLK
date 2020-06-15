@@ -24,6 +24,10 @@ function mb_Paladin_OnLoad()
 end
 
 function mb_Paladin_OnUpdate()
+	if mb_isOnGCD() then
+		return
+	end
+
 	if mb_resurrectRaid("Redemption") then
 		return
 	end

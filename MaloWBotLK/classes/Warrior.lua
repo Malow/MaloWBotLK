@@ -7,6 +7,10 @@ function mb_Warrior_OnLoad()
 end
 
 function mb_Warrior_OnUpdate()
+	if mb_isOnGCD() then
+		return
+	end
+
 	if not UnitBuff("player", "Commanding Shout") and UnitPower("player") >= 10 then
 		mb_castSpellOnSelf("Commanding Shout")
 		return

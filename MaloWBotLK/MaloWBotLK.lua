@@ -104,24 +104,34 @@ function mb_initClass()
 	local playerClass = mb_GetClass("player")
 	if playerClass == "DEATHKNIGHT" then
 		mb_Deathknight_OnLoad()
+		mb_GCDSpell = "Death Coil"
 	elseif playerClass == "DRUID" then
 		mb_Druid_OnLoad()
+		mb_GCDSpell = "Healing Touch"
 	elseif playerClass == "HUNTER" then
 		mb_Hunter_OnLoad()
+		mb_GCDSpell = "Serpent Sting"
 	elseif playerClass == "MAGE" then
 		mb_Mage_OnLoad()
+		mb_GCDSpell = "Frost Armor"
 	elseif playerClass == "PALADIN" then
 		mb_Paladin_OnLoad()
+		mb_GCDSpell = "Seal of Righteousness"
 	elseif playerClass == "PRIEST" then
 		mb_Priest_OnLoad()
+		mb_GCDSpell = "Lesser Heal"
 	elseif playerClass == "ROGUE" then
 		mb_Rogue_OnLoad()
+		mb_GCDSpell = "Sinister Strike"
 	elseif playerClass == "SHAMAN" then
 		mb_Shaman_OnLoad()
+		mb_GCDSpell = "Healing Wave"
 	elseif playerClass == "WARLOCK" then
 		mb_Warlock_OnLoad()
+		mb_GCDSpell = "Demon Skin"
 	elseif playerClass == "WARRIOR" then
 		mb_Warrior_OnLoad()
+		mb_GCDSpell = "Hamstring"
 	else
 		mb_print("Error, playerClass " .. tostring(playerClass) .. " not supported")
 	end
@@ -158,6 +168,7 @@ end
 -- OnUpdate stuff
 -- -------------------
 
+mb_GCDSpell = nil
 mb_isCommanding = false
 mb_commanderUnit = nil
 mb_shouldFollow = true

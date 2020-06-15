@@ -271,7 +271,13 @@ function mb_unitHasDebuffOfType(unit, debuffType1, debuffType2, debuffType3)
 	return false
 end
 
-
+-- Returns true if you're on Global Cooldown
+function mb_isOnGCD()
+	if GetSpellCooldown(mb_GCDSpell) ~= 0 then
+		return true
+	end
+	return false
+end
 
 
 

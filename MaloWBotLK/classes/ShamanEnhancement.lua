@@ -1,5 +1,9 @@
 
 function mb_Shaman_EnhancementOnUpdate()
+    if mb_isOnGCD() then
+        return
+    end
+
     if mb_resurrectRaid("Ancestral Spirit") then
         return
     end

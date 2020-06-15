@@ -71,7 +71,7 @@ end
 
 function mb_Paladin_FlashOfLightRaid()
 	local healUnit, missingHealth = mb_getMostDamagedFriendly("Flash of Light")
-	if missingHealth > 500 then
+	if missingHealth > mb_getSpellEffect("Flash of Light") then
 		mb_castSpellOnFriendly(healUnit, "Flash of Light")
 		return true
 	end
@@ -118,6 +118,8 @@ function mb_Paladin_CastAura()
 		myAura = "Fire Resistance Aura"
 	elseif mb_myClassOrderIndex == mb_ClassOrderConfig.crusaderAura then
 		myAura = "Crusader Aura"
+	elseif mb_myClassOrderIndex == mb_ClassOrderConfig.shadowAura then
+		myAura = "Shadow Resistance Aura"
 	end
 	if UnitBuff("player", myAura) then
 		return false

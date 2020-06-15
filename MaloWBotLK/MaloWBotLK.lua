@@ -51,7 +51,7 @@ function mb_onEvent(self, event, arg1, arg2, arg3, ...)
 			StaticPopup1:Hide()
 		end
 	elseif event == "CONFIRM_SUMMON" then
-		if mb_isEnabled then
+		if mb_isEnabled and not mb_isCommanding then
 			ConfirmSummon()
 			StaticPopup1:Hide()
 		end

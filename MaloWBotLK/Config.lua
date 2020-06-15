@@ -34,6 +34,7 @@ mb_ClassOrderConfig.frostAura = 3
 mb_ClassOrderConfig.devoAura = 4
 mb_ClassOrderConfig.fireAura = 5
 mb_ClassOrderConfig.crusaderAura = 6
+mb_ClassOrderConfig.shadowAura = 7
 
 
 

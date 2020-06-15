@@ -8,6 +8,8 @@
 
 Config.lua
 Buffs.lua
+LootHandler.lua
+SpellEffectCalculator.lua
 MessageHandlers.lua
 Functions.lua
 MaloWBotLK.lua

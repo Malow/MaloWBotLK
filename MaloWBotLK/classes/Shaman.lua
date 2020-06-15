@@ -18,7 +18,7 @@ end
 
 function mb_Shaman_ChainHealRaid()
 	local healUnit, missingHealth = mb_getMostDamagedFriendly("Chain Heal")
-	if missingHealth > 1000 then
+	if missingHealth > mb_getSpellEffect("Chain Heal") then
 		mb_castSpellOnFriendly(healUnit, "Chain Heal")
 		return true
 	end

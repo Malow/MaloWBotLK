@@ -81,6 +81,7 @@ f:SetScript("OnEvent", mb_onEvent);
 mb_hasInitiated = false
 mb_classSpecificRunFunction = nil
 function mb_init()
+	mb_registeredMessageHandlers = {}
 	mb_registerMessageHandlers()
 	
 	-- Set Class Order
@@ -190,6 +191,7 @@ function mb_onUpdate()
 		return
 	end
 	mb_time = GetTime()
+	mb_LootHandler_update()
 	mb_requestDesiredBuffsThrottled()
 	if mb_isCommanding then
 		return
@@ -205,9 +207,16 @@ function mb_onUpdate()
 end
 
 function mb_handleCommand(msg)
-	local isRemoteExecute, remainingString = mb_stringStartsWith(msg, "remoteExecute")
-	if isRemoteExecute then
+	local matches, remainingString = mb_stringStartsWith(msg, "remoteExecute")
+	if matches then
 		mb_sendMessage("remoteExecute ", remainingString)
+		return true
+	end
+	matches, remainingString = mb_stringStartsWith(msg, "lc")
+	if matches then
+		mb_sayRaid("----------------------------------")
+		mb_sayRaid("Loot Council started for: " .. remainingString)
+		mb_sendMessage("lc ", remainingString)
 		return true
 	end
 	
@@ -223,11 +232,21 @@ function mb_registerMessageHandler(messageType, handlerFunc)
 	mb_registeredMessageHandlers[messageType] = handlerFunc
 end
 
+function mb_shouldHandleMessageFromSelf(messageType)
+	if string.sub(messageType, 1, 5) == "buff:" then
+		return true
+	end
+	if string.sub(messageType, 1, 2) == "lc" then
+		return true
+	end
+	return false
+end
+
 function mb_handleIncomingMessage(mbCom)
 	local messageType = string.sub(mbCom.message, 1, string.find(mbCom.message, " ") - 1)
 	local message = string.sub(mbCom.message, string.find(mbCom.message, " ") + 1)
 	
-	if mbCom.from == UnitName("player") and string.sub(messageType, 1, 5) ~= "buff:" then
+	if mbCom.from == UnitName("player") and not mb_shouldHandleMessageFromSelf(messageType) then
 		return
 	end
 		
@@ -247,14 +266,16 @@ function mb_handleIncomingMessage(mbCom)
 end
 
 function mb_initAsLeader()
+	mb_registeredMessageHandlers = {}
+	mb_isCommanding = true
 	mb_sendMessage("enable")
 	mb_sendMessage("setCommander", UnitName("player"))
 	mb_updateClassOrder()
 	if not mb_hasInitiated then
 		mb_initClass()
+		mb_registerMessageHandlers()
 		mb_hasInitiated = true
 	end
-	mb_isCommanding = true
 	mb_isEnabled = true
 end
 

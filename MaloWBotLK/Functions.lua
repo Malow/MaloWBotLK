@@ -279,8 +279,18 @@ function mb_isOnGCD()
 	return false
 end
 
-
-
+-- Returns the name of your spec
+function mb_getMySpecName()
+	local name, _, points = GetTalentTabInfo(1)
+	for i = 2, 3 do
+		local n, _, p = GetTalentTabInfo(i)
+		if p > points then
+			points = p
+			name = n
+		end
+	end
+	return name
+end
 
 
 

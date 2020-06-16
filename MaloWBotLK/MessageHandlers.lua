@@ -1,4 +1,10 @@
 function mb_registerMessageHandlers()
+	mb_registerMessageHandler("lc", mb_lcHandler)
+
+	if mb_isCommanding then
+		return
+	end
+
     mb_registerMessageHandler("remoteExecute", mb_remoteExecuteHandler)
     mb_registerMessageHandler("setCommander", mb_setCommanderHandler)
     mb_registerMessageHandler("mount", mb_mountHandler)
@@ -47,4 +53,8 @@ function mb_moveForwardHandler(msg, from)
 	end
 	mb_startedMovingForward = mb_time
 	MoveForwardStart()
+end
+
+function mb_lcHandler(msg, from)
+	mb_LootHandler_handleLootCouncilRequest(msg)
 end

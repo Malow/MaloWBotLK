@@ -33,9 +33,14 @@ function mb_setCommanderHandler(msg, from)
 end
 
 function mb_mountHandler(msg, from)
-	if not UnitBuff("player", "Swift Palomino") then 
-		CastSpellByName("Swift Palomino")
-	end
+    if UnitRace("player") == "Human" and not UnitBuff("player", "Swift Palomino") then
+        CastSpellByName("Swift Palomino")
+        return
+    end
+    if UnitRace("player") == "Draenei" and not UnitBuff("player", "Great Red Elekk") then
+        CastSpellByName("Great Red Elekk")
+        return
+    end
 end
 
 function mb_acceptHandler(msg, from)

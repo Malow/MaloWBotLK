@@ -149,6 +149,7 @@ function mb_LootHandler_canEquipItem(itemSubType)
         end
         return true
     end
+    return true
 end
 
 

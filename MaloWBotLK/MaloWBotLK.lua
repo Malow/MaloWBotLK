@@ -197,6 +197,15 @@ function mb_onUpdate()
 		return
 	end
 	if mb_commanderUnit ~= nil and mb_shouldFollow then
+		if CheckInteractDistance(mb_commanderUnit, 2) == nil then
+			FollowUnit(mb_commanderUnit)
+			return
+		end
+
+		if UnitBuff("player", "Drink") then
+			return
+		end
+
 		FollowUnit(mb_commanderUnit)
 	end
 	if mb_startedMovingForward ~= 0 and mb_startedMovingForward + 2 < mb_time then

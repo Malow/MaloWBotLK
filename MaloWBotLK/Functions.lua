@@ -134,6 +134,10 @@ function mb_unitHealthPercentage(unit)
 	return (UnitHealth(unit) * 100) / UnitHealthMax(unit)
 end
 
+function mb_unitPowerPercentage(unit)
+	return (UnitPower(unit) * 100) / UnitPowerMax(unit)
+end
+
 -- Checks if there's no cooldown and if the spell use useable (have mana to cast it)
 function mb_canCastSpell(spell)
 	if GetSpellCooldown(spell) ~= 0 then
@@ -292,6 +296,59 @@ function mb_getMySpecName()
 	return name
 end
 
+-- Scans through all bag slots looking for item by name
+function mb_GetItemLocation(itemName)
+	for bag = 0, 4 do
+		for slot = 1, GetContainerNumSlots(bag) do
+			local texture = GetContainerItemInfo(bag, slot)
+			if texture ~= nil then
+				local name = GetItemInfo(mb_GetItemStringFromItemLink(GetContainerItemLink(bag, slot)))
+				if itemName == name then
+					return bag, slot
+				end
+			end
+		end
+	end
+	return nil
+end
 
+-- Converts an ItemLink to an ItemString
+function mb_GetItemStringFromItemLink(itemLink)
+	local found, _, itemString = string.find(itemLink, "^|%x+|H(.+)|h%[.+%]")
+	return itemString
+end
 
+-- Uses item in bag by name
+function mb_UseItem(itemName)
+	local bag, slot = mb_GetItemLocation(itemName)
+	if bag ~= nil then
+		UseContainerItem(bag, slot)
+		return true
+	end
+	return false
+end
+-- Uses mage food if missing mana and not in combat
+function mb_DrinkIfGood()
+	if mb_ShouldStopDrinking() then
+		return false
+	end
 
+	if mb_unitPowerPercentage("player") < 50 and not UnitAffectingCombat("player") then
+		if UnitBuff("player", "Drink") then
+			return true
+		end
+
+		mb_UseItem("Conjured Mana Strudel")
+		return true
+	end
+
+	return false
+end
+
+function mb_ShouldStopDrinking()
+	if mb_unitPowerPercentage("player") > 90 then
+		return true
+	end
+
+	return false
+end

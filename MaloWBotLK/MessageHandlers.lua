@@ -1,20 +1,20 @@
-function mb_registerMessageHandlers()
-	mb_registerMessageHandler("lc", mb_lcHandler)
+function mb_RegisterMessageHandlers()
+	mb_RegisterMessageHandler("lc", mb_LcHandler)
 
 	if mb_isCommanding then
 		return
 	end
 
-    mb_registerMessageHandler("remoteExecute", mb_remoteExecuteHandler)
-    mb_registerMessageHandler("setCommander", mb_setCommanderHandler)
-    mb_registerMessageHandler("mount", mb_mountHandler)
-    mb_registerMessageHandler("accept", mb_acceptHandler)
-    mb_registerMessageHandler("moveForward", mb_moveForwardHandler)
+    mb_RegisterMessageHandler("remoteExecute", mb_RemoteExecuteHandler)
+    mb_RegisterMessageHandler("setCommander", mb_SetCommanderHandler)
+    mb_RegisterMessageHandler("mount", mb_MountHandler)
+    mb_RegisterMessageHandler("accept", mb_AcceptHandler)
+    mb_RegisterMessageHandler("moveForward", mb_MoveForwardHandler)
 end
 
-function mb_remoteExecuteHandler(msg, from)
-	if not mb_isTrustedCharacter(from) then
-		mb_print(from .. " tried to make me remoteExecute but I don't trust him/her")
+function mb_RemoteExecuteHandler(msg, from)
+	if not mb_IsTrustedCharacter(from) then
+		mb_Print(from .. " tried to make me remoteExecute but I don't trust him/her")
 		return
 	end
 	local func = loadstring(msg)
@@ -25,14 +25,14 @@ function mb_remoteExecuteHandler(msg, from)
 	end
 end
 
-function mb_setCommanderHandler(msg, from)
-	if not mb_isTrustedCharacter(from) then
+function mb_SetCommanderHandler(msg, from)
+	if not mb_IsTrustedCharacter(from) then
 		return
 	end
-	mb_commanderUnit = mb_getUnitForPlayerName(msg)
+	mb_commanderUnit = mb_GetUnitForPlayerName(msg)
 end
 
-function mb_mountHandler(msg, from)
+function mb_MountHandler(msg, from)
     if UnitRace("player") == "Human" and not UnitBuff("player", "Swift Palomino") then
         CastSpellByName("Swift Palomino")
         return
@@ -43,8 +43,8 @@ function mb_mountHandler(msg, from)
     end
 end
 
-function mb_acceptHandler(msg, from)
-	if not mb_isTrustedCharacter(from) then
+function mb_AcceptHandler(msg, from)
+	if not mb_IsTrustedCharacter(from) then
 		return
 	end
     AcceptGuild()
@@ -52,14 +52,14 @@ function mb_acceptHandler(msg, from)
 	AcceptTrade()
 end
 
-function mb_moveForwardHandler(msg, from)
-	if not mb_isTrustedCharacter(from) then
+function mb_MoveForwardHandler(msg, from)
+	if not mb_IsTrustedCharacter(from) then
 		return
 	end
-	mb_startedMovingForward = mb_time
+	mb_shouldStopMovingForwardAt = mb_time + 2
 	MoveForwardStart()
 end
 
-function mb_lcHandler(msg, from)
-	mb_LootHandler_handleLootCouncilRequest(msg)
+function mb_LcHandler(msg, from)
+	mb_LootHandler_HandleLootCouncilRequest(msg)
 end

@@ -24,12 +24,12 @@ mb_spellEffectBaseValues["Chain Heal"][6] = 1034
 mb_spellEffectBaseValues["Chain Heal"][7] = 1205
 
 
-function mb_getSpellEffect(spell)
+function mb_GetSpellEffect(spell)
     local _, rank = GetSpellInfo(spell)
     local spellRank = tonumber(string.sub(rank, 5))
     local spellValues = mb_spellEffectBaseValues[spell]
     if spellValues == nil or spellValues[spellRank] == nil then
-        mb_sayRaid(spell .. "(Rank " .. spellRank .. ") is not supported in SpellEffectCalculator, please add it in SpellEffectCalculator.lua at the top.")
+        mb_SayRaid(spell .. "(Rank " .. spellRank .. ") is not supported in SpellEffectCalculator, please add it in SpellEffectCalculator.lua at the top.")
         return nil
     end
     local baseValue = spellValues[spellRank]

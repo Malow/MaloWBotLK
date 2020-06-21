@@ -1,35 +1,42 @@
 function mb_Warrior_OnLoad()
-	mb_classSpecificRunFunction = mb_Warrior_OnUpdate
+	mb_RegisterDesiredBuff(BUFF_KINGS)
+	mb_RegisterDesiredBuff(BUFF_MIGHT)
+	mb_RegisterDesiredBuff(BUFF_SANCTUARY)
+	mb_RegisterDesiredBuff(BUFF_FORT)
+	mb_RegisterDesiredBuff(BUFF_SHADOW_PROT)
+	mb_RegisterDesiredBuff(BUFF_MOTW)
 
-	mb_registerDesiredBuff(BUFF_KINGS)
-	mb_registerDesiredBuff(BUFF_MIGHT)
-	mb_registerDesiredBuff(BUFF_SANCTUARY)
-end
-
-function mb_Warrior_OnUpdate()
-	if mb_isOnGCD() then
-		return
-	end
-
-	if not UnitBuff("player", "Commanding Shout") and UnitPower("player") >= 10 then
-		mb_castSpellOnSelf("Commanding Shout")
-		return
-	end
-
-	AssistUnit(mb_commanderUnit)
-	if not mb_hasValidOffensiveTarget() then
-		return
-	end
-	
-	if not mb_isAutoAttacking then
-		InteractUnit("target")
-	end
-
-	if mb_getDebuffStackCount("target", "Sunder Armor") < 5 and UnitPower("player") >= 15 and mb_castSpellOnTarget("Sunder Armor") then
-		return
-	end
-
-	if UnitPower("player") >= 30 and mb_castSpellOnTarget("Mortal Strike") then
-		return
+	if mb_GetMySpecName() == "Arms" then
+		mb_classSpecificRunFunction = mb_Warrior_Arms_OnUpdate
+	elseif mb_GetMySpecName() == "Fury" then
+		mb_SayRaid("Fury spec is not supported yet")
+	else
+		mb_SayRaid("Protection spec is not supported yet")
 	end
 end
+
+mb_Warrior_lastCommandingShoutRaidCheck = 0
+function mb_Warrior_CommandingShout()
+	if not UnitBuff("player", "Commanding Shout") then
+		if UnitPower("player") < 10 then
+			return mb_CastSpellWithoutTarget("Bloodrage")
+		end
+		return mb_CastSpellWithoutTarget("Commanding Shout")
+	end
+	if mb_Warrior_lastCommandingShoutRaidCheck + 10 > mb_time then
+		return false
+	end
+	mb_Warrior_lastCommandingShoutRaidCheck = mb_time
+	local members = mb_GetNumPartyOrRaidMembers()
+	for i = 1, members do
+		local unit = mb_GetUnitFromPartyOrRaidIndex(i)
+		if not UnitBuff(unit, "Commanding Shout") and CheckInteractDistance(unit, 4) then
+			if UnitPower("player") < 10 then
+				return mb_CastSpellWithoutTarget("Bloodrage")
+			end
+			return mb_CastSpellWithoutTarget("Commanding Shout")
+		end
+	end
+	return false
+end
+

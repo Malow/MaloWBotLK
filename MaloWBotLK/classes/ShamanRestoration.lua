@@ -1,4 +1,4 @@
 
-function mb_Shaman_RestorationOnUpdate()
+function mb_Shaman_Restoration_OnUpdate()
 
 end

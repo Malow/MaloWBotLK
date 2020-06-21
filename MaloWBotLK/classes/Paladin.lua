@@ -1,139 +1,105 @@
 function mb_Paladin_OnLoad()
-	mb_classSpecificRunFunction = mb_Paladin_OnUpdate
+	mb_RegisterDesiredBuff(BUFF_KINGS)
+	mb_RegisterDesiredBuff(BUFF_WISDOM)
+	mb_RegisterDesiredBuff(BUFF_SANCTUARY)
+	mb_RegisterDesiredBuff(BUFF_FORT)
+	mb_RegisterDesiredBuff(BUFF_SPIRIT)
+	mb_RegisterDesiredBuff(BUFF_INTELLECT)
+	mb_RegisterDesiredBuff(BUFF_SHADOW_PROT)
+	mb_RegisterDesiredBuff(BUFF_MOTW)
 
-	mb_registerDesiredBuff(BUFF_KINGS)
-	mb_registerDesiredBuff(BUFF_WISDOM)
-	mb_registerDesiredBuff(BUFF_MIGHT)
-	mb_registerDesiredBuff(BUFF_SANCTUARY)
-	if mb_myClassOrderIndex == mb_ClassOrderConfig.mightBlesser then
-		mb_registerMessageHandler(BUFF_MIGHT.requestType, mb_Paladin_mightHandler)
-		return
-	end
-	if mb_myClassOrderIndex == mb_ClassOrderConfig.wisdomBlesser then
-		mb_registerMessageHandler(BUFF_WISDOM.requestType, mb_Paladin_wisdomHandler)
-		return
-	end
-	if mb_myClassOrderIndex == mb_ClassOrderConfig.kingsBlesser then
-		mb_registerMessageHandler(BUFF_KINGS.requestType, mb_Paladin_kingsHandler)
-		return
-	end
-	if mb_myClassOrderIndex == mb_ClassOrderConfig.sancBlesser then
-		mb_registerMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_sancHandler)
-		return
-	end
-end
+	mb_CheckReagentAmount("Symbol of Kings", 300)
 
-function mb_Paladin_OnUpdate()
-	if mb_isOnGCD() then
-		return
+	if mb_GetMySpecName() == "Holy" then
+		mb_SayRaid("Holy spec is not supported yet")
+	elseif mb_GetMySpecName() == "Protection" then
+		mb_classSpecificRunFunction = mb_Paladin_Protection_OnUpdate
+		mb_RegisterDesiredBuff(BUFF_MIGHT)
+	else
+		mb_classSpecificRunFunction = mb_Paladin_Retribution_OnUpdate
+		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	end
 
-	if mb_resurrectRaid("Redemption") then
-		return
-	end
-	
-	if UnitBuff("player", "The Art of War") then
-		if mb_Paladin_FlashOfLightRaid() then
-			return
-		end
-	end
 
-	if mb_Paladin_CastAura() then
+	if mb_GetMySpecName() == "Protection" then -- Override class-order blessing for prot-palas since they have sanc
+		mb_RegisterMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_SancHandler)
 		return
 	end
-	
-	if not UnitBuff("player", "Seal of Command") then
-		CastSpellByName("Seal of Command")
+	if mb_myClassOrderIndex == mb_config.classOrder.mightBlesser then
+		mb_RegisterMessageHandler(BUFF_MIGHT.requestType, mb_Paladin_MightHandler)
 		return
 	end
-
-	if mb_cleanseRaid("Cleanse", "Magic", "Poison", "Disease") then
+	if mb_myClassOrderIndex == mb_config.classOrder.kingsBlesser then
+		mb_RegisterMessageHandler(BUFF_KINGS.requestType, mb_Paladin_KingsHandler)
 		return
 	end
-	
-	AssistUnit(mb_commanderUnit)
-	if not mb_hasValidOffensiveTarget() then
+	if mb_myClassOrderIndex == mb_config.classOrder.wisdomBlesser then
+		mb_RegisterMessageHandler(BUFF_WISDOM.requestType, mb_Paladin_WisdomHandler)
 		return
 	end
-	
-	if not mb_isAutoAttacking then
-		InteractUnit("target")
-	end
-	
-	if mb_castSpellOnTarget("Judgement of Wisdom") then
-		return
-	end	
-	
-	if mb_unitHealthPercentage("target") < 21 and mb_castSpellOnTarget("Hammer of Wrath") then
-		return
-	end	
-	
-	if mb_castSpellOnTarget("Crusader Strike") then
-		return
-	end
-	
-	if mb_isSpellInRange("Crusader Strike", "target") and mb_castSpellOnSelf("Divine Storm") then
-		return
-	end	
 end
 
 function mb_Paladin_FlashOfLightRaid()
-	local healUnit, missingHealth = mb_getMostDamagedFriendly("Flash of Light")
-	if missingHealth > mb_getSpellEffect("Flash of Light") then
-		mb_castSpellOnFriendly(healUnit, "Flash of Light")
+	local healUnit, missingHealth = mb_GetMostDamagedFriendly("Flash of Light")
+	if missingHealth > mb_GetSpellEffect("Flash of Light") then
+		mb_CastSpellOnFriendly(healUnit, "Flash of Light")
 		return true
 	end
 	return false
 end
 
-function mb_Paladin_mightHandler(msg, from)
-	mb_Paladin_handleBless(from, "Greater Blessing of Might", "Blessing of Might")
+function mb_Paladin_MightHandler(msg, from)
+	mb_Paladin_HandleBless(from, "Greater Blessing of Might", "Blessing of Might")
 end
 
-function mb_Paladin_wisdomHandler(msg, from)
-	mb_Paladin_handleBless(from, "Greater Blessing of Wisdom", "Blessing of Wisdom")
+function mb_Paladin_WisdomHandler(msg, from)
+	mb_Paladin_HandleBless(from, "Greater Blessing of Wisdom", "Blessing of Wisdom")
 end
 
-function mb_Paladin_kingsHandler(msg, from)
-	mb_Paladin_handleBless(from, "Greater Blessing of Kings", "Blessing of Kings")
+function mb_Paladin_KingsHandler(msg, from)
+	mb_Paladin_HandleBless(from, "Greater Blessing of Kings", "Blessing of Kings")
 end
 
-function mb_Paladin_sancHandler(msg, from)
-	mb_Paladin_handleBless(from, "Greater Blessing of Sanctuary", "Blessing of Sanctuary")
+function mb_Paladin_SancHandler(msg, from)
+	mb_Paladin_HandleBless(from, "Greater Blessing of Sanctuary", "Blessing of Sanctuary")
 end
 
-function mb_Paladin_handleBless(targetPlayerName, greaterSpell, singleSpell)
+function mb_Paladin_HandleBless(targetPlayerName, greaterSpell, singleSpell)
 	if UnitAffectingCombat("player") then
 		return
 	end
-	if mb_castSpellOnFriendly(mb_getUnitForPlayerName(targetPlayerName), greaterSpell) then
+	if mb_CastSpellOnFriendly(mb_GetUnitForPlayerName(targetPlayerName), greaterSpell) then
 		return
 	end
-	mb_castSpellOnFriendly(mb_getUnitForPlayerName(targetPlayerName), singleSpell)
+	mb_CastSpellOnFriendly(mb_GetUnitForPlayerName(targetPlayerName), singleSpell)
 end
 
 function mb_Paladin_CastAura()
 	local myAura = ""
-	if mb_myClassOrderIndex == mb_ClassOrderConfig.retriAura then
-		myAura = "Retribution Aura"
-	elseif mb_myClassOrderIndex == mb_ClassOrderConfig.concentrationAura then
-		myAura = "Concentration Aura"
-	elseif mb_myClassOrderIndex == mb_ClassOrderConfig.frostAura then
-		myAura = "Frost Resistance Aura"
-	elseif mb_myClassOrderIndex == mb_ClassOrderConfig.devoAura then
+	if mb_GetMySpecName() == "Protection" then -- Override class-order auras for prot-palas since they have improved
 		myAura = "Devotion Aura"
-	elseif mb_myClassOrderIndex == mb_ClassOrderConfig.fireAura then
+	elseif mb_myClassOrderIndex == mb_config.classOrder.retriAura then
+		myAura = "Retribution Aura"
+	elseif mb_myClassOrderIndex == mb_config.classOrder.concentrationAura then
+		myAura = "Concentration Aura"
+	elseif mb_myClassOrderIndex == mb_config.classOrder.frostAura then
+		myAura = "Frost Resistance Aura"
+	elseif mb_myClassOrderIndex == mb_config.classOrder.devoAura then
+		myAura = "Devotion Aura"
+	elseif mb_myClassOrderIndex == mb_config.classOrder.fireAura then
 		myAura = "Fire Resistance Aura"
-	elseif mb_myClassOrderIndex == mb_ClassOrderConfig.crusaderAura then
+	elseif mb_myClassOrderIndex == mb_config.classOrder.crusaderAura then
 		myAura = "Crusader Aura"
-	elseif mb_myClassOrderIndex == mb_ClassOrderConfig.shadowAura then
+	elseif mb_myClassOrderIndex == mb_config.classOrder.shadowAura then
 		myAura = "Shadow Resistance Aura"
 	end
 	if UnitBuff("player", myAura) then
 		return false
 	end
-	return mb_castSpellOnSelf(myAura)
+	return mb_CastSpellWithoutTarget(myAura)
 end
+
+
 
 
 

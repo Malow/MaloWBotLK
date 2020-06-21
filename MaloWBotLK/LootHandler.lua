@@ -1,15 +1,15 @@
 
 mb_LootHandler_queuedLootCouncilMsg = nil
 
-function mb_LootHandler_update()
+function mb_LootHandler_OnUpdate()
     if mb_LootHandler_queuedLootCouncilMsg ~= nil then
         local msg = mb_LootHandler_queuedLootCouncilMsg
         mb_LootHandler_queuedLootCouncilMsg = nil
-        mb_LootHandler_handleLootCouncilRequest(msg)
+        mb_LootHandler_HandleLootCouncilRequest(msg)
     end
 end
 
-function mb_LootHandler_handleLootCouncilRequest(msg)
+function mb_LootHandler_HandleLootCouncilRequest(msg)
     local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount,
         itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(msg)
     if itemName == nil then
@@ -17,10 +17,10 @@ function mb_LootHandler_handleLootCouncilRequest(msg)
         GameTooltip:SetHyperlink(msg)
         return
     end
-    if not mb_LootHandler_canEquipItem(itemSubType) then
+    if not mb_LootHandler_CanEquipItem(itemSubType) then
         return
     end
-    local usableSlots = mb_LootHandler_getUsableSlotsForItemEquipLoc(itemEquipLoc)
+    local usableSlots = mb_LootHandler_GetUsableSlotsForItemEquipLoc(itemEquipLoc)
     local output = ""
     local currentItemValue = 99999999
     for _, v in pairs(usableSlots) do
@@ -29,35 +29,34 @@ function mb_LootHandler_handleLootCouncilRequest(msg)
             currentItemValue = 0
         else
             output = output .. currentItemLink .. "   "
-            currentItemValue = min(currentItemValue, mb_LootHandler_getNormalizedValueForItem(currentItemLink))
+            currentItemValue = min(currentItemValue, mb_LootHandler_GetNormalizedValueForItem(currentItemLink))
         end
     end
-    local newItemValue = mb_LootHandler_getNormalizedValueForItem(itemLink)
+    local newItemValue = mb_LootHandler_GetNormalizedValueForItem(itemLink)
     if newItemValue > currentItemValue then
         local valueIncrease = newItemValue - currentItemValue
-        mb_sayRaid(floor(valueIncrease) .. " score increase over " .. output)
+        mb_SayRaid(floor(valueIncrease) .. " score increase over " .. output)
     end
 end
 
-function mb_LootHandler_getNormalizedValueForItem(itemLink)
+function mb_LootHandler_GetNormalizedValueForItem(itemLink)
     local stats = {}
     GetItemStats(itemLink, stats)
 
-    if mb_statWeights[UnitClass("player")] == nil or mb_statWeights[UnitClass("player")][mb_getMySpecName()] == nil then
-        mb_sayRaid("I don't have stat-weights set up for my class/spec")
+    if mb_config.statWeights[UnitClass("player")] == nil or mb_config.statWeights[UnitClass("player")][mb_GetMySpecName()] == nil then
+        mb_SayRaid("I don't have stat-weights set up for my class/spec")
         return 0
     end
 
-    local myStatWeights = mb_statWeights[UnitClass("player")][mb_getMySpecName()]
     local itemValue = 0
     for badStatName, statAmount in pairs(stats) do
-        local goodStatName = mb_LootHandler_getGoodStatName(badStatName)
+        local goodStatName = mb_LootHandler_GetGoodStatName(badStatName)
         if goodStatName == nil then
-            mb_sayRaid("I didn't have a good-name translation for stat: " .. badStatName)
+            mb_SayRaid("I didn't have a good-name translation for stat: " .. badStatName)
         else
-            local statWeight = mb_statWeights[UnitClass("player")][mb_getMySpecName()][goodStatName]
+            local statWeight = mb_config.statWeights[UnitClass("player")][mb_GetMySpecName()][goodStatName]
             if statWeight == nil then
-                mb_sayRaid("I didn't have a stat-weight defined for the stat: " .. goodStatName)
+                mb_SayRaid("I didn't have a stat-weight defined for the stat: " .. goodStatName)
             else
                 itemValue = itemValue + statAmount * statWeight
             end
@@ -71,7 +70,7 @@ end
 -- ----------------------------------
 -- Hardcoded translation functions --
 -- ----------------------------------
-function mb_LootHandler_getUsableSlotsForItemEquipLoc(itemEquipLoc)
+function mb_LootHandler_GetUsableSlotsForItemEquipLoc(itemEquipLoc)
     if itemEquipLoc == "INVTYPE_HEAD" then return {1} end
     if itemEquipLoc == "INVTYPE_NECK" then return {2} end
     if itemEquipLoc == "INVTYPE_SHOULDER" then return {3} end
@@ -90,7 +89,7 @@ function mb_LootHandler_getUsableSlotsForItemEquipLoc(itemEquipLoc)
     if itemEquipLoc == "INVTYPE_RANGED" or itemEquipLoc == "INVTYPE_RANGEDRIGHT" or itemEquipLoc == "INVTYPE_THROWN" or itemEquipLoc == "INVTYPE_RELIC" then return {18} end
 end
 
-function mb_LootHandler_getGoodStatName(badStatName)
+function mb_LootHandler_GetGoodStatName(badStatName)
     -- Base stats
     if badStatName == "ITEM_MOD_AGILITY_SHORT" then return "agility" end
     if badStatName == "ITEM_MOD_INTELLECT_SHORT" then return "intellect" end
@@ -128,9 +127,9 @@ function mb_LootHandler_getGoodStatName(badStatName)
     return nil
 end
 
-function mb_LootHandler_canEquipItem(itemSubType)
+function mb_LootHandler_CanEquipItem(itemSubType)
     local myClass = UnitClass("player")
-    local mySpec = mb_getMySpecName()
+    local mySpec = mb_GetMySpecName()
     if itemSubType == "Plate" then
         if myClass == "Paladin" or myClass == "Warrior" or myClass == "Deathknight" then
             return true
@@ -149,6 +148,13 @@ function mb_LootHandler_canEquipItem(itemSubType)
         end
         return true
     end
+    if itemSubType == "Bows" or itemSubType == "Guns" or itemSubType == "Crossbows" or itemSubType == "Thrown" then
+        if myClass == "Warrior" or myClass == "Rogue" or myClass == "Hunter" then
+            return true
+        end
+        return false
+    end
+
     return true
 end
 

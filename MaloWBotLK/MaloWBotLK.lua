@@ -2,36 +2,36 @@ local MY_NAME = "MaloWBotLK"
 local MY_ABBREVIATION = "MB"
 
 -- Prints message in chatbox
-function mb_print(msg)
+function mb_Print(msg)
 	MaloWUtils_Print(MY_ABBREVIATION .. ": " .. tostring(msg))
 end
 
 -- Frame setup for update
 local total = 0
-local function mb_update(self, elapsed)
+local function mb_Update(self, elapsed)
 	total = total + elapsed
 	if total >= 0.1 then
 		total = 0
-		mb_onUpdate()
+		mb_OnUpdate()
     end
 end
 local f = CreateFrame("frame", MY_NAME .. "Frame", UIParent)
 f:SetPoint("CENTER")
-f:SetScript("OnUpdate", mb_update)
+f:SetScript("OnUpdate", mb_Update)
 f:SetSize(1, 1)
 f:Show()
 
 -- Cmds
 SlashCmdList[MY_ABBREVIATION .. "COMMAND"] = function(msg)
-	if not mb_handleCommand(msg) then
-		mb_print("Unrecognized command: " .. msg)
+	if not mb_HandleCommand(msg) then
+		mb_Print("Unrecognized command: " .. msg)
 	end
 end 
 SLASH_MBCOMMAND1 = "/" .. MY_ABBREVIATION;
 
 -- Events
 local hasLoaded = false
-function mb_onEvent(self, event, arg1, arg2, arg3, ...)
+function mb_OnEvent(self, event, arg1, arg2, arg3, ...)
 	if event == "ADDON_LOADED" and arg1 == MY_NAME then
 		hasLoaded = true
 	elseif event == "CHAT_MSG_ADDON" and arg1 == "MB" then
@@ -40,13 +40,13 @@ function mb_onEvent(self, event, arg1, arg2, arg3, ...)
 		local mbCom = {}
 		mbCom.message = message
 		mbCom.from = from
-		mb_handleIncomingMessage(mbCom)
+		mb_HandleIncomingMessage(mbCom)
 	elseif event == "PLAYER_ENTER_COMBAT" then
 		mb_isAutoAttacking = true
 	elseif event == "PLAYER_LEAVE_COMBAT" then
 		mb_isAutoAttacking = false
 	elseif event == "PARTY_INVITE_REQUEST" then
-		if mb_isTrustedCharacter(arg1) then
+		if mb_IsTrustedCharacter(arg1) then
 			AcceptGroup()
 			StaticPopup1:Hide()
 		end
@@ -63,10 +63,16 @@ function mb_onEvent(self, event, arg1, arg2, arg3, ...)
 		ConfirmAcceptQuest()
 		StaticPopup1:Hide()
 	elseif event == "GROUP_ROSTER_CHANGED" then
-		mb_updateClassOrder()
+		mb_UpdateClassOrder()
+	elseif event == "UI_ERROR_MESSAGE" then
+		if arg1 == "You are too far away!" then
+			mb_HandleTooFarAway()
+		elseif arg1 == "You are facing the wrong way!" or arg1 == "Target needs to be in front of you." then
+			mb_HandleFacingWrongWay()
+		end
 	end
 end
-f:RegisterEvent("ADDON_LOADED");
+f:RegisterEvent("ADDON_LOADED")
 f:RegisterEvent("CHAT_MSG_ADDON")
 f:RegisterEvent("PLAYER_ENTER_COMBAT")
 f:RegisterEvent("PLAYER_LEAVE_COMBAT")
@@ -76,23 +82,29 @@ f:RegisterEvent("RESURRECT_REQUEST")
 f:RegisterEvent("QUEST_ACCEPT_CONFIRM")
 f:RegisterEvent("QUEST_DETAIL")
 f:RegisterEvent("GROUP_ROSTER_CHANGED")
-f:SetScript("OnEvent", mb_onEvent);
+f:RegisterEvent("UI_ERROR_MESSAGE")
+f:SetScript("OnEvent", mb_OnEvent)
 
 mb_hasInitiated = false
 mb_classSpecificRunFunction = nil
-function mb_init()
+mb_originalErrorHandler = nil
+function mb_Init()
 	mb_registeredMessageHandlers = {}
-	mb_registerMessageHandlers()
+	mb_RegisterMessageHandlers()
 	
 	-- Set Class Order
-	mb_updateClassOrder()
+	mb_UpdateClassOrder()
 	
-	mb_initClass()
+	mb_InitClass()
+	mb_CheckDurability()
 	
-	mb_createMacro("MBReload", "/run ReloadUI()", 1)
+	mb_CreateMacro("MBReload", "/run ReloadUI()", 1)
 	SetCVar("autoSelfCast", 0) -- Disable auto self-casting to allow directly casting spells on raid-members
 	SetCVar("autoLootDefault", 1) -- Enable autolooting
-	
+
+	mb_originalErrorHandler = geterrorhandler()
+	seterrorhandler(mb_ErrorHandler)
+
 	if TI_VersionString ~= nil then -- Turn TurnIn on if it's loaded
 		TI_Switch("on")
 		TI_status.options[7].state = true
@@ -101,7 +113,7 @@ function mb_init()
 	mb_hasInitiated = true
 end
 
-function mb_initClass()
+function mb_InitClass()
 	local playerClass = mb_GetClass("player")
 	if playerClass == "DEATHKNIGHT" then
 		mb_Deathknight_OnLoad()
@@ -134,19 +146,19 @@ function mb_initClass()
 		mb_Warrior_OnLoad()
 		mb_GCDSpell = "Hamstring"
 	else
-		mb_print("Error, playerClass " .. tostring(playerClass) .. " not supported")
+		mb_Print("Error, playerClass " .. tostring(playerClass) .. " not supported")
 	end
 end
 
-
 mb_classOrder = {}
 mb_myClassOrderIndex = nil
-function mb_updateClassOrder()
+function mb_UpdateClassOrder()
 	local name = UnitName("player")
+	mb_classOrder = {}
 	table.insert(mb_classOrder, name)
-    local members = mb_getNumPartyOrRaidMembers()
+    local members = mb_GetNumPartyOrRaidMembers()
     for i = 1, members do
-        local unit = mb_getUnitFromPartyOrRaidIndex(i)
+        local unit = mb_GetUnitFromPartyOrRaidIndex(i)
 		if mb_GetClass(unit) == mb_GetClass("player") then
 			name = UnitName(unit)
 			table.insert(mb_classOrder, name)
@@ -169,17 +181,18 @@ end
 -- OnUpdate stuff
 -- -------------------
 
+mb_cleaveMode = 0 -- 0 = Single-target, 1 = Cleave, 2 = Full AoE
 mb_GCDSpell = nil
 mb_isCommanding = false
 mb_commanderUnit = nil
-mb_shouldFollow = true
+mb_followMode = "lenient"
 mb_isEnabled = false
 mb_isAutoAttacking = false
 mb_time = GetTime()
-mb_startedMovingForward = 0
+mb_shouldStopMovingForwardAt = 0
 
 -- OnUpdate
-function mb_onUpdate()
+function mb_OnUpdate()
 	if not mb_isEnabled then
 		return
 	end
@@ -187,52 +200,59 @@ function mb_onUpdate()
 		return
 	end
 	if not mb_hasInitiated then
-		mb_init()
+		mb_Init()
 		return
 	end
 	mb_time = GetTime()
-	mb_LootHandler_update()
-	mb_requestDesiredBuffsThrottled()
+	mb_LootHandler_OnUpdate()
+	mb_RequestDesiredBuffsThrottled()
 	if mb_isCommanding then
 		return
 	end
-	if mb_commanderUnit ~= nil and mb_shouldFollow then
-		FollowUnit(mb_commanderUnit)
+	if mb_commanderUnit ~= nil then
+		if mb_followMode == "strict" then
+			FollowUnit(mb_commanderUnit)
+		elseif mb_followMode == "lenient" then
+			if not CheckInteractDistance(mb_commanderUnit, 2) then
+				FollowUnit(mb_commanderUnit)
+			end
+		end
 	end
-	if mb_startedMovingForward ~= 0 and mb_startedMovingForward + 2 < mb_time then
+	if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then
+		MoveForwardStart()
 		MoveForwardStop()
-		mb_startedMovingForward = 0
+		mb_shouldStopMovingForwardAt = 0
 	end
 	mb_classSpecificRunFunction()
 end
 
-function mb_handleCommand(msg)
-	local matches, remainingString = mb_stringStartsWith(msg, "remoteExecute")
+function mb_HandleCommand(msg)
+	local matches, remainingString = mb_StringStartsWith(msg, "remoteExecute")
 	if matches then
-		mb_sendMessage("remoteExecute ", remainingString)
+		mb_SendMessage("remoteExecute ", remainingString)
 		return true
 	end
-	matches, remainingString = mb_stringStartsWith(msg, "lc")
+	matches, remainingString = mb_StringStartsWith(msg, "lc")
 	if matches then
-		mb_sayRaid("----------------------------------")
-		mb_sayRaid("Loot Council started for: " .. remainingString)
-		mb_sendMessage("lc ", remainingString)
+		mb_SayRaid("----------------------------------")
+		mb_SayRaid("Loot Council started for: " .. remainingString)
+		mb_SendMessage("lc ", remainingString)
 		return true
 	end
 	
 	return false
 end
 
-function mb_sendMessage(messageType, message)
+function mb_SendMessage(messageType, message)
 	SendAddonMessage("MB", messageType .. " " .. tostring(message), "RAID")
 end
 
 mb_registeredMessageHandlers = {}
-function mb_registerMessageHandler(messageType, handlerFunc)
+function mb_RegisterMessageHandler(messageType, handlerFunc)
 	mb_registeredMessageHandlers[messageType] = handlerFunc
 end
 
-function mb_shouldHandleMessageFromSelf(messageType)
+function mb_ShouldHandleMessageFromSelf(messageType)
 	if string.sub(messageType, 1, 5) == "buff:" then
 		return true
 	end
@@ -242,17 +262,17 @@ function mb_shouldHandleMessageFromSelf(messageType)
 	return false
 end
 
-function mb_handleIncomingMessage(mbCom)
+function mb_HandleIncomingMessage(mbCom)
 	local messageType = string.sub(mbCom.message, 1, string.find(mbCom.message, " ") - 1)
 	local message = string.sub(mbCom.message, string.find(mbCom.message, " ") + 1)
 	
-	if mbCom.from == UnitName("player") and not mb_shouldHandleMessageFromSelf(messageType) then
+	if mbCom.from == UnitName("player") and not mb_ShouldHandleMessageFromSelf(messageType) then
 		return
 	end
 		
-	if messageType == "enable" and mb_isTrustedCharacter(mbCom.from) then
+	if messageType == "enable" and mb_IsTrustedCharacter(mbCom.from) then
 		mb_isEnabled = true
-		mb_init()
+		mb_Init()
 		return
 	end
 	
@@ -265,27 +285,28 @@ function mb_handleIncomingMessage(mbCom)
 	end
 end
 
-function mb_initAsLeader()
+function mb_InitAsLeader()
 	mb_registeredMessageHandlers = {}
 	mb_isCommanding = true
-	mb_sendMessage("enable")
-	mb_sendMessage("setCommander", UnitName("player"))
-	mb_updateClassOrder()
+	mb_SendMessage("enable")
+	mb_SendMessage("setCommander", UnitName("player"))
+	mb_UpdateClassOrder()
 	if not mb_hasInitiated then
-		mb_initClass()
-		mb_registerMessageHandlers()
+		mb_InitClass()
+		mb_RegisterMessageHandlers()
 		mb_hasInitiated = true
 	end
+	mb_CheckDurability()
 	mb_isEnabled = true
 end
 
 mb_desiredBuffs = {}
-function mb_registerDesiredBuff(buff)
+function mb_RegisterDesiredBuff(buff)
 	table.insert(mb_desiredBuffs, buff)
 end
 
 mb_lastBuffRequest = GetTime()
-function mb_requestDesiredBuffsThrottled()
+function mb_RequestDesiredBuffsThrottled()
 	if mb_lastBuffRequest + 3 > mb_time then
 		return
 	end
@@ -301,10 +322,43 @@ function mb_requestDesiredBuffsThrottled()
 		end
 
 		if not hasBuff then
-			mb_sendMessage(buff.requestType)
+			mb_SendMessage(buff.requestType)
 		end
 	end
 end
+
+function mb_HandleFacingWrongWay()
+	if not mb_isEnabled or mb_isCommanding then
+		return
+	end
+	if mb_followMode == "strict" then
+		return
+	end
+	SetCVar("autoInteract", 1)
+	InteractUnit("target")
+	SetCVar("autoInteract", 0)
+	mb_shouldStopMovingForwardAt = mb_time
+end
+
+function mb_HandleTooFarAway()
+	if not mb_isEnabled or mb_isCommanding then
+		return
+	end
+	if mb_followMode == "none" then
+		return
+	elseif mb_followMode == "lenient" then
+		SetCVar("autoInteract", 1)
+		InteractUnit("target")
+		SetCVar("autoInteract", 0)
+		mb_shouldStopMovingForwardAt = mb_time + 0.5
+	end
+end
+
+function mb_ErrorHandler(msg)
+	mb_SayRaid("I received lua-error: " .. msg)
+	mb_originalErrorHandler(msg)
+end
+
 
 
 

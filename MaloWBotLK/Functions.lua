@@ -136,13 +136,17 @@ function mb_GetMostDamagedFriendly(spell)
         local missingHealth = mb_GetMissingHealth(unit)
         if missingHealth > missingHealthOfTarget then
             if mb_IsUnitValidFriendlyTarget(unit, spell) then
-				if spell == nil or mb_IsSpellInRange(spell, unit) then
-					missingHealthOfTarget = missingHealth
-					healTarget = i
-				end
+				missingHealthOfTarget = missingHealth
+				healTarget = i
             end
         end
     end
+	if UnitExists("focus") then
+		local missingHealth = mb_GetMissingHealth("focus")
+		if missingHealth > missingHealthOfTarget and mb_IsUnitValidFriendlyTarget("focus", spell) then
+			return "focus", missingHealth
+		end
+	end
     if healTarget == 0 then
         return "player", missingHealthOfTarget
     else
@@ -402,9 +406,14 @@ function mb_CheckDurability()
 	end
 end
 
-
-
-
+function mb_TableContains(table, item)
+	for _, v in pairs(table) do
+		if v == item then
+			return true
+		end
+	end
+	return false
+end
 
 
 

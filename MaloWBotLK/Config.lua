@@ -40,6 +40,46 @@ mb_config.classOrder.shadowAura = 7
 
 
 -- -----------------------------------------------
+-- Raid Layout
+-- -----------------------------------------------
+mb_config.raidLayout = {}
+mb_config.raidLayout["25man"] = {}
+mb_config.raidLayout["25man"][1] = {}
+table.insert(mb_config.raidLayout["25man"][1], "Malowtank")
+table.insert(mb_config.raidLayout["25man"][1], "Aerer")
+table.insert(mb_config.raidLayout["25man"][1], "Ceolmar")
+table.insert(mb_config.raidLayout["25man"][1], "Ninki")
+table.insert(mb_config.raidLayout["25man"][1], "Elweald")
+mb_config.raidLayout["25man"][2] = {}
+table.insert(mb_config.raidLayout["25man"][2], "Warde")
+table.insert(mb_config.raidLayout["25man"][2], "Rewis")
+table.insert(mb_config.raidLayout["25man"][2], "Riffin")
+table.insert(mb_config.raidLayout["25man"][2], "Tunbert")
+table.insert(mb_config.raidLayout["25man"][2], "Abith")
+mb_config.raidLayout["25man"][3] = {}
+table.insert(mb_config.raidLayout["25man"][3], "Puabi")
+table.insert(mb_config.raidLayout["25man"][3], "Verne")
+table.insert(mb_config.raidLayout["25man"][3], "Odia")
+table.insert(mb_config.raidLayout["25man"][3], "Elerien")
+table.insert(mb_config.raidLayout["25man"][3], "Necria")
+mb_config.raidLayout["25man"][4] = {}
+table.insert(mb_config.raidLayout["25man"][4], "Khalia")
+table.insert(mb_config.raidLayout["25man"][4], "Gwethriel")
+table.insert(mb_config.raidLayout["25man"][4], "Arethel")
+table.insert(mb_config.raidLayout["25man"][4], "Kisaana")
+table.insert(mb_config.raidLayout["25man"][4], "Trudy")
+mb_config.raidLayout["25man"][5] = {}
+table.insert(mb_config.raidLayout["25man"][5], "Maligna")
+table.insert(mb_config.raidLayout["25man"][5], "Charnel")
+table.insert(mb_config.raidLayout["25man"][5], "Pestilina")
+table.insert(mb_config.raidLayout["25man"][5], "Umbria")
+table.insert(mb_config.raidLayout["25man"][5], "Igal")
+
+
+
+
+
+-- -----------------------------------------------
 -- Stat Weights
 -- -----------------------------------------------
 mb_config.statWeights = {}

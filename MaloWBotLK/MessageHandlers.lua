@@ -33,14 +33,13 @@ function mb_SetCommanderHandler(msg, from)
 end
 
 function mb_MountHandler(msg, from)
-    if UnitRace("player") == "Human" and not UnitBuff("player", "Swift Palomino") then
-        CastSpellByName("Swift Palomino")
-        return
-    end
-    if UnitRace("player") == "Draenei" and not UnitBuff("player", "Great Red Elekk") then
-        CastSpellByName("Great Red Elekk")
-        return
-    end
+	if not mb_IsTrustedCharacter(from) then
+		return
+	end
+	if IsMounted() then
+		return
+	end
+	CallCompanion("MOUNT", 1)
 end
 
 function mb_AcceptHandler(msg, from)

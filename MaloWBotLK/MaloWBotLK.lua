@@ -159,7 +159,7 @@ function mb_UpdateClassOrder()
     local members = mb_GetNumPartyOrRaidMembers()
     for i = 1, members do
         local unit = mb_GetUnitFromPartyOrRaidIndex(i)
-		if mb_GetClass(unit) == mb_GetClass("player") then
+		if mb_GetClass(unit) == mb_GetClass("player") and UnitIsConnected(unit) then
 			name = UnitName(unit)
 			table.insert(mb_classOrder, name)
 		end
@@ -206,6 +206,7 @@ function mb_OnUpdate()
 	mb_time = GetTime()
 	mb_LootHandler_OnUpdate()
 	mb_RequestDesiredBuffsThrottled()
+	mb_FixRaidSetup()
 	if mb_isCommanding then
 		return
 	end
@@ -358,6 +359,50 @@ function mb_ErrorHandler(msg)
 	mb_SayRaid("I received lua-error: " .. msg)
 	mb_originalErrorHandler(msg)
 end
+
+mb_fixRaidSetupName = nil
+mb_fixRaidSetupLastInvite = 0
+function mb_FixRaidSetup()
+	if mb_fixRaidSetupName == nil then
+		return
+	end
+	local currentMembers = mb_GetNumPartyOrRaidMembers()
+	if not UnitInRaid("player") and currentMembers > 0 then
+		ConvertToRaid()
+		return
+	end
+
+	local setup = mb_config.raidLayout[mb_fixRaidSetupName]
+	local didInvite = false
+	if mb_fixRaidSetupLastInvite + 10 > mb_time then
+		return
+	end
+	for groupId, groupMembers in pairs(setup) do
+		for memberId, memberName in pairs(groupMembers) do
+			if mb_GetUnitForPlayerName(memberName) == nil then
+				mb_fixRaidSetupLastInvite = mb_time
+				InviteUnit(memberName)
+				didInvite = true
+			end
+		end
+	end
+	if didInvite then
+		return
+	end
+
+	-- TODO add fixing of subgroups
+	--for raidIndex = 1, currentMembers do
+	--	local name, _, subgroup = GetRaidRosterInfo(raidIndex);
+	--	if not mb_TableContains(groupMembers, name) and subgroup ~= groupId then
+	--		SwapRaidSubgroup(raidIndex)
+	--	end
+	--end
+
+	SetLootMethod("freeforall")
+	mb_Print("Finished fixing raid setup for " .. mb_fixRaidSetupName)
+	mb_fixRaidSetupName = nil
+end
+
 
 
 

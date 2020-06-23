@@ -1,5 +1,8 @@
 mb_config ={}
 
+mb_config.mainTank = "Malowtank"
+mb_config.offTank = "Elerien"
+
 mb_config.trustedCharacters = {}
 table.insert(mb_config.trustedCharacters, "Malowtank")
 table.insert(mb_config.trustedCharacters, "Aerer")
@@ -24,11 +27,17 @@ function mb_IsTrustedCharacter(charName)
 	return false
 end
 
+
+-- List of waters that should be drunk
+mb_config.waters = {}
+table.insert(mb_config.waters, "Conjured Mana Strudel")
+
+
 -- Class Order is the alphabetical order that the character is within its own class
 mb_config.classOrder = {}
 mb_config.classOrder.mightBlesser = 1
-mb_config.classOrder.kingsBlesser = 2
-mb_config.classOrder.wisdomBlesser = 3
+mb_config.classOrder.kingsBlesser = 3
+mb_config.classOrder.wisdomBlesser = 2
 mb_config.classOrder.retriAura = 1
 mb_config.classOrder.concentrationAura = 2
 mb_config.classOrder.frostAura = 3
@@ -47,7 +56,7 @@ mb_config.raidLayout["25man"] = {}
 mb_config.raidLayout["25man"][1] = {}
 table.insert(mb_config.raidLayout["25man"][1], "Malowtank")
 table.insert(mb_config.raidLayout["25man"][1], "Aerer")
-table.insert(mb_config.raidLayout["25man"][1], "Ceolmar")
+table.insert(mb_config.raidLayout["25man"][1], "Trudy")
 table.insert(mb_config.raidLayout["25man"][1], "Ninki")
 table.insert(mb_config.raidLayout["25man"][1], "Elweald")
 mb_config.raidLayout["25man"][2] = {}
@@ -67,7 +76,7 @@ table.insert(mb_config.raidLayout["25man"][4], "Khalia")
 table.insert(mb_config.raidLayout["25man"][4], "Gwethriel")
 table.insert(mb_config.raidLayout["25man"][4], "Arethel")
 table.insert(mb_config.raidLayout["25man"][4], "Kisaana")
-table.insert(mb_config.raidLayout["25man"][4], "Trudy")
+table.insert(mb_config.raidLayout["25man"][4], "Ceolmar")
 mb_config.raidLayout["25man"][5] = {}
 table.insert(mb_config.raidLayout["25man"][5], "Maligna")
 table.insert(mb_config.raidLayout["25man"][5], "Charnel")
@@ -85,6 +94,31 @@ table.insert(mb_config.raidLayout["25man"][5], "Igal")
 mb_config.statWeights = {}
 -- Paladin
 mb_config.statWeights["Paladin"] = {}
+-- Holy
+mb_config.statWeights["Paladin"]["Holy"] = {}
+mb_config.statWeights["Paladin"]["Holy"].agility = 0.0
+mb_config.statWeights["Paladin"]["Holy"].intellect = 1.0
+mb_config.statWeights["Paladin"]["Holy"].spirit = 0.0
+mb_config.statWeights["Paladin"]["Holy"].strength = 0.0
+mb_config.statWeights["Paladin"]["Holy"].stamina = 0.1
+mb_config.statWeights["Paladin"]["Holy"].critRating = 0.46
+mb_config.statWeights["Paladin"]["Holy"].resilienceRating = 0.0
+mb_config.statWeights["Paladin"]["Holy"].defenseRating = 0.0
+mb_config.statWeights["Paladin"]["Holy"].expertiseRating = 0.0
+mb_config.statWeights["Paladin"]["Holy"].dodgeRating = 0.0
+mb_config.statWeights["Paladin"]["Holy"].parryRating = 0.0
+mb_config.statWeights["Paladin"]["Holy"].blockRating = 0.0
+mb_config.statWeights["Paladin"]["Holy"].armorPenetrationRating = 0.0
+mb_config.statWeights["Paladin"]["Holy"].hitRating = 0.0
+mb_config.statWeights["Paladin"]["Holy"].hasteRating = 0.35
+mb_config.statWeights["Paladin"]["Holy"].attackPower = 0.0
+mb_config.statWeights["Paladin"]["Holy"].armor = 0.0
+mb_config.statWeights["Paladin"]["Holy"].blockValue = 0.0
+mb_config.statWeights["Paladin"]["Holy"].spellPower = 0.58
+mb_config.statWeights["Paladin"]["Holy"].mp5 = 0.88
+mb_config.statWeights["Paladin"]["Holy"].dps = 0.0
+mb_config.statWeights["Paladin"]["Holy"].socketMeta = 100
+mb_config.statWeights["Paladin"]["Holy"].socketColored = 16
 -- Protection
 mb_config.statWeights["Paladin"]["Protection"] = {}
 mb_config.statWeights["Paladin"]["Protection"].agility = 0.6

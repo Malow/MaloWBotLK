@@ -35,6 +35,10 @@ function mb_Shaman_Enhancement_OnUpdate()
         return
     end
 
+    if mb_Drink() then
+        return
+    end
+
     if UnitExists("playerpet") then
         PetPassiveMode()
         mb_SetPetAutocast("Bash", true)
@@ -65,8 +69,7 @@ function mb_Shaman_Enhancement_OnUpdate()
         return
     end
 
-    AssistUnit(mb_commanderUnit)
-    if not mb_HasValidOffensiveTarget() then
+    if not mb_AcquireOffensiveTarget() then
         if mb_UnitPowerPercentage("player") > 30 then
             if mb_Shaman_ChainHealRaid() then
                 return

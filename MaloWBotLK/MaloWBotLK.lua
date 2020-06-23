@@ -88,17 +88,10 @@ f:SetScript("OnEvent", mb_OnEvent)
 mb_hasInitiated = false
 mb_classSpecificRunFunction = nil
 mb_originalErrorHandler = nil
-function mb_Init()
-	mb_registeredMessageHandlers = {}
-	mb_RegisterMessageHandlers()
-	
-	-- Set Class Order
-	mb_UpdateClassOrder()
-	
-	mb_InitClass()
-	mb_CheckDurability()
-	
+function mb_InitAsSlave()
+	mb_InitShared()
 	mb_CreateMacro("MBReload", "/run ReloadUI()", 1)
+	mb_CreateMacro("MBFree", "/run mb_commanderUnit=nil", 2)
 	SetCVar("autoSelfCast", 0) -- Disable auto self-casting to allow directly casting spells on raid-members
 	SetCVar("autoLootDefault", 1) -- Enable autolooting
 
@@ -109,8 +102,27 @@ function mb_Init()
 		TI_Switch("on")
 		TI_status.options[7].state = true
 	end
-	
+end
+
+function mb_InitAsLeader()
+	mb_isCommanding = true
+	mb_SendMessage("enable")
+	mb_SendMessage("setCommander", UnitName("player"))
+	mb_InitShared()
+	mb_isEnabled = true
+end
+
+function mb_InitShared()
+	if mb_hasInitiated then
+		return
+	end
 	mb_hasInitiated = true
+
+	mb_registeredMessageHandlers = {}
+	mb_RegisterMessageHandlers()
+	mb_UpdateClassOrder()
+	mb_InitClass()
+	mb_CheckDurability()
 end
 
 function mb_InitClass()
@@ -180,11 +192,13 @@ end
 -- -------------------
 -- OnUpdate stuff
 -- -------------------
-
 mb_cleaveMode = 0 -- 0 = Single-target, 1 = Cleave, 2 = Full AoE
 mb_GCDSpell = nil
 mb_isCommanding = false
 mb_commanderUnit = nil
+-- "none" = Never follows, not allowed to move if out of range of target, free to turn to face the right way
+-- "lenient" = Only follow-spams when commander is more than 11 yards away, free to turn or move if out of range of target automatically if within those 11 yards of commander
+-- "strict" = Spams follow constantly, not free to turn or move
 mb_followMode = "lenient"
 mb_isEnabled = false
 mb_isAutoAttacking = false
@@ -200,7 +214,7 @@ function mb_OnUpdate()
 		return
 	end
 	if not mb_hasInitiated then
-		mb_Init()
+		mb_InitAsSlave()
 		return
 	end
 	mb_time = GetTime()
@@ -211,12 +225,12 @@ function mb_OnUpdate()
 		return
 	end
 	if mb_commanderUnit ~= nil then
-		if mb_followMode == "strict" then
-			FollowUnit(mb_commanderUnit)
-		elseif mb_followMode == "lenient" then
+		if mb_followMode == "lenient" or mb_IsDrinking() then
 			if not CheckInteractDistance(mb_commanderUnit, 2) then
 				FollowUnit(mb_commanderUnit)
 			end
+		elseif mb_followMode == "strict" then
+			FollowUnit(mb_commanderUnit)
 		end
 	end
 	if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then
@@ -273,7 +287,7 @@ function mb_HandleIncomingMessage(mbCom)
 		
 	if messageType == "enable" and mb_IsTrustedCharacter(mbCom.from) then
 		mb_isEnabled = true
-		mb_Init()
+		mb_InitAsSlave()
 		return
 	end
 	
@@ -284,21 +298,6 @@ function mb_HandleIncomingMessage(mbCom)
 	if mb_registeredMessageHandlers[messageType] ~= nil then
 		mb_registeredMessageHandlers[messageType](message, mbCom.from)
 	end
-end
-
-function mb_InitAsLeader()
-	mb_registeredMessageHandlers = {}
-	mb_isCommanding = true
-	mb_SendMessage("enable")
-	mb_SendMessage("setCommander", UnitName("player"))
-	mb_UpdateClassOrder()
-	if not mb_hasInitiated then
-		mb_InitClass()
-		mb_RegisterMessageHandlers()
-		mb_hasInitiated = true
-	end
-	mb_CheckDurability()
-	mb_isEnabled = true
 end
 
 mb_desiredBuffs = {}
@@ -355,8 +354,18 @@ function mb_HandleTooFarAway()
 	end
 end
 
+mb_lastError = 0
 function mb_ErrorHandler(msg)
-	mb_SayRaid("I received lua-error: " .. msg)
+	if mb_lastError + 10 > mb_time then
+		mb_originalErrorHandler(msg)
+		return
+	end
+	mb_lastError = mb_time
+	mb_SayRaid("I received lua-error: " .. msg .. ". Call stack:")
+	for w in string.gmatch(debugstack(2, 20, 20), "[^\n]+") do
+		mb_SayRaid(string.gsub(w, "Interface\\AddOns\\", ""))
+	end
+	mb_SayRaid("-------------------------------------")
 	mb_originalErrorHandler(msg)
 end
 

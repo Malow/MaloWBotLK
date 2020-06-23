@@ -12,9 +12,14 @@
 -- Hand of Salvation constantly on people with high threat
 -- Use Every Man For Himself on loss of control
 -- Start using on-use trinkets
+-- Keep sense undead up
 
 function mb_Paladin_Retribution_OnUpdate()
     if mb_IsOnGCD() then
+        return
+    end
+
+    if mb_Drink() then
         return
     end
 
@@ -27,8 +32,23 @@ function mb_Paladin_Retribution_OnUpdate()
     end
 
     if UnitBuff("player", "The Art of War") and not UnitBuff("player", "Divine Plea") then
-        if mb_Paladin_FlashOfLightRaid() then
+        if mb_RaidHeal("Flash of Light") then
             return
+        end
+    end
+
+    if mb_config.mainTank ~= nil and UnitAffectingCombat("player") then
+        local unit = mb_GetUnitForPlayerName(mb_config.mainTank)
+        local rand = math.random(100)
+        if rand < 5 then
+            if not UnitBuff(unit, "Hand of Sacrifice") or not UnitBuff(unit, "Divine Guardian") then
+                if mb_CastSpellOnFriendly(unit, "Hand of Sacrifice") then
+                    return
+                end
+                if mb_CastSpellWithoutTarget("Divine Sacrifice") then
+                    return
+                end
+            end
         end
     end
 
@@ -52,10 +72,9 @@ function mb_Paladin_Retribution_OnUpdate()
         return
     end
 
-    AssistUnit(mb_commanderUnit)
-    if not mb_HasValidOffensiveTarget() then
+    if not mb_AcquireOffensiveTarget() then
         if not UnitBuff("player", "Divine Plea") and mb_UnitPowerPercentage("player") > 30 then
-            if mb_Paladin_FlashOfLightRaid() then
+            if mb_RaidHeal("Flash of Light") then
                 return
             end
         end
@@ -103,7 +122,7 @@ function mb_Paladin_Retribution_OnUpdate()
     end
 
     if mb_UnitPowerPercentage("player") > 30 and not mb_IsSpellInRange("Crusader Strike", "target") then
-        if not UnitBuff("player", "Divine Plea") and mb_Paladin_FlashOfLightRaid() then
+        if not UnitBuff("player", "Divine Plea") and mb_RaidHeal("Flash of Light") then
             return
         end
         if mb_CastSpellOnTarget("Exorcism") then
@@ -118,8 +137,7 @@ function mb_Paladin_Retribution_CastSeal()
         spell = "Seal of Command"
     end
     if not UnitBuff("player", spell) then
-        CastSpellByName(spell)
-        return true
+        return mb_CastSpellWithoutTarget(spell)
     end
     return false
 end

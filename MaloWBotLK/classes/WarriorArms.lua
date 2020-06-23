@@ -26,8 +26,7 @@ function mb_Warrior_Arms_OnUpdate()
         return
     end
 
-    AssistUnit(mb_commanderUnit)
-    if not mb_HasValidOffensiveTarget() then
+    if not mb_AcquireOffensiveTarget() then
         return
     end
 

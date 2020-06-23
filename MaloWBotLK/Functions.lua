@@ -136,8 +136,10 @@ function mb_GetMostDamagedFriendly(spell)
         local missingHealth = mb_GetMissingHealth(unit)
         if missingHealth > missingHealthOfTarget then
             if mb_IsUnitValidFriendlyTarget(unit, spell) then
-				missingHealthOfTarget = missingHealth
-				healTarget = i
+				if mb_Paladin_Holy_beaconUnit == nil or mb_Paladin_Holy_beaconUnit ~= unit then -- Used for Holy paladins to make them never heal their beacon
+					missingHealthOfTarget = missingHealth
+					healTarget = i
+				end
             end
         end
     end
@@ -211,6 +213,12 @@ function mb_CastSpellOnFriendly(unit, spell)
 	return true
 end
 
+-- Returns true/false depending on if the unit is capable of resurrecting other players
+function mb_IsUnitResurrector(unit)
+	local unitClass = mb_GetClass(unit)
+	return unitClass == "PALADIN" or unitClass == "PRIEST" or unitClass == "SHAMAN" or unitClass == "DRUID"
+end
+
 -- Checks if any friendly unit is resurrecting another raid-member
 function mb_IsSomeoneResurrectingUnit(resurrectUnit)
     local members = mb_GetNumPartyOrRaidMembers()
@@ -223,28 +231,41 @@ function mb_IsSomeoneResurrectingUnit(resurrectUnit)
 	return false
 end
 
+function mb_GetResurrectionTarget(resurrectionSpell)
+	local members = mb_GetNumPartyOrRaidMembers()
+	local resUnit = nil
+	for i = 1, members do
+		local unit = mb_GetUnitFromPartyOrRaidIndex(i)
+		if UnitIsDead(unit) and not mb_IsSomeoneResurrectingUnit(unit) and mb_IsSpellInRange(resurrectionSpell, unit) then
+			if mb_IsUnitResurrector(unit) then
+				return unit
+			end
+			resUnit = unit
+		end
+	end
+	return resUnit
+end
+
 -- Will try to resurrect a dead raid member
 function mb_ResurrectRaid(resurrectionSpell)
 	if UnitIsDead("target") and UnitCastingInfo("player") == resurrectionSpell then
 		return true
 	end
-	
-	if UnitAffectingCombat("player") then
+
+	if UnitAffectingCombat("player") or mb_IsDrinking() then
 		return false
 	end
 	if not mb_CanCastSpell(resurrectionSpell) then
 		return false
 	end
-    local members = mb_GetNumPartyOrRaidMembers()
-    for i = 1, members do
-        local unit = mb_GetUnitFromPartyOrRaidIndex(i)
-		if UnitIsDead(unit) and not mb_IsSomeoneResurrectingUnit(unit) and mb_IsSpellInRange(resurrectionSpell, unit) then
-			TargetUnit(unit)
-			CastSpellByName(resurrectionSpell)
-			mb_SayRaid("I'm resurrecting " .. UnitName(unit))
-			return true
-		end
+	local resUnit = mb_GetResurrectionTarget(resurrectionSpell)
+	if resUnit == nil then
+		return false
 	end
+	TargetUnit(resUnit)
+	CastSpellByName(resurrectionSpell)
+	mb_SayRaid("I'm resurrecting " .. UnitName(resUnit))
+	return true
 end
 
 -- Checks if your target has a debuff from the spell specified that specifically you have cast
@@ -271,6 +292,15 @@ end
 -- Returns the time remaining of a debuff
 function mb_GetDebuffTimeRemaining(unit, spell)
 	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "HARMFUL")
+	if name == nil then
+		return 0
+	end
+	return expirationTime - mb_time
+end
+
+-- Returns the time remaining of a buff
+function mb_GetBuffTimeRemaining(unit, spell)
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "HELPFUL")
 	if name == nil then
 		return 0
 	end
@@ -326,7 +356,11 @@ function mb_IsOnGCD()
 end
 
 -- Returns the name of your spec
+mb_cache_specName = nil
 function mb_GetMySpecName()
+	if mb_cache_specName ~= nil then
+		return mb_cache_specName
+	end
 	local name, _, points = GetTalentTabInfo(1)
 	for i = 2, 3 do
 		local n, _, p = GetTalentTabInfo(i)
@@ -335,6 +369,7 @@ function mb_GetMySpecName()
 			name = n
 		end
 	end
+	mb_cache_specName = name
 	return name
 end
 
@@ -392,6 +427,7 @@ function mb_GetItemCount(itemName)
 	return totalItemCount
 end
 
+-- Makes the character say in raid if durability of any item is lower than 30%
 function mb_CheckDurability()
 	local lowestDurability = 1.0
 	for i = 1, 18 do
@@ -406,6 +442,7 @@ function mb_CheckDurability()
 	end
 end
 
+-- Returns true/false depending on if the item is in the table
 function mb_TableContains(table, item)
 	for _, v in pairs(table) do
 		if v == item then
@@ -415,7 +452,93 @@ function mb_TableContains(table, item)
 	return false
 end
 
+-- Finds the most damaged member in the raid and casts the spell on that target as long as it doesn't over-heal
+function mb_RaidHeal(spell)
+	local healUnit, missingHealth = mb_GetMostDamagedFriendly(spell)
+	if missingHealth > mb_GetSpellEffect(spell) then
+		return mb_CastSpellOnFriendly(healUnit, spell)
+	end
+	return false
+end
 
+-- Tries to acquire an offensive target. Will assist the commander unit if it exists.
+-- Returns true/false depending on if a valid offensive target was acquired.
+function mb_AcquireOffensiveTarget()
+	if mb_commanderUnit == nil then
+		return mb_HasValidOffensiveTarget()
+	end
+	if not UnitExists(mb_commanderUnit .. "target") then
+		ClearTarget()
+		return false
+	end
+	AssistUnit(mb_commanderUnit)
+	return mb_HasValidOffensiveTarget()
+end
 
+-- Checks whether it's a good time to buff, returns true/false
+function mb_ShouldBuff()
+	if UnitAffectingCombat("player") or mb_IsDrinking() or mb_UnitPowerPercentage("player") < 30 then
+		return false
+	end
+	local members = mb_GetNumPartyOrRaidMembers()
+	for i = 1, members do
+		local unit = mb_GetUnitFromPartyOrRaidIndex(i)
+		if UnitIsConnected(unit) then
+			if not mb_IsUnitValidFriendlyTarget(unit) or not CheckInteractDistance(unit, 4) then
+				return false
+			end
+		end
+	end
+	return true
+end
 
+-- returns the bag and slot indexes for where an item is located
+function mb_GetItemLocation(itemName)
+	for bag = 0, 4 do
+		for slot = 1, GetContainerNumSlots(bag) do
+			local itemLink = GetContainerItemLink(bag, slot)
+			if itemLink ~= nil then
+				local name = GetItemInfo(itemLink)
+				if itemName == name then
+					return bag, slot
+				end
+			end
+		end
+	end
+	return nil
+end
+
+-- tries to use an item in the bags, returns true/false depending on if successful
+function mb_UseItem(itemName)
+	local bag, slot = mb_GetItemLocation(itemName)
+	if bag == nil then
+		return false
+	end
+	UseContainerItem(bag, slot)
+	return true
+end
+
+function mb_IsDrinking()
+	return UnitBuff("player", "Drink") ~= nil
+end
+
+-- Starts drinking if possible and if good to do so. Returns true if drinking
+function mb_Drink()
+	if UnitAffectingCombat("player") then
+		return false
+	end
+	if mb_IsDrinking() and mb_UnitPowerPercentage("player") < 99 then
+		return true
+	end
+	if mb_UnitPowerPercentage("player") > 60 then
+		return false
+	end
+	for _, water in pairs(mb_config.waters) do
+		if mb_UseItem(water) then
+			return true
+		end
+	end
+	mb_SayRaid("Didn't find any water in my bags")
+	return false
+end
 

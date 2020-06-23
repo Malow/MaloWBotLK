@@ -11,7 +11,7 @@ function mb_Paladin_OnLoad()
 	mb_CheckReagentAmount("Symbol of Kings", 300)
 
 	if mb_GetMySpecName() == "Holy" then
-		mb_SayRaid("Holy spec is not supported yet")
+		mb_classSpecificRunFunction = mb_Paladin_Holy_OnUpdate
 	elseif mb_GetMySpecName() == "Protection" then
 		mb_classSpecificRunFunction = mb_Paladin_Protection_OnUpdate
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
@@ -19,7 +19,6 @@ function mb_Paladin_OnLoad()
 		mb_classSpecificRunFunction = mb_Paladin_Retribution_OnUpdate
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	end
-
 
 	if mb_GetMySpecName() == "Protection" then -- Override class-order blessing for prot-palas since they have sanc
 		mb_RegisterMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_SancHandler)
@@ -39,15 +38,6 @@ function mb_Paladin_OnLoad()
 	end
 end
 
-function mb_Paladin_FlashOfLightRaid()
-	local healUnit, missingHealth = mb_GetMostDamagedFriendly("Flash of Light")
-	if missingHealth > mb_GetSpellEffect("Flash of Light") then
-		mb_CastSpellOnFriendly(healUnit, "Flash of Light")
-		return true
-	end
-	return false
-end
-
 function mb_Paladin_MightHandler(msg, from)
 	mb_Paladin_HandleBless(from, "Greater Blessing of Might", "Blessing of Might")
 end
@@ -65,7 +55,7 @@ function mb_Paladin_SancHandler(msg, from)
 end
 
 function mb_Paladin_HandleBless(targetPlayerName, greaterSpell, singleSpell)
-	if UnitAffectingCombat("player") then
+	if not mb_ShouldBuff() then
 		return
 	end
 	if mb_CastSpellOnFriendly(mb_GetUnitForPlayerName(targetPlayerName), greaterSpell) then

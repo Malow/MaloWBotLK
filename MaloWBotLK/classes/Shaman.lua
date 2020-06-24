@@ -114,7 +114,7 @@ end
 function mb_Shaman_GetMissingTotemIndex()
 	for i = 1, 4 do
 		local haveTotem, totemName, startTime, duration = GetTotemInfo(i)
-		if startTime == 0 or startTime + duration < mb_time then
+		if startTime == 0 or startTime + duration <= mb_time then
 			return i
 		end
 	end
@@ -125,7 +125,7 @@ function mb_Shaman_GetTotemCount()
 	local count = 0
 	for i = 1, 4 do
 		local haveTotem, totemName, startTime, duration = GetTotemInfo(i)
-		if startTime ~= 0 and startTime + duration > mb_time then
+		if startTime ~= 0 and startTime + duration >= mb_time then
 			count = count + 1
 		end
 	end

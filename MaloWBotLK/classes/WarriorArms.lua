@@ -104,20 +104,9 @@ function mb_Warrior_Arms_OnUpdate()
         return
     end
 
-    if UnitPower("player") >= 25 and mb_IsSpellInRange("Mortal Strike", "target") and mb_cleaveMode > 0 then
-        if mb_CastSpellWithoutTarget("Whirlwind") then
-            return
-        end
-    end
-
     if UnitPower("player") >= 30 and mb_CastSpellOnTarget("Mortal Strike") then
         return
     end
-
-    if UnitPower("player") >= 25 and mb_IsSpellInRange("Mortal Strike", "target") and mb_CastSpellWithoutTarget("Whirlwind") then
-        return
-    end
-
     if mb_CastSpellOnTarget("Victory Rush") then
         return
     end

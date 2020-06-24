@@ -117,6 +117,9 @@ function mb_Paladin_Holy_OnUpdate()
 end
 
 function mb_Paladin_Holy_PreCastFinishCallback(spell, unit)
+    if spell ~= "Holy Light" and spell ~= "Flash of Light" then
+        return
+    end
     local spellTargetUnitMissingHealth = mb_GetMissingHealth(unit)
     local beaconUnitMissingHealth = 0
     if mb_Paladin_Holy_beaconUnit ~= nil then

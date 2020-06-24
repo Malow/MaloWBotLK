@@ -535,6 +535,7 @@ function mb_IsDrinking()
 end
 
 -- Starts drinking if possible and if good to do so. Returns true if drinking
+mb_lastWaterWarningTime = 0
 function mb_Drink()
 	if UnitAffectingCombat("player") then
 		return false
@@ -550,7 +551,10 @@ function mb_Drink()
 			return true
 		end
 	end
-	mb_SayRaid("Didn't find any water in my bags")
+	if mb_lastWaterWarningTime + 60 < mb_time then
+		mb_SayRaid("Didn't find any water in my bags")
+		mb_lastWaterWarningTime = mb_time
+	end
 	return false
 end
 

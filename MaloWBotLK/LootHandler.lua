@@ -28,6 +28,10 @@ function mb_LootHandler_HandleLootCouncilRequest(msg)
         if currentItemLink == nil then
             currentItemValue = 0
         else
+            local currentItemName, _, _, currentItemLevel = GetItemInfo(currentItemLink)
+            if currentItemName == itemName and currentItemLevel == itemLevel then
+                return
+            end
             output = output .. currentItemLink .. "   "
             currentItemValue = min(currentItemValue, mb_LootHandler_GetNormalizedValueForItem(currentItemLink))
         end

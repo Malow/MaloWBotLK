@@ -7,7 +7,7 @@
 -- 		Maybe some item you can use on friendly?
 
 function mb_Warrior_Arms_OnUpdate()
-    if mb_IsOnGCD() then
+    if not mb_IsReadyForNewCast() then
         return
     end
 

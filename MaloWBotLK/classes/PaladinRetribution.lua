@@ -15,7 +15,7 @@
 -- Keep sense undead up
 
 function mb_Paladin_Retribution_OnUpdate()
-    if mb_IsOnGCD() then
+    if not mb_IsReadyForNewCast() then
         return
     end
 

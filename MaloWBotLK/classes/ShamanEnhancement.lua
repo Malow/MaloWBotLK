@@ -31,7 +31,7 @@ function mb_Shaman_Enhancement_OnLoad()
 end
 
 function mb_Shaman_Enhancement_OnUpdate()
-    if mb_IsOnGCD() then
+    if not mb_IsReadyForNewCast() then
         return
     end
 

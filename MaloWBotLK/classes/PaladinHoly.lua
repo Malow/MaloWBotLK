@@ -6,24 +6,23 @@
 -- Avenging Wrath when needed, probably through a "Heal CD" macro
 --     Divine Illumination at the same time and replace Flash of Light with Holy Light during the duration
 --     Make sure to prevent casting Divine Plea while these CDs are up, and make sure to not cast these CDs while Divine Plea is up
---     Avoid popping heal-CDs while heroism is up, or within 5 seconds of the start of a fight
+--     Avoid popping heal-CDs while heroism is up, or within 10 seconds of the start of a fight
 -- Divine Favor
 --      Pop it when you notice high raid damage and you know you'll be holy Lighting
--- Make him cast holy light when he notices massive raid damage
+-- Make him cast holy light over Flash of Light when he notices massive raid damage
 --      Implement some function that retrieves a "severity" of raid health from a scale of like 1 to 10
 --      1 meaning everyone in the raid have full health
 --      10 meaning everyone alive in the raid has 1% HP
 --      Only cast Divine Plea during low severity
 --      Possibly click away Divine Plea if severity is high
--- Stop cast if target is full, add a callback you can set for "pre-finish cast"
---      that MaloWBotLK auto calls after onupdate checking UnitCastingInfo("player") is close to finishing,
---      throttle it tho kinda, only want 1 callback per spell-cast, maybe OnCastStart event sets a flag to true,
---      which when true doesn't call the callback, which when calling the callback sets to false
---      Callback should have spellName and target as parameters
+
+function mb_Paladin_Holy_OnLoad()
+    mb_preCastFinishCallback = mb_Paladin_Holy_PreCastFinishCallback
+end
 
 mb_Paladin_Holy_beaconUnit = nil
 function mb_Paladin_Holy_OnUpdate()
-    if mb_IsOnGCD() then
+    if not mb_IsReadyForNewCast() then
         return
     end
 
@@ -63,9 +62,13 @@ function mb_Paladin_Holy_OnUpdate()
         return
     end
 
-    if not UnitBuff(mainTankUnit, "Beacon of Light") and mb_CastSpellOnFriendly(mainTankUnit, "Beacon of Light") then
-        mb_Paladin_Holy_beaconUnit = mainTankUnit
-        return
+    if not UnitBuff(mainTankUnit, "Beacon of Light") then
+        if mb_CastSpellOnFriendly(mainTankUnit, "Beacon of Light") then
+            mb_Paladin_Holy_beaconUnit = mainTankUnit
+            return
+        else
+            mb_Paladin_Holy_beaconUnit = nil
+        end
     end
 
     if mb_RaidHeal("Holy Shock") then
@@ -113,5 +116,26 @@ function mb_Paladin_Holy_OnUpdate()
     end
 end
 
-
+function mb_Paladin_Holy_PreCastFinishCallback(spell, unit)
+    local spellTargetUnitMissingHealth = mb_GetMissingHealth(unit)
+    local beaconUnitMissingHealth = 0
+    if mb_Paladin_Holy_beaconUnit ~= nil then
+        beaconUnitMissingHealth = mb_GetMissingHealth(unit)
+    end
+    local healAmount = mb_GetSpellEffect(spell)
+    local effectiveHealAmount = 0
+    if healAmount > spellTargetUnitMissingHealth then
+        effectiveHealAmount = effectiveHealAmount + spellTargetUnitMissingHealth
+    else
+        effectiveHealAmount = effectiveHealAmount + healAmount
+    end
+    if healAmount > beaconUnitMissingHealth then
+        effectiveHealAmount = effectiveHealAmount + beaconUnitMissingHealth
+    else
+        effectiveHealAmount = effectiveHealAmount + healAmount
+    end
+    if effectiveHealAmount * 1.1 < healAmount then
+        mb_StopCast()
+    end
+end
 

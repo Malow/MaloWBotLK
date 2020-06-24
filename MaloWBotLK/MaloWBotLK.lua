@@ -31,7 +31,7 @@ SLASH_MBCOMMAND1 = "/" .. MY_ABBREVIATION;
 
 -- Events
 local hasLoaded = false
-function mb_OnEvent(self, event, arg1, arg2, arg3, ...)
+function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 	if event == "ADDON_LOADED" and arg1 == MY_NAME then
 		hasLoaded = true
 	elseif event == "CHAT_MSG_ADDON" and arg1 == "MB" then
@@ -70,6 +70,9 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, ...)
 		elseif arg1 == "You are facing the wrong way!" or arg1 == "Target needs to be in front of you." then
 			mb_HandleFacingWrongWay()
 		end
+	elseif event == "UNIT_SPELLCAST_SENT" and arg1 == "player" then
+		mb_shouldCallPreCastFinishCallback = true
+		mb_currentCastTargetUnit = mb_GetUnitForPlayerName(arg4)
 	end
 end
 f:RegisterEvent("ADDON_LOADED")
@@ -83,6 +86,7 @@ f:RegisterEvent("QUEST_ACCEPT_CONFIRM")
 f:RegisterEvent("QUEST_DETAIL")
 f:RegisterEvent("GROUP_ROSTER_CHANGED")
 f:RegisterEvent("UI_ERROR_MESSAGE")
+f:RegisterEvent("UNIT_SPELLCAST_SENT")
 f:SetScript("OnEvent", mb_OnEvent)
 
 mb_hasInitiated = false
@@ -204,7 +208,10 @@ mb_isEnabled = false
 mb_isAutoAttacking = false
 mb_time = GetTime()
 mb_shouldStopMovingForwardAt = 0
-
+-- This callback will be called 0.3 seconds before a spell-cast finishes, to let you mb_StopCast() it if you want
+mb_preCastFinishCallback = nil
+mb_shouldCallPreCastFinishCallback = false
+mb_currentCastTargetUnit = nil
 -- OnUpdate
 function mb_OnUpdate()
 	if not mb_isEnabled then
@@ -237,6 +244,15 @@ function mb_OnUpdate()
 		MoveForwardStart()
 		MoveForwardStop()
 		mb_shouldStopMovingForwardAt = 0
+	end
+	if mb_preCastFinishCallback ~= nil and mb_shouldCallPreCastFinishCallback then
+		local spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, interrupt = UnitCastingInfo("player")
+		if spell ~= nil then
+			if endTime / 1000 < mb_time + 0.3 then
+				mb_shouldCallPreCastFinishCallback = false
+				mb_preCastFinishCallback(spell, mb_currentCastTargetUnit)
+			end
+		end
 	end
 	mb_classSpecificRunFunction()
 end

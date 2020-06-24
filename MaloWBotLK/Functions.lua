@@ -43,15 +43,15 @@ end
 
 -- Turns a playerName into a unit-reference, nil if not found
 function mb_GetUnitForPlayerName(playerName)
+	if UnitName("player") == playerName then
+		return "player"
+	end
 	local members = mb_GetNumPartyOrRaidMembers()
 	for i = 1, members do
 		local unit = mb_GetUnitFromPartyOrRaidIndex(i)
 		if UnitName(unit) == playerName then
 			return unit
 		end
-	end
-	if UnitName("player") == playerName then
-		return "player"
 	end
 	return nil
 end
@@ -355,6 +355,18 @@ function mb_IsOnGCD()
 	return false
 end
 
+-- Returns true if you're not on GCD and not currently casting
+function mb_IsReadyForNewCast()
+	if mb_IsOnGCD() then
+		return false
+	end
+	local spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, interrupt = UnitCastingInfo("player")
+	if spell ~= nil then
+		return false
+	end
+	return true
+end
+
 -- Returns the name of your spec
 mb_cache_specName = nil
 function mb_GetMySpecName()
@@ -542,3 +554,6 @@ function mb_Drink()
 	return false
 end
 
+function mb_StopCast()
+	SpellStopCasting()
+end

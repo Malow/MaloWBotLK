@@ -12,6 +12,7 @@ function mb_Paladin_OnLoad()
 
 	if mb_GetMySpecName() == "Holy" then
 		mb_classSpecificRunFunction = mb_Paladin_Holy_OnUpdate
+		mb_Paladin_Holy_OnLoad()
 	elseif mb_GetMySpecName() == "Protection" then
 		mb_classSpecificRunFunction = mb_Paladin_Protection_OnUpdate
 		mb_RegisterDesiredBuff(BUFF_MIGHT)

@@ -14,12 +14,11 @@ end
 
 function mb_RemoteExecuteHandler(msg, from)
 	if not mb_IsTrustedCharacter(from) then
-		mb_Print(from .. " tried to make me remoteExecute but I don't trust him/her")
 		return
 	end
 	local func = loadstring(msg)
 	if func == nil then
-		SendChatMessage("Bad Code: " .. code, "RAID", "Common")
+		mb_SayRaid("Bad Code: " .. msg)
 	else
 		func()
 	end

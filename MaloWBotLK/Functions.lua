@@ -164,13 +164,17 @@ function mb_UnitPowerPercentage(unit)
 	return (UnitPower(unit) * 100) / UnitPowerMax(unit)
 end
 
+function mb_IsUsableSpell(spell)
+	local usable, nomana = IsUsableSpell(spell)
+	return usable == 1
+end
+
 -- Checks if there's no cooldown and if the spell use useable (have mana to cast it)
 function mb_CanCastSpell(spell)
 	if GetSpellCooldown(spell) ~= 0 then
 		return false
 	end
-	local usable, nomana = IsUsableSpell(spell)
-	return usable == 1
+	return mb_IsUsableSpell(spell)
 end
 
 -- Returns true on success
@@ -560,4 +564,22 @@ end
 
 function mb_StopCast()
 	SpellStopCasting()
+end
+
+function mb_SplitString(str, char)
+    local strings = {}
+    while string.find(str, char) do
+        table.insert(strings, string.sub(str, 1, string.find(str, char) - 1))
+        str = string.sub(str, string.find(str, char) + 1)
+    end
+    table.insert(strings, str)
+    return strings
+end
+
+function mb_GetRemainingSpellCooldown(spell)
+	local start, duration, enabled = GetSpellCooldown(spell)
+	if duration == 0 then
+		return 0
+	end
+	return (start + duration) - mb_time
 end

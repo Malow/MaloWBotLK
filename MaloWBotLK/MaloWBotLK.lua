@@ -35,11 +35,9 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 	if event == "ADDON_LOADED" and arg1 == MY_NAME then
 		hasLoaded = true
 	elseif event == "CHAT_MSG_ADDON" and arg1 == "MB" then
-		local message = arg2
-		local from = arg4
 		local mbCom = {}
-		mbCom.message = message
-		mbCom.from = from
+		mbCom.message = arg2
+		mbCom.from = arg4
 		mb_HandleIncomingMessage(mbCom)
 	elseif event == "PLAYER_ENTER_COMBAT" then
 		mb_isAutoAttacking = true
@@ -254,6 +252,9 @@ function mb_OnUpdate()
 			end
 		end
 	end
+	if mb_HandleQueuedAcceptedRequest() then
+		return
+	end
 	mb_classSpecificRunFunction()
 end
 
@@ -278,6 +279,11 @@ function mb_SendMessage(messageType, message)
 	SendAddonMessage("MB", messageType .. " " .. tostring(message), "RAID")
 end
 
+function mb_SendExclusiveRequest(requestType, message)
+	local requestId = tostring(math.random(9999999))
+	mb_SendMessage("exclusiveRequest", requestId .. ":" .. requestType .. ":" .. message)
+end
+
 mb_registeredMessageHandlers = {}
 function mb_RegisterMessageHandler(messageType, handlerFunc)
 	mb_registeredMessageHandlers[messageType] = handlerFunc
@@ -296,8 +302,21 @@ end
 function mb_HandleIncomingMessage(mbCom)
 	local messageType = string.sub(mbCom.message, 1, string.find(mbCom.message, " ") - 1)
 	local message = string.sub(mbCom.message, string.find(mbCom.message, " ") + 1)
+
+	if messageType == "acceptExclusiveRequest" then
+		local requestId = tonumber(message)
+		if mbCom.from == UnitName("player") then
+			table.insert(mb_queuedAcceptedRequests, mb_acceptedPendingExclusiveRequests[requestId])
+		end
+		mb_acceptedPendingExclusiveRequests[requestId] = nil
+	end
 	
 	if mbCom.from == UnitName("player") and not mb_ShouldHandleMessageFromSelf(messageType) then
+		return
+	end
+
+	if messageType == "exclusiveRequest" then
+		mb_HandleIncomingExclusiveRequest(message, mbCom.from)
 		return
 	end
 		
@@ -313,6 +332,43 @@ function mb_HandleIncomingMessage(mbCom)
 	
 	if mb_registeredMessageHandlers[messageType] ~= nil then
 		mb_registeredMessageHandlers[messageType](message, mbCom.from)
+	end
+end
+
+mb_queuedAcceptedRequests = {}
+function mb_HandleQueuedAcceptedRequest()
+	local request = mb_queuedAcceptedRequests[1]
+	if request ~= nil then
+		if mb_registeredExclusiveRequestHandlers[request.type].handler(request.message, request.from) then
+			table.remove(mb_queuedAcceptedRequests, 1)
+		end
+		return true
+	end
+	return false
+end
+
+mb_registeredExclusiveRequestHandlers = {}
+function mb_RegisterExclusiveRequestHandler(requestType, acceptorFunc, handlerFunc)
+	mb_registeredExclusiveRequestHandlers[requestType] = {}
+	mb_registeredExclusiveRequestHandlers[requestType].acceptor = acceptorFunc
+	mb_registeredExclusiveRequestHandlers[requestType].handler = handlerFunc
+end
+
+mb_acceptedPendingExclusiveRequests = {}
+function mb_HandleIncomingExclusiveRequest(message, from)
+	local strings = mb_SplitString(message, ":")
+	local requestType = strings[2]
+	if mb_registeredExclusiveRequestHandlers[requestType] ~= nil then
+		local requestId = tonumber(strings[1])
+		local message = strings[3]
+		if mb_registeredExclusiveRequestHandlers[requestType].acceptor(message, from) then
+			local exclusiveRequest = {}
+			exclusiveRequest.type = requestType
+			exclusiveRequest.message = message
+			exclusiveRequest.from = from
+			mb_acceptedPendingExclusiveRequests[requestId] = exclusiveRequest
+			mb_SendMessage("acceptExclusiveRequest", requestId)
+		end
 	end
 end
 

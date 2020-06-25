@@ -17,6 +17,8 @@ function mb_Shaman_OnLoad()
 	else
 		mb_classSpecificRunFunction = mb_Shaman_Restoration_OnUpdate
 	end
+
+	mb_RegisterExclusiveRequestHandler("heroism", mb_Shaman_HeroismRequestAcceptor, mb_Shaman_HeroismRequestHandler)
 end
 
 function mb_Shaman_ChainHealRaid()
@@ -142,7 +144,28 @@ function mb_Shaman_PurgeTarget()
 	return false
 end
 
+function mb_Shaman_GetHeroismName()
+    if UnitRace("player") == "Draenei" then
+        return "Heroism"
+    end
+    return "Bloodlust"
+end
 
+function mb_Shaman_HeroismRequestAcceptor(message, from)
+	if mb_GetRemainingSpellCooldown(mb_Shaman_GetHeroismName()) < 1.5 and mb_IsUsableSpell(mb_Shaman_GetHeroismName()) then
+		return true
+	end
+	return false
+end
+
+function mb_Shaman_HeroismRequestHandler(message, from)
+	if not mb_IsReadyForNewCast() then
+		return false
+	end
+    mb_SayRaid("Casting " .. mb_Shaman_GetHeroismName())
+	mb_CastSpellWithoutTarget(mb_Shaman_GetHeroismName())
+	return true
+end
 
 
 

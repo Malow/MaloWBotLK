@@ -550,7 +550,7 @@ end
 -- Starts drinking if possible and if good to do so. Returns true if drinking
 mb_lastWaterWarningTime = 0
 function mb_Drink()
-	if UnitAffectingCombat("player") then
+	if UnitAffectingCombat("player") or GetUnitSpeed("player") ~= 0 then
 		return false
 	end
 	if mb_IsDrinking() and mb_UnitPowerPercentage("player") < 99 then

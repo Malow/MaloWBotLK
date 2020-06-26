@@ -232,12 +232,15 @@ function mb_OnUpdate()
 	end
 	if mb_commanderUnit ~= nil then
 		if mb_followMode == "lenient" or mb_IsDrinking() then
-			if not CheckInteractDistance(mb_commanderUnit, 2) or not UnitAffectingCombat("player") then
-				FollowUnit(mb_commanderUnit)
-			end
+            if not CheckInteractDistance(mb_commanderUnit, 2) then
+                FollowUnit(mb_commanderUnit)
+            end
 		elseif mb_followMode == "strict" then
 			FollowUnit(mb_commanderUnit)
 		end
+        if mb_followMode == "lenient" and not UnitAffectingCombat("player") and not mb_IsDrinking() then
+            FollowUnit(mb_commanderUnit)
+        end
 	end
 	if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then
 		MoveForwardStart()

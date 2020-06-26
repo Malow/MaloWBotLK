@@ -11,7 +11,6 @@
 -- Hand of Sacrifice, probably on tank on rotation
 -- Hand of Salvation constantly on people with high threat
 -- Use Every Man For Himself on loss of control
--- Start using on-use trinkets
 -- Keep sense undead up
 
 function mb_Paladin_Retribution_OnLoad()

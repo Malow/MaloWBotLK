@@ -360,7 +360,7 @@ mb_queuedAcceptedRequests = {}
 function mb_HandleQueuedAcceptedRequest()
 	local request = mb_queuedAcceptedRequests[1]
 	if request ~= nil then
-		if mb_registeredExclusiveRequestHandlers[request.type].handler(request.message, request.from) then
+		if mb_registeredExclusiveRequestHandlers[request.type].executor(request.message, request.from) then
 			table.remove(mb_queuedAcceptedRequests, 1)
 		end
 		return true
@@ -369,10 +369,10 @@ function mb_HandleQueuedAcceptedRequest()
 end
 
 mb_registeredExclusiveRequestHandlers = {}
-function mb_RegisterExclusiveRequestHandler(requestType, acceptorFunc, handlerFunc)
+function mb_RegisterExclusiveRequestHandler(requestType, acceptorFunc, executorFunc)
 	mb_registeredExclusiveRequestHandlers[requestType] = {}
 	mb_registeredExclusiveRequestHandlers[requestType].acceptor = acceptorFunc
-	mb_registeredExclusiveRequestHandlers[requestType].handler = handlerFunc
+	mb_registeredExclusiveRequestHandlers[requestType].executor = executorFunc
 end
 
 mb_acceptedPendingExclusiveRequests = {}

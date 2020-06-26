@@ -174,7 +174,7 @@ function mb_CanCastSpell(spell)
 	if GetSpellCooldown(spell) ~= 0 then
 		return false
 	end
-	if GetUnitSpeed("player") ~= 0 then
+	if mb_IsMoving() then
 		local name, rank, icon, cost, isFunnel, powerType, castTime, minRange, maxRange	= GetSpellInfo(spell)
 		if castTime > 0 then
 			return false
@@ -550,7 +550,7 @@ end
 -- Starts drinking if possible and if good to do so. Returns true if drinking
 mb_lastWaterWarningTime = 0
 function mb_Drink()
-	if UnitAffectingCombat("player") or GetUnitSpeed("player") ~= 0 then
+	if UnitAffectingCombat("player") or mb_IsMoving() then
 		return false
 	end
 	if mb_IsDrinking() and mb_UnitPowerPercentage("player") < 99 then
@@ -607,6 +607,10 @@ function mb_UseItemCooldowns()
 		end
 	end
 	return false
+end
+
+function mb_IsMoving()
+	return GetUnitSpeed("player") ~= 0
 end
 
 --[[

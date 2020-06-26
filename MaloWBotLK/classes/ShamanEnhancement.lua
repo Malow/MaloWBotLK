@@ -3,10 +3,9 @@
 -- Gift of the Naruu on tanks?
 -- Magma totem on cleave > 1
 -- Wind Shear to interrupt
--- Fire ELemental Totem and Heroism on CD
+-- Fire Elemental Totem on CD
 -- Earth Elemental Totem? Seems when you use one it starts a shared CD with the other for 2 mins, but each still has 10 min CD
 --      Avoid Totemic Recall when Elemental Totem is down, also go back to normal totems after the Elemental totem is gone.
--- Start using on-use trinkets
 -- If I'm within melee range of the target, but my fire totem is not very close to me, re-place it, otherwise Fire Nova will miss
 function mb_Shaman_Enhancement_OnLoad()
     local is25Man = mb_Is25ManRaid()

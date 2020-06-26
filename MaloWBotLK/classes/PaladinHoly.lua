@@ -3,24 +3,14 @@
 -- Add a DPS rotation if high mana
 -- Lay on Hands, is an external CD due to talent
 -- Divine Protection pre-taking damage, probably through a "use personals" macro
--- Avenging Wrath when needed, probably through a "Heal CD" macro
---     Divine Illumination at the same time and replace Flash of Light with Holy Light during the duration
---     Make sure to prevent casting Divine Plea while these CDs are up, and make sure to not cast these CDs while Divine Plea is up
---     Avoid popping heal-CDs while heroism is up, or within 10 seconds of the start of a fight
--- Divine Favor
---      Pop it when you notice high raid damage and you know you'll be holy Lighting
--- Make him cast holy light over Flash of Light when he notices massive raid damage
---      Implement some function that retrieves a "severity" of raid health from a scale of like 1 to 10
---      1 meaning everyone in the raid have full health
---      10 meaning everyone alive in the raid has 1% HP
---      Only cast Divine Plea during low severity
---      Possibly click away Divine Plea if severity is high
 
 function mb_Paladin_Holy_OnLoad()
     mb_preCastFinishCallback = mb_Paladin_Holy_PreCastFinishCallback
+    mb_RegisterExclusiveRequestHandler("healcd", mb_Paladin_HealCdAcceptor, mb_Paladin_HealCdExecutor)
 end
 
 mb_Paladin_Holy_beaconUnit = nil
+mb_Paladin_Holy_useCooldownsCommandTime = 0
 function mb_Paladin_Holy_OnUpdate()
     if not mb_IsReadyForNewCast() then
         return
@@ -48,8 +38,10 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
-    if mb_UnitPowerPercentage("player") < 60 and mb_CastSpellWithoutTarget("Divine Plea") then
-        return
+    if mb_UnitPowerPercentage("player") < 70 and mb_Paladin_Holy_useCooldownsCommandTime + 20 < mb_time then
+        if mb_CastSpellWithoutTarget("Divine Plea") then
+            return
+        end
     end
 
     local mainTankUnit, offTankUnit = mb_GetUnitForPlayerName(mb_config.mainTank), mb_GetUnitForPlayerName(mb_config.offTank)
@@ -71,11 +63,21 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
+    if mb_Paladin_Holy_useCooldownsCommandTime + 20 > mb_time then
+        mb_UseItemCooldowns()
+        mb_CastSpellWithoutTarget("Avenging Wrath")
+        mb_CastSpellWithoutTarget("Divine Illumination")
+        mb_CastSpellWithoutTarget("Divine Favor")
+    end
+
     if mb_RaidHeal("Holy Shock") then
         return
     end
 
     if UnitBuff("player", "Infusion of Light") then
+        if mb_IsMoving() and mb_RaidHeal("Flash of Light") then
+            return
+        end
         if mb_RaidHeal("Holy Light") then
             return
         end
@@ -114,6 +116,12 @@ function mb_Paladin_Holy_OnUpdate()
             return
         end
     end
+
+    if mb_GetMissingHealth(mainTankUnit) > mb_GetSpellEffect("Flash of Light") then
+        if mb_CastSpellOnFriendly("player", "Flash of Light") then
+            return
+        end
+    end
 end
 
 function mb_Paladin_Holy_PreCastFinishCallback(spell, unit)
@@ -123,7 +131,7 @@ function mb_Paladin_Holy_PreCastFinishCallback(spell, unit)
     local spellTargetUnitMissingHealth = mb_GetMissingHealth(unit)
     local beaconUnitMissingHealth = 0
     if mb_Paladin_Holy_beaconUnit ~= nil then
-        beaconUnitMissingHealth = mb_GetMissingHealth(unit)
+        beaconUnitMissingHealth = mb_GetMissingHealth(mb_Paladin_Holy_beaconUnit)
     end
     local healAmount = mb_GetSpellEffect(spell)
     local effectiveHealAmount = 0
@@ -137,8 +145,26 @@ function mb_Paladin_Holy_PreCastFinishCallback(spell, unit)
     else
         effectiveHealAmount = effectiveHealAmount + healAmount
     end
-    if effectiveHealAmount * 1.1 < healAmount then
+    if effectiveHealAmount < healAmount * 0.9 then
         mb_StopCast()
     end
 end
 
+function mb_Paladin_HealCdAcceptor(message, from)
+    if mb_GetBuffTimeRemaining("player", "Divine Plea") > 1 then
+        return false
+    end
+    if mb_CanCastSpell("Avenging Wrath") then
+        return false
+    end
+    if mb_UnitPowerPercentage("player") < 20 then
+        return false
+    end
+    return true
+end
+
+function mb_Paladin_HealCdExecutor(message, from)
+    mb_SayRaid("I'm popping my cooldowns!")
+    mb_Paladin_Holy_useCooldownsCommandTime = mb_time
+    return true
+end

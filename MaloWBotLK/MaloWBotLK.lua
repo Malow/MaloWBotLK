@@ -106,7 +106,7 @@ function mb_InitAsSlave()
 	end
 end
 
-function mb_InitAsLeader()
+function mb_InitAsCommander()
 	mb_isCommanding = true
 	mb_SendMessage("enable")
 	mb_SendMessage("setCommander", UnitName("player"))
@@ -210,6 +210,7 @@ mb_shouldStopMovingForwardAt = 0
 mb_preCastFinishCallback = nil
 mb_shouldCallPreCastFinishCallback = false
 mb_currentCastTargetUnit = nil
+mb_IWTDistanceClosingRangeCheckSpell = nil
 -- OnUpdate
 function mb_OnUpdate()
 	if not mb_isEnabled then
@@ -231,7 +232,7 @@ function mb_OnUpdate()
 	end
 	if mb_commanderUnit ~= nil then
 		if mb_followMode == "lenient" or mb_IsDrinking() then
-			if not CheckInteractDistance(mb_commanderUnit, 2) then
+			if not CheckInteractDistance(mb_commanderUnit, 2) or not UnitAffectingCombat("player") then
 				FollowUnit(mb_commanderUnit)
 			end
 		elseif mb_followMode == "strict" then
@@ -242,6 +243,16 @@ function mb_OnUpdate()
 		MoveForwardStart()
 		MoveForwardStop()
 		mb_shouldStopMovingForwardAt = 0
+	end
+	if mb_IWTDistanceClosingRangeCheckSpell ~= nil and mb_HasValidOffensiveTarget() and CheckInteractDistance(mb_commanderUnit, 2) then
+		if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
+			SetCVar("autoInteract", 1)
+			InteractUnit("target")
+			SetCVar("autoInteract", 0)
+		else
+			MoveForwardStart()
+			MoveForwardStop()
+		end
 	end
 	if mb_preCastFinishCallback ~= nil and mb_shouldCallPreCastFinishCallback then
 		local spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, interrupt = UnitCastingInfo("player")
@@ -259,11 +270,13 @@ function mb_OnUpdate()
 end
 
 function mb_HandleCommand(msg)
-	local matches, remainingString = mb_StringStartsWith(msg, "remoteExecute")
+    -- remoteExecute
+	local matches, remainingString = mb_StringStartsWith(msg, "re")
 	if matches then
 		mb_SendMessage("remoteExecute ", remainingString)
 		return true
 	end
+
 	matches, remainingString = mb_StringStartsWith(msg, "lc")
 	if matches then
 		mb_SayRaid("----------------------------------")
@@ -271,7 +284,12 @@ function mb_HandleCommand(msg)
 		mb_SendMessage("lc ", remainingString)
 		return true
 	end
-	
+
+    matches, remainingString = mb_StringStartsWith(msg, "InitAsCommander")
+    if matches then
+        mb_InitAsCommander()
+        return true
+    end
 	return false
 end
 
@@ -412,13 +430,15 @@ function mb_HandleFacingWrongWay()
 	mb_shouldStopMovingForwardAt = mb_time
 end
 
+function mb_EnableIWTDistanceClosing(rangeCheckSpell)
+	mb_IWTDistanceClosingRangeCheckSpell = rangeCheckSpell
+end
+
 function mb_HandleTooFarAway()
-	if not mb_isEnabled or mb_isCommanding then
+	if not mb_isEnabled or mb_isCommanding or mb_followMode == "none" or mb_IWTDistanceClosingRangeCheckSpell~= nil then
 		return
 	end
-	if mb_followMode == "none" then
-		return
-	elseif mb_followMode == "lenient" then
+	if mb_followMode == "lenient" then
 		SetCVar("autoInteract", 1)
 		InteractUnit("target")
 		SetCVar("autoInteract", 0)

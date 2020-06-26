@@ -28,6 +28,7 @@ function mb_Shaman_Enhancement_OnLoad()
     else
         mb_Shaman_SetAirTotem("Grounding Totem")
     end
+    mb_EnableIWTDistanceClosing("Stormstrike")
 end
 
 function mb_Shaman_Enhancement_OnUpdate()
@@ -94,7 +95,8 @@ function mb_Shaman_Enhancement_OnUpdate()
         return
     end
 
-    if mb_ShouldUseDpsCooldowns() and mb_IsSpellInRange("Stormstrike", "target") then
+    if mb_ShouldUseDpsCooldowns("Stormstrike") then
+        mb_UseItemCooldowns()
         if mb_CastSpellWithoutTarget("Feral Spirit") then
             return
         end

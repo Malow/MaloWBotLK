@@ -14,6 +14,10 @@
 -- Start using on-use trinkets
 -- Keep sense undead up
 
+function mb_Paladin_Retribution_OnLoad()
+    mb_EnableIWTDistanceClosing("Crusader Strike")
+end
+
 function mb_Paladin_Retribution_OnUpdate()
     if not mb_IsReadyForNewCast() then
         return
@@ -85,7 +89,8 @@ function mb_Paladin_Retribution_OnUpdate()
         InteractUnit("target")
     end
 
-    if mb_ShouldUseDpsCooldowns() and mb_IsSpellInRange("Crusader Strike", "target") then
+    if mb_ShouldUseDpsCooldowns("Crusader Strike") then
+        mb_UseItemCooldowns()
         if mb_CastSpellWithoutTarget("Avenging Wrath") then
             return
         end

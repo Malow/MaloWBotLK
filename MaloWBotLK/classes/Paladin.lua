@@ -18,6 +18,7 @@ function mb_Paladin_OnLoad()
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	else
 		mb_classSpecificRunFunction = mb_Paladin_Retribution_OnUpdate
+		mb_Paladin_Retribution_OnLoad()
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	end
 

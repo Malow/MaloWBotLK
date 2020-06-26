@@ -6,6 +6,10 @@
 -- Some better check for Commanding Shout than CheckInteractDistance(unit, 4), that's 28 yards, range is 45 yards.
 -- 		Maybe some item you can use on friendly?
 
+function mb_Warrior_Arms_OnLoad()
+    mb_EnableIWTDistanceClosing("Mortal Strike")
+end
+
 function mb_Warrior_Arms_OnUpdate()
     if not mb_IsReadyForNewCast() then
         return
@@ -66,7 +70,7 @@ function mb_Warrior_Arms_OnUpdate()
 
     if mb_cleaveMode > 0 then
         if UnitPower("player") >= 20 then
-            if not UnitDebuff("target", "Thunder Clap") and not UnitDebuff("target", "Judgements of the Just") then
+            if not UnitDebuff("target", "Thunder Clap") and mb_IsSpellInRange("Mortal Strike", "target") then
                 if mb_CastSpellWithoutTarget("Thunder Clap") then
                     return
                 end
@@ -85,7 +89,8 @@ function mb_Warrior_Arms_OnUpdate()
         end
     end
 
-    if mb_ShouldUseDpsCooldowns() then
+    if mb_ShouldUseDpsCooldowns("Mortal Strike") then
+        mb_UseItemCooldowns()
         if UnitPower("player") >= 25 and mb_UnitHealthPercentage("target") < 20 then
             if mb_IsSpellInRange("Mortal Strike", "target") and mb_CastSpellOnTarget("Shattering Throw") then
                 return

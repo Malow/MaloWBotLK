@@ -121,6 +121,7 @@ function mb_LootHandler_GetGoodStatName(badStatName)
     if badStatName == "ITEM_MOD_MANA_REGENERATION_SHORT" then return "mp5" end
     if badStatName == "ITEM_MOD_POWER_REGEN0_SHORT" then return "mp5" end
     if badStatName == "ITEM_MOD_DAMAGE_PER_SECOND_SHORT" then return "dps" end
+    if badStatName == "ITEM_MOD_FERAL_ATTACK_POWER_SHORT" then return "attackPower" end
 
     -- Sockets
     if badStatName == "EMPTY_SOCKET_META" then return "socketMeta" end

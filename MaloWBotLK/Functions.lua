@@ -169,10 +169,16 @@ function mb_IsUsableSpell(spell)
 	return usable == 1
 end
 
--- Checks if there's no cooldown and if the spell use useable (have mana to cast it)
+-- Checks if there's no cooldown and if the spell use useable (have mana to cast it), and that if we're moving that it doesn't have a cast time
 function mb_CanCastSpell(spell)
 	if GetSpellCooldown(spell) ~= 0 then
 		return false
+	end
+	if GetUnitSpeed("player") ~= 0 then
+		local name, rank, icon, cost, isFunnel, powerType, castTime, minRange, maxRange	= GetSpellInfo(spell)
+		if castTime > 0 then
+			return false
+		end
 	end
 	return mb_IsUsableSpell(spell)
 end
@@ -390,8 +396,11 @@ function mb_GetMySpecName()
 end
 
 -- Returns true if using CDs is a good idea
-function mb_ShouldUseDpsCooldowns()
+function mb_ShouldUseDpsCooldowns(rangeCheckSpell)
 	if not mb_HasValidOffensiveTarget() then
+		return false
+	end
+	if not mb_IsSpellInRange(rangeCheckSpell, "target") then
 		return false
 	end
 	local members = mb_GetNumPartyOrRaidMembers()
@@ -583,3 +592,61 @@ function mb_GetRemainingSpellCooldown(spell)
 	end
 	return (start + duration) - mb_time
 end
+
+-- Uses trinkets and engineering gloves
+mb_itemCooldownSlots = {}
+table.insert(mb_itemCooldownSlots, 10) -- Gloves (Engineering enchant)
+table.insert(mb_itemCooldownSlots, 13) -- Trinket 1
+table.insert(mb_itemCooldownSlots, 14) -- Trinket 2
+function mb_UseItemCooldowns()
+	for _, slot in pairs(mb_itemCooldownSlots) do
+		local start, duration, enable = GetInventoryItemCooldown("player", slot)
+		if enable == 1 and start == 0 then
+			UseInventoryItem(slot)
+			return true
+		end
+	end
+	return false
+end
+
+--[[
+-- Ongoing temporary stuff for exact dist checking
+mb_followStickLength = 2.73
+mb_positionMultiplier = nil
+function mb_SetPositionMultiplier()
+	local dist = mb_GetDistance("player", mb_commanderUnit)
+	mb_positionMultiplier = mb_followStickLength / dist
+end
+
+-- Returns the Position of the unit, doesn't work for enemy units
+function mb_GetPosition(unit)
+	local x, y = GetPlayerMapPosition(unit)
+	if mb_positionMultiplier ~= nil then
+		x, y = x * mb_positionMultiplier, y * mb_positionMultiplier
+	end
+	return x, y
+end
+
+function mb_GetDistance(unit1, unit2)
+	local x1, y1 = mb_GetPosition(unit1)
+	local x2, y2 = mb_GetPosition(unit2)
+	return sqrt((x1 - x2)^2 + (y1 - y2)^2)
+end
+--]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

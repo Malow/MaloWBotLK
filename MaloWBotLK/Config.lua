@@ -232,5 +232,3 @@ mb_config.statWeights["Warrior"]["Arms"].socketColored = 16
 
 
 
-
-

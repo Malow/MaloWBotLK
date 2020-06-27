@@ -55,7 +55,7 @@ function mb_Shaman_Enhancement_OnUpdate()
         return
     end
 
-    if mb_GetBuffStackCount("player", "Maelstrom Weapon") == 5 then
+    if mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 4 then
         if mb_Shaman_ChainHealRaid() then
             return
         end
@@ -101,7 +101,21 @@ function mb_Shaman_Enhancement_OnUpdate()
         end
     end
 
-    if not mb_TargetHasMyDebuff("Flame Shock") and mb_CastSpellOnTarget("Flame Shock") then
+    if mb_cleaveMode > 0 and mb_IsSpellInRange("Stormstrike", "target") then
+        if mb_CastSpellWithoutTarget("Fire Nova") then
+            return
+        end
+    end
+
+    if mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 4 then
+        if mb_cleaveMode > 0 and mb_CastSpellOnTarget("Chain Lightning") then
+            return
+        elseif mb_CastSpellOnTarget("Lightning Bolt") then
+            return
+        end
+    end
+
+    if not mb_UnitHasMyDebuff("target", "Flame Shock") and mb_CastSpellOnTarget("Flame Shock") then
         return
     end
 
@@ -111,14 +125,6 @@ function mb_Shaman_Enhancement_OnUpdate()
 
     if mb_IsSpellInRange("Stormstrike", "target") and mb_CastSpellWithoutTarget("Fire Nova") then
         return
-    end
-
-    if mb_GetBuffStackCount("player", "Maelstrom Weapon") == 5 then
-        if mb_cleaveMode > 0 and mb_CastSpellOnTarget("Chain Lightning") then
-            return
-        elseif mb_CastSpellOnTarget("Lightning Bolt") then
-            return
-        end
     end
 
     if mb_UnitPowerPercentage("player") > 30 and not mb_IsSpellInRange("Stormstrike", "target") then

@@ -81,20 +81,20 @@ function mb_CreateMacro(name, body, actionSlot)
 	ClearCursor()
 end
 
-function mb_HasValidOffensiveTarget()
-	if not UnitExists("target") then
+function mb_IsValidOffensiveUnit(unit)
+	if not UnitExists(unit) then
 		return false
 	end
-	if UnitIsDeadOrGhost("target") then
+	if UnitIsDeadOrGhost(unit) then
 		return false
 	end
-	if UnitIsFriend("player", "target") then
+	if UnitIsFriend("player", unit) then
 		return false
 	end
-	if not UnitCanAttack("player", "target") == 1 then
+	if not UnitCanAttack("player", unit) == 1 then
 		return false
 	end
-	if not UnitAffectingCombat("target") then
+	if not UnitAffectingCombat(unit) then
 		return false
 	end
 	return true
@@ -279,8 +279,8 @@ function mb_ResurrectRaid(resurrectionSpell)
 end
 
 -- Checks if your target has a debuff from the spell specified that specifically you have cast
-function mb_TargetHasMyDebuff(spell)
-	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura("target", spell, nil, "PLAYER|HARMFUL")
+function mb_UnitHasMyDebuff(unit, spell)
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "PLAYER|HARMFUL")
 	return name ~= nil
 end
 
@@ -397,7 +397,7 @@ end
 
 -- Returns true if using CDs is a good idea
 function mb_ShouldUseDpsCooldowns(rangeCheckSpell)
-	if not mb_HasValidOffensiveTarget() then
+	if not mb_IsValidOffensiveUnit("target") then
 		return false
 	end
 	if not mb_IsSpellInRange(rangeCheckSpell, "target") then
@@ -490,14 +490,14 @@ end
 -- Returns true/false depending on if a valid offensive target was acquired.
 function mb_AcquireOffensiveTarget()
 	if mb_commanderUnit == nil then
-		return mb_HasValidOffensiveTarget()
+		return mb_IsValidOffensiveUnit("target")
 	end
 	if not UnitExists(mb_commanderUnit .. "target") then
 		ClearTarget()
 		return false
 	end
 	AssistUnit(mb_commanderUnit)
-	return mb_HasValidOffensiveTarget()
+	return mb_IsValidOffensiveUnit("target")
 end
 
 -- Checks whether it's a good time to buff, returns true/false

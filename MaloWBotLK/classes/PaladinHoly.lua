@@ -154,7 +154,7 @@ function mb_Paladin_HealCdAcceptor(message, from)
     if mb_GetBuffTimeRemaining("player", "Divine Plea") > 1 then
         return false
     end
-    if mb_CanCastSpell("Avenging Wrath") then
+    if not mb_CanCastSpell("Avenging Wrath") then
         return false
     end
     if mb_UnitPowerPercentage("player") < 20 then

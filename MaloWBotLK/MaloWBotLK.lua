@@ -247,7 +247,7 @@ function mb_OnUpdate()
 		MoveForwardStop()
 		mb_shouldStopMovingForwardAt = 0
 	end
-	if mb_IWTDistanceClosingRangeCheckSpell ~= nil and mb_HasValidOffensiveTarget() and CheckInteractDistance(mb_commanderUnit, 2) then
+	if mb_IWTDistanceClosingRangeCheckSpell ~= nil and mb_IsValidOffensiveUnit("target") and CheckInteractDistance(mb_commanderUnit, 2) then
 		if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
 			SetCVar("autoInteract", 1)
 			InteractUnit("target")

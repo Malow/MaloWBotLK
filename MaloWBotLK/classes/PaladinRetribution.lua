@@ -99,15 +99,11 @@ function mb_Paladin_Retribution_OnUpdate()
         return
     end
 
-    if mb_CastSpellOnTarget("Hammer of Wrath") then
-        return
-    end
-
-    if UnitBuff("player", "The Art of War") and mb_CastSpellOnTarget("Exorcism") then
-        return
-    end
-
     if mb_CastSpellOnTarget("Crusader Strike") then
+        return
+    end
+
+    if mb_CastSpellOnTarget("Hammer of Wrath") then
         return
     end
 
@@ -119,6 +115,10 @@ function mb_Paladin_Retribution_OnUpdate()
         if mb_CastSpellWithoutTarget("Consecration") then
             return
         end
+    end
+
+    if UnitBuff("player", "The Art of War") and mb_CastSpellOnTarget("Exorcism") then
+        return
     end
 
     if not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnFriendly("player", "Sacred Shield") then

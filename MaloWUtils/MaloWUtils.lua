@@ -58,3 +58,17 @@ function MaloWUtils_GetEquippedAndInventoryItemState()
 	end
 	return itemState
 end
+
+function MaloWUtils_ConvertTableToString(o)
+    if type(o) == 'table' then
+        local s = '{ '
+        for k,v in pairs(o) do
+            if type(k) ~= 'number' then k = '"'..k..'"' end
+            s = s .. '['..k..'] = ' .. MaloWUtils_ConvertTableToString(v) .. ','
+        end
+        return s .. '} '
+    else
+        return tostring(o)
+    end
+end
+

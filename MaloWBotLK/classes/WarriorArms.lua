@@ -8,6 +8,7 @@
 
 function mb_Warrior_Arms_OnLoad()
     mb_EnableIWTDistanceClosing("Mortal Strike")
+    mb_CombatLogModule_Enable()
 end
 
 function mb_Warrior_Arms_OnUpdate()
@@ -42,6 +43,12 @@ function mb_Warrior_Arms_OnUpdate()
         return
     end
 
+    if CheckInteractDistance(mb_commanderUnit, 1) and CheckInteractDistance("target", 1) then
+        if mb_CastSpellOnTarget("Charge") then
+            return
+        end
+    end
+
     mb_CastSpellWithoutTarget("Bloodrage")
 
     if UnitPower("player") >= 75 then
@@ -52,41 +59,30 @@ function mb_Warrior_Arms_OnUpdate()
         end
     end
 
-    if UnitPower("player") >= 15 then
-        if mb_GetDebuffStackCount("target", "Sunder Armor") < 5 or mb_GetDebuffTimeRemaining("target", "Sunder Armor") < 3 then
-            if mb_CastSpellOnTarget("Sunder Armor") then
-                return
-            end
-        end
+    if mb_GetMyDebuffTimeRemaining("target", "Rend") == 0 then
+        mb_CastSpellOnTarget("Rend")
+        return
     end
 
-    if UnitPower("player") >= 10 and mb_IsSpellInRange("Mortal Strike", "target") then
+    if mb_GetDebuffStackCount("target", "Sunder Armor") < 5 or mb_GetDebuffTimeRemaining("target", "Sunder Armor") < 5 then
+        mb_CastSpellOnTarget("Sunder Armor")
+        return
+    end
+
+    if UnitBuff("player", "Sudden Death") then
+        mb_CastSpellOnTarget("Execute")
+        return
+    end
+
+    if mb_IsSpellInRange("Mortal Strike", "target") then
         if not UnitDebuff("target", "Demoralizing Shout") and not UnitDebuff("target", "Demoralizing Roar") then
-            if mb_CastSpellWithoutTarget("Demoralizing Shout") then
-                return
-            end
-        end
-    end
-
-    if mb_cleaveMode > 0 then
-        if UnitPower("player") >= 20 then
-            if not UnitDebuff("target", "Thunder Clap") and mb_IsSpellInRange("Mortal Strike", "target") then
-                if mb_CastSpellWithoutTarget("Thunder Clap") then
-                    return
-                end
-            end
-        end
-        if UnitPower("player") >= 30 then
-            if mb_CastSpellWithoutTarget("Sweeping Strikes") then
-                return
-            end
-        end
-    end
-
-    if UnitPower("player") >= 10 and mb_GetMyDebuffTimeRemaining("target", "Rend") == 0 then
-        if mb_CastSpellOnTarget("Rend") then
+            mb_CastSpellWithoutTarget("Demoralizing Shout")
             return
         end
+    end
+
+    if mb_CastSpellOnTarget("Overpower") then
+        return
     end
 
     if mb_ShouldUseDpsCooldowns("Mortal Strike") then
@@ -96,22 +92,42 @@ function mb_Warrior_Arms_OnUpdate()
                 return
             end
         end
-        if UnitPower("player") >= 25 and mb_CastSpellWithoutTarget("Bladestorm") then
+    end
+
+    if mb_cleaveMode > 0 then
+        if not UnitDebuff("target", "Thunder Clap") and mb_IsSpellInRange("Mortal Strike", "target") then
+            mb_CastSpellWithoutTarget("Thunder Clap")
+            return
+        end
+        if mb_GetRemainingSpellCooldown("Sweeping Strikes") == 0 and mb_IsSpellInRange("Mortal Strike", "target") then
+            mb_CastSpellWithoutTarget("Sweeping Strikes")
+            return
+        end
+        if mb_GetRemainingSpellCooldown("Bladestorm") == 0 and mb_IsSpellInRange("Mortal Strike", "target") then
+            mb_CastSpellWithoutTarget("Bladestorm")
+            return
+        end
+        if mb_cleaveMode > 1 and mb_GetRemainingSpellCooldown("Thunder Clap") == 0 and mb_IsSpellInRange("Mortal Strike", "target") then
+            mb_CastSpellWithoutTarget("Thunder Clap")
             return
         end
     end
 
-    if UnitPower("player") >= 5 and mb_CastSpellOnTarget("Overpower") then
+    if mb_UnitHealthPercentage("target") < 20 then
+        mb_CastSpellOnTarget("Execute")
         return
     end
 
-    if UnitPower("player") >= 10 and mb_CastSpellOnTarget("Execute") then
+    local timeRemainingUntilNextSwing = (mb_CombatLogModule_GetLastSwingTime() + UnitAttackSpeed("player")) - mb_time
+    if timeRemainingUntilNextSwing > 0.6 then
+        mb_CastSpellOnTarget("Slam")
         return
     end
 
-    if UnitPower("player") >= 30 and mb_CastSpellOnTarget("Mortal Strike") then
+    if mb_CastSpellOnTarget("Mortal Strike") then
         return
     end
+
     if mb_CastSpellOnTarget("Victory Rush") then
         return
     end

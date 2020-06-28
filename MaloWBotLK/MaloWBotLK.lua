@@ -3,6 +3,9 @@ local MY_ABBREVIATION = "MB"
 
 -- Prints message in chatbox
 function mb_Print(msg)
+	if type(msg) == "table" then
+		msg = MaloWUtils_ConvertTableToString(msg)
+	end
 	MaloWUtils_Print(MY_ABBREVIATION .. ": " .. tostring(msg))
 end
 
@@ -242,8 +245,10 @@ function mb_OnUpdate()
 		elseif mb_followMode == "strict" then
 			FollowUnit(mb_commanderUnit)
 		end
-        if mb_followMode == "lenient" and not UnitAffectingCombat("player") and not mb_IsDrinking() then
-            FollowUnit(mb_commanderUnit)
+        if mb_followMode == "lenient" and not mb_IsDrinking() then
+			if not UnitAffectingCombat("player") or not mb_IsValidOffensiveUnit("target") then
+				FollowUnit(mb_commanderUnit)
+			end
         end
 	end
 	if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then

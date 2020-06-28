@@ -407,6 +407,9 @@ function mb_ShouldUseDpsCooldowns(rangeCheckSpell)
 		return false
 	end
 	local members = mb_GetNumPartyOrRaidMembers()
+	if UnitHealthMax("target") > UnitHealthMax("player") * members * 2 then
+		return true
+	end
 	if UnitHealth("target") > UnitHealthMax("player") * members then
 		return true
 	end

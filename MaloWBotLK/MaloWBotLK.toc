@@ -13,6 +13,7 @@ SpellEffectCalculator.lua
 MessageHandlers.lua
 Functions.lua
 MaloWBotLK.lua
+CombatLogModule.lua
 
 classes\Deathknight.lua
 classes\Druid.lua

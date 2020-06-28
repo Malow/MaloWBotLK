@@ -92,8 +92,12 @@ mb_classSpecificRunFunction = nil
 mb_originalErrorHandler = nil
 function mb_InitAsSlave()
 	mb_InitShared()
-	mb_CreateMacro("MBReload", "/run ReloadUI()", 1)
-	mb_CreateMacro("MBFree", "/run mb_commanderUnit=nil", 2)
+	local classActionSlotOffset = 0
+	if mb_GetClass("player") == "WARRIOR" then
+		classActionSlotOffset = 72
+	end
+	mb_CreateMacro("MBReload", "/run ReloadUI()", classActionSlotOffset + 1)
+	mb_CreateMacro("MBFree", "/run mb_commanderUnit=nil", classActionSlotOffset + 2)
 	SetCVar("autoSelfCast", 0) -- Disable auto self-casting to allow directly casting spells on raid-members
 	SetCVar("autoLootDefault", 1) -- Enable autolooting
 
@@ -252,9 +256,8 @@ function mb_OnUpdate()
 			SetCVar("autoInteract", 1)
 			InteractUnit("target")
 			SetCVar("autoInteract", 0)
-		else
-			MoveForwardStart()
-			MoveForwardStop()
+		elseif mb_IsMoving() then
+            mb_shouldStopMovingForwardAt = mb_time
 		end
 	end
 	if mb_preCastFinishCallback ~= nil and mb_shouldCallPreCastFinishCallback then
@@ -267,6 +270,9 @@ function mb_OnUpdate()
 		end
 	end
 	if mb_HandleQueuedAcceptedRequest() then
+		return
+	end
+	if mb_BossModule_PreOnUpdate() then
 		return
 	end
 	mb_classSpecificRunFunction()
@@ -357,11 +363,19 @@ function mb_HandleIncomingMessage(mbCom)
 end
 
 mb_queuedAcceptedRequests = {}
+mb_executorAttempts = 0
 function mb_HandleQueuedAcceptedRequest()
 	local request = mb_queuedAcceptedRequests[1]
 	if request ~= nil then
 		if mb_registeredExclusiveRequestHandlers[request.type].executor(request.message, request.from) then
 			table.remove(mb_queuedAcceptedRequests, 1)
+			mb_executorAttempts = 0
+		else
+			mb_executorAttempts = mb_executorAttempts + 1
+			if mb_executorAttempts > 25 then
+				mb_executorAttempts = 0
+				mb_SayRaid("I'm stuck trying to fulfil a request of type: " .. request.type)
+			end
 		end
 		return true
 	end

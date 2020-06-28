@@ -278,12 +278,6 @@ function mb_ResurrectRaid(resurrectionSpell)
 	return true
 end
 
--- Checks if your target has a debuff from the spell specified that specifically you have cast
-function mb_UnitHasMyDebuff(unit, spell)
-	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "PLAYER|HARMFUL")
-	return name ~= nil
-end
-
 -- Checks if unit has a buff from the spell specified that specifically you have cast
 function mb_UnitHasMyBuff(unit, spell)
 	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "PLAYER|HELPFUL")
@@ -299,9 +293,18 @@ function mb_GetDebuffStackCount(unit, spell)
 	return count
 end
 
--- Returns the time remaining of a debuff
+-- Returns the time remaining of a debuff, 0 if it doesn't exist
 function mb_GetDebuffTimeRemaining(unit, spell)
 	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "HARMFUL")
+	if name == nil then
+		return 0
+	end
+	return expirationTime - mb_time
+end
+
+-- Returns the time remaining of a debuff that you have cast, 0 if it doesn't exist
+function mb_GetMyDebuffTimeRemaining(unit, spell)
+	local name, rank, icon, count, debuffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitAura(unit, spell, nil, "PLAYER|HARMFUL")
 	if name == nil then
 		return 0
 	end
@@ -478,9 +481,12 @@ function mb_TableContains(table, item)
 end
 
 -- Finds the most damaged member in the raid and casts the spell on that target as long as it doesn't over-heal
-function mb_RaidHeal(spell)
+function mb_RaidHeal(spell, acceptedOverheal)
+	if acceptedOverheal == nil then
+		acceptedOverheal = 0
+	end
 	local healUnit, missingHealth = mb_GetMostDamagedFriendly(spell)
-	if missingHealth > mb_GetSpellEffect(spell) then
+	if missingHealth * (1 + acceptedOverheal) > mb_GetSpellEffect(spell) then
 		return mb_CastSpellOnFriendly(healUnit, spell)
 	end
 	return false

@@ -50,11 +50,13 @@ function mb_Paladin_Holy_OnUpdate()
         sacredShieldTarget = offTankUnit
     end
 
-    if not UnitBuff(sacredShieldTarget, "Sacred Shield") and mb_CastSpellOnFriendly(sacredShieldTarget, "Sacred Shield") then
-        return
+    if sacredShieldTarget ~= nil then
+        if not UnitBuff(sacredShieldTarget, "Sacred Shield") and mb_CastSpellOnFriendly(sacredShieldTarget, "Sacred Shield") then
+            return
+        end
     end
 
-    if not UnitBuff(mainTankUnit, "Beacon of Light") then
+    if mainTankUnit ~= nil and not UnitBuff(mainTankUnit, "Beacon of Light") then
         if mb_CastSpellOnFriendly(mainTankUnit, "Beacon of Light") then
             mb_Paladin_Holy_beaconUnit = mainTankUnit
             return
@@ -93,7 +95,7 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
-    if mb_RaidHeal("Holy Light") then
+    if mb_RaidHeal("Holy Light", 0.2) then
         return
     end
 
@@ -105,8 +107,10 @@ function mb_Paladin_Holy_OnUpdate()
         return
     end
 
-    if mb_GetBuffTimeRemaining(mainTankUnit, "Beacon of Light") < 10 and mb_CastSpellOnFriendly(mainTankUnit, "Beacon of Light") then
-        return
+    if mainTankUnit ~= nil then
+        if mb_GetBuffTimeRemaining(mainTankUnit, "Beacon of Light") < 10 and mb_CastSpellOnFriendly(mainTankUnit, "Beacon of Light") then
+            return
+        end
     end
 
     if UnitAffectingCombat("player") then
@@ -117,9 +121,11 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
-    if mb_GetMissingHealth(mainTankUnit) > mb_GetSpellEffect("Flash of Light") then
-        if mb_CastSpellOnFriendly("player", "Flash of Light") then
-            return
+    if mainTankUnit ~= nil then
+        if mb_GetMissingHealth(mainTankUnit) > mb_GetSpellEffect("Flash of Light") then
+            if mb_CastSpellOnFriendly("player", "Flash of Light") then
+                return
+            end
         end
     end
 end

@@ -22,22 +22,23 @@ function mb_Paladin_OnLoad()
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	end
 
+	if GetTrackingTexture() ~= "Interface\\Icons\\Spell_Holy_SenseUndead" then
+		CastSpellByName("Sense Undead")
+	end
+
 	if mb_GetMySpecName() == "Protection" then -- Override class-order blessing for prot-palas since they have sanc
 		mb_RegisterMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_SancHandler)
 		return
 	end
 	if mb_myClassOrderIndex == mb_config.classOrder.mightBlesser then
 		mb_RegisterMessageHandler(BUFF_MIGHT.requestType, mb_Paladin_MightHandler)
-		return
-	end
-	if mb_myClassOrderIndex == mb_config.classOrder.kingsBlesser then
+	elseif mb_myClassOrderIndex == mb_config.classOrder.kingsBlesser then
 		mb_RegisterMessageHandler(BUFF_KINGS.requestType, mb_Paladin_KingsHandler)
-		return
-	end
-	if mb_myClassOrderIndex == mb_config.classOrder.wisdomBlesser then
+	elseif mb_myClassOrderIndex == mb_config.classOrder.wisdomBlesser then
 		mb_RegisterMessageHandler(BUFF_WISDOM.requestType, mb_Paladin_WisdomHandler)
-		return
 	end
+
+	mb_RegisterExclusiveRequestHandler("external", mb_Paladin_ExternalRequestAcceptor, mb_Paladin_ExternalRequestExecutor)
 end
 
 function mb_Paladin_MightHandler(msg, from)
@@ -92,6 +93,32 @@ function mb_Paladin_CastAura()
 end
 
 
+function mb_Paladin_ExternalRequestAcceptor(message, from)
+	if mb_GetRemainingSpellCooldown("Hand of Sacrifice") < 1.5 then
+		return true
+	end
+	if mb_GetRemainingSpellCooldown("Divine Sacrifice") < 1.5 and UnitInParty(mb_GetUnitForPlayerName(from)) then
+		return true
+	end
+	return false
+end
+
+function mb_Paladin_ExternalRequestExecutor(message, from)
+	if not mb_IsReadyForNewCast() then
+		return false
+	end
+	local targetUnit = mb_GetUnitForPlayerName(from)
+
+	if mb_CastSpellOnFriendly(targetUnit, "Hand of Sacrifice") then
+		mb_SayRaid("Casting Hand of Sacrifice")
+		return true
+	end
+	if UnitInParty(targetUnit) and mb_CastSpellWithoutTarget("Divine Sacrifice") then
+		mb_SayRaid("Casting Divine Sacrifice")
+		return true
+	end
+	return false
+end
 
 
 

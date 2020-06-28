@@ -18,7 +18,7 @@ function mb_Shaman_OnLoad()
 		mb_classSpecificRunFunction = mb_Shaman_Restoration_OnUpdate
 	end
 
-	mb_RegisterExclusiveRequestHandler("heroism", mb_Shaman_HeroismRequestAcceptor, mb_Shaman_HeroismExecutor)
+	mb_RegisterExclusiveRequestHandler("heroism", mb_Shaman_HeroismRequestAcceptor, mb_Shaman_HeroismRequestExecutor)
 end
 
 function mb_Shaman_ChainHealRaid()
@@ -158,13 +158,15 @@ function mb_Shaman_HeroismRequestAcceptor(message, from)
 	return false
 end
 
-function mb_Shaman_HeroismExecutor(message, from)
+function mb_Shaman_HeroismRequestExecutor(message, from)
 	if not mb_IsReadyForNewCast() then
 		return false
 	end
-    mb_SayRaid("Casting " .. mb_Shaman_GetHeroismName())
-	mb_CastSpellWithoutTarget(mb_Shaman_GetHeroismName())
-	return true
+	if mb_CastSpellWithoutTarget(mb_Shaman_GetHeroismName()) then
+		mb_SayRaid("Casting " .. mb_Shaman_GetHeroismName())
+		return true
+	end
+	return false
 end
 
 

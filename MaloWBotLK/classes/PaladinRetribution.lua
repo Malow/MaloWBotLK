@@ -1,17 +1,16 @@
 -- TODO:
--- Weave in Exorcisms when healing is not needed
 -- Holy Wrath if fighting undead
 -- Lay on Hands on someone really low in the raid
 -- Divine Protection pre-taking damage, probably through a "use personals" macro
--- Divine Sacrifice, some sexy rotation or requested 1 by 1?
 -- Hammer of Justice targets, both as interrupt and as stun
 -- Hand of Freedom when someone or self is slowed
 -- Hand of Protection on a friendly who has aggro who shouldn't have aggro
 -- Hand of Reckoning if the tank is almost undead, maybe as the prot in waiting, equipping a shield and using SotR and a personal CD
--- Hand of Sacrifice, probably on tank on rotation
 -- Hand of Salvation constantly on people with high threat
 -- Use Every Man For Himself on loss of control
--- Keep sense undead up
+-- Click away Divine Shield if full health
+
+mb_Paladin_Retribution_saveProcsForHeals = false
 
 function mb_Paladin_Retribution_OnLoad()
     mb_EnableIWTDistanceClosing("Crusader Strike")
@@ -37,21 +36,6 @@ function mb_Paladin_Retribution_OnUpdate()
     if UnitBuff("player", "The Art of War") and not UnitBuff("player", "Divine Plea") then
         if mb_RaidHeal("Flash of Light") then
             return
-        end
-    end
-
-    if mb_config.mainTank ~= nil and UnitAffectingCombat("player") then
-        local unit = mb_GetUnitForPlayerName(mb_config.mainTank)
-        local rand = math.random(100)
-        if rand < 5 then
-            if not UnitBuff(unit, "Hand of Sacrifice") or not UnitBuff(unit, "Divine Guardian") then
-                if mb_CastSpellOnFriendly(unit, "Hand of Sacrifice") then
-                    return
-                end
-                if mb_CastSpellWithoutTarget("Divine Sacrifice") then
-                    return
-                end
-            end
         end
     end
 
@@ -117,7 +101,7 @@ function mb_Paladin_Retribution_OnUpdate()
         end
     end
 
-    if UnitBuff("player", "The Art of War") and mb_CastSpellOnTarget("Exorcism") then
+    if not mb_Paladin_Retribution_saveProcsForHeals and UnitBuff("player", "The Art of War") and mb_CastSpellOnTarget("Exorcism") then
         return
     end
 
@@ -129,7 +113,7 @@ function mb_Paladin_Retribution_OnUpdate()
         if not UnitBuff("player", "Divine Plea") and mb_RaidHeal("Flash of Light") then
             return
         end
-        if mb_CastSpellOnTarget("Exorcism") then
+        if not mb_Paladin_Retribution_saveProcsForHeals and mb_CastSpellOnTarget("Exorcism") then
             return
         end
     end

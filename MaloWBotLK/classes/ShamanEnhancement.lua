@@ -1,12 +1,14 @@
 
 -- TODO:
 -- Gift of the Naruu on tanks?
--- Magma totem on cleave > 1
 -- Wind Shear to interrupt
 -- Fire Elemental Totem on CD
 -- Earth Elemental Totem? Seems when you use one it starts a shared CD with the other for 2 mins, but each still has 10 min CD
 --      Avoid Totemic Recall when Elemental Totem is down, also go back to normal totems after the Elemental totem is gone.
 -- If I'm within melee range of the target, but my fire totem is not very close to me, re-place it, otherwise Fire Nova will miss
+
+mb_Shaman_Enhancement_saveProcsForHeals = false
+
 function mb_Shaman_Enhancement_OnLoad()
     local is25Man = mb_Is25ManRaid()
     local _, _, _, _, improvedStrengthOfEarth = GetTalentInfo(2, 1);
@@ -15,7 +17,7 @@ function mb_Shaman_Enhancement_OnLoad()
     else
         mb_Shaman_SetEarthTotem("Tremor Totem")
     end
-    mb_Shaman_SetFireTotem("Searing Totem")
+    mb_Shaman_SetFireTotem("Magma Totem")
     if not is25Man then
         mb_Shaman_SetWaterTotem("Mana Spring Totem")
     else
@@ -107,7 +109,7 @@ function mb_Shaman_Enhancement_OnUpdate()
         end
     end
 
-    if mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 4 then
+    if not mb_Shaman_Enhancement_saveProcsForHeals and mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 4 then
         if mb_cleaveMode > 0 and mb_CastSpellOnTarget("Chain Lightning") then
             return
         elseif mb_CastSpellOnTarget("Lightning Bolt") then
@@ -115,7 +117,11 @@ function mb_Shaman_Enhancement_OnUpdate()
         end
     end
 
-    if not mb_UnitHasMyDebuff("target", "Flame Shock") and mb_CastSpellOnTarget("Flame Shock") then
+    if mb_GetMyDebuffTimeRemaining("target", "Flame Shock") == 0 and mb_CastSpellOnTarget("Flame Shock") then
+        return
+    end
+
+    if mb_GetMyDebuffTimeRemaining("target", "Flame Shock") > 6 and mb_CastSpellOnTarget("Earth Shock") then
         return
     end
 
@@ -136,8 +142,12 @@ function mb_Shaman_Enhancement_OnUpdate()
             return
         end
 
-        if mb_CastSpellOnTarget("Lightning Bolt") then
-            return
+        if not mb_Shaman_Enhancement_saveProcsForHeals then
+            if mb_cleaveMode > 0 and mb_CastSpellOnTarget("Chain Lightning") then
+                return
+            elseif mb_CastSpellOnTarget("Lightning Bolt") then
+                return
+            end
         end
     end
 end

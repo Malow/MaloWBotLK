@@ -13,6 +13,7 @@ SpellEffectCalculator.lua
 MessageHandlers.lua
 Functions.lua
 MaloWBotLK.lua
+
 classes\Deathknight.lua
 classes\Druid.lua
 classes\Hunter.lua
@@ -30,4 +31,5 @@ classes\Warlock.lua
 classes\Warrior.lua
 classes\WarriorArms.lua
 
-
+bosses\Bosses.lua
+bosses\Loatheb.lua

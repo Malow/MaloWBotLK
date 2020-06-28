@@ -83,7 +83,7 @@ function mb_Warrior_Arms_OnUpdate()
         end
     end
 
-    if UnitPower("player") >= 10 and not mb_UnitHasMyDebuff("target", "Rend") then
+    if UnitPower("player") >= 10 and mb_GetMyDebuffTimeRemaining("target", "Rend") == 0 then
         if mb_CastSpellOnTarget("Rend") then
             return
         end

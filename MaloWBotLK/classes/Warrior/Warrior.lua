@@ -10,9 +10,11 @@ function mb_Warrior_OnLoad()
 		mb_classSpecificRunFunction = mb_Warrior_Arms_OnUpdate
 		mb_Warrior_Arms_OnLoad()
 	elseif mb_GetMySpecName() == "Fury" then
-		mb_SayRaid("Fury spec is not supported yet")
+		mb_classSpecificRunFunction = mb_Warrior_Fury_OnUpdate
+		mb_SpecNotSupported("Fury Warriors are not yet supported")
 	else
-		mb_SayRaid("Protection spec is not supported yet")
+		mb_classSpecificRunFunction = mb_Warrior_Protection_OnUpdate
+		mb_SpecNotSupported("Protection Warriors are not yet supported")
 	end
 end
 

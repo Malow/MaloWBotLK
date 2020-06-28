@@ -15,6 +15,7 @@ function mb_Paladin_OnLoad()
 		mb_Paladin_Holy_OnLoad()
 	elseif mb_GetMySpecName() == "Protection" then
 		mb_classSpecificRunFunction = mb_Paladin_Protection_OnUpdate
+		mb_SpecNotSupported("Protection Paladins are not yet supported")
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	else
 		mb_classSpecificRunFunction = mb_Paladin_Retribution_OnUpdate

@@ -622,6 +622,12 @@ function mb_IsMoving()
 	return GetUnitSpeed("player") ~= 0
 end
 
+function mb_SpecNotSupported(msg)
+	if not mb_isCommanding then
+		mb_SayRaid(msg)
+	end
+end
+
 --[[
 -- Ongoing temporary stuff for exact dist checking
 mb_followStickLength = 2.73

@@ -9,13 +9,15 @@ function mb_Shaman_OnLoad()
 	mb_RegisterDesiredBuff(BUFF_MOTW)
 
 	if mb_GetMySpecName() == "Elemental" then
-		mb_SayRaid("Elemental spec is not supported yet")
+		mb_classSpecificRunFunction = mb_Shaman_Elemental_OnUpdate
+		mb_SpecNotSupported("Elemental Shamans are not yet supported")
 	elseif mb_GetMySpecName() == "Enhancement" then
 		mb_classSpecificRunFunction = mb_Shaman_Enhancement_OnUpdate
 		mb_Shaman_Enhancement_OnLoad()
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	else
 		mb_classSpecificRunFunction = mb_Shaman_Restoration_OnUpdate
+		mb_SpecNotSupported("Restoration Shamans are not yet supported")
 	end
 
 	mb_RegisterExclusiveRequestHandler("heroism", mb_Shaman_HeroismRequestAcceptor, mb_Shaman_HeroismRequestExecutor)

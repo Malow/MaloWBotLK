@@ -31,6 +31,9 @@ This will make each of your slaves say "Hello" in the raid chat.
 Start a loot council for an item that dropped:  
 /mb lc [itemlink]
 
+Loads a boss-module which will override certain behaviour depending on the boss:  
+/mb bm \<bossname\>
+
 
 # Some useful macros I use on my Commander:
 Make all slaves accept pending trades or guild invites:  
@@ -73,5 +76,17 @@ Where "Elerien" is the name of the new character that they should follow, and "M
 
 Change commander on the fly for a single character:  
 /mb re if UnitName("player") == "Ceolmar" then mb_commanderUnit = mb_GetUnitForPlayerName("Odia") end
+
+Request a healer to use a CD (for example when there's large raid damage):  
+/run mb_SendExclusiveRequest("healcd", "")
+
+Request an external cooldown to be cast on you like Pain Supression or Hand of Sacrifice:  
+/run mb_SendExclusiveRequest("external", "")
+
+Toggle auto-rotation on/off on your commander:  
+/run if mb_doAutoRotationAsCommander then mb_doAutoRotationAsCommander = false; else mb_doAutoRotationAsCommander = true; end
+
+Toggle everyone in the raid using DPS cooldowns automatically on/off:  
+/run local c=mb_forceBlockDpsCooldowns;if c then c=false; mb_Print("DPS CDs free");else c=true; mb_Print("DPS CDs blocked");end mb_forceBlockDpsCooldowns=c; mb_SendMessage("remoteExecute ", "mb_forceBlockDpsCooldowns="..tostring(c));
 
 

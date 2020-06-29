@@ -39,7 +39,9 @@ function mb_Paladin_OnLoad()
 		mb_RegisterMessageHandler(BUFF_WISDOM.requestType, mb_Paladin_WisdomHandler)
 	end
 
-	mb_RegisterExclusiveRequestHandler("external", mb_Paladin_ExternalRequestAcceptor, mb_Paladin_ExternalRequestExecutor)
+	if not mb_isCommanding then
+		mb_RegisterExclusiveRequestHandler("external", mb_Paladin_ExternalRequestAcceptor, mb_Paladin_ExternalRequestExecutor)
+	end
 end
 
 function mb_Paladin_MightHandler(msg, from)
@@ -93,13 +95,16 @@ function mb_Paladin_CastAura()
 	return mb_CastSpellWithoutTarget(myAura)
 end
 
-
 function mb_Paladin_ExternalRequestAcceptor(message, from)
-	if mb_GetRemainingSpellCooldown("Hand of Sacrifice") < 1.5 then
-		return true
+	if mb_IsUsableSpell("Hand of Sacrifice") and mb_GetRemainingSpellCooldown("Hand of Sacrifice") < 1.5 then
+		if mb_IsUnitValidFriendlyTarget(from, "Hand of Sacrifice") then
+			return true
+		end
 	end
-	if mb_GetRemainingSpellCooldown("Divine Sacrifice") < 1.5 and UnitInParty(mb_GetUnitForPlayerName(from)) then
-		return true
+	if mb_IsUsableSpell("Divine Sacrifice") and mb_GetRemainingSpellCooldown("Divine Sacrifice") < 1.5 and UnitInParty(mb_GetUnitForPlayerName(from)) then
+		if CheckInteractDistance(from, 4) then
+			return true
+		end
 	end
 	return false
 end
@@ -111,11 +116,11 @@ function mb_Paladin_ExternalRequestExecutor(message, from)
 	local targetUnit = mb_GetUnitForPlayerName(from)
 
 	if mb_CastSpellOnFriendly(targetUnit, "Hand of Sacrifice") then
-		mb_SayRaid("Casting Hand of Sacrifice")
+		mb_SayRaid("Casting Hand of Sacrifice on " .. from)
 		return true
 	end
 	if UnitInParty(targetUnit) and mb_CastSpellWithoutTarget("Divine Sacrifice") then
-		mb_SayRaid("Casting Divine Sacrifice")
+		mb_SayRaid("Casting Divine Sacrifice on " .. from)
 		return true
 	end
 	return false

@@ -398,8 +398,12 @@ function mb_GetMySpecName()
 	return name
 end
 
+mb_forceBlockDpsCooldowns = false
 -- Returns true if using CDs is a good idea
 function mb_ShouldUseDpsCooldowns(rangeCheckSpell)
+	if mb_forceBlockDpsCooldowns then
+		return false
+	end
 	if not mb_IsValidOffensiveUnit("target") then
 		return false
 	end
@@ -626,6 +630,10 @@ function mb_SpecNotSupported(msg)
 	if not mb_isCommanding then
 		mb_SayRaid(msg)
 	end
+end
+
+function mb_IsTank()
+	return mb_GetMySpecName() == "Protection" or mb_GetMySpecName() == "Feral Combat" or mb_GetMySpecName() == "Frost"
 end
 
 --[[

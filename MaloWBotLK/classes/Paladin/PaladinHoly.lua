@@ -6,8 +6,11 @@
 
 function mb_Paladin_Holy_OnLoad()
     mb_preCastFinishCallback = mb_Paladin_Holy_PreCastFinishCallback
-    mb_RegisterExclusiveRequestHandler("healcd", mb_Paladin_HealCdAcceptor, mb_Paladin_HealCdExecutor)
+    mb_RegisterExclusiveRequestHandler("healcd", mb_Paladin_Holy_HealCdAcceptor, mb_Paladin_Holy_HealCdExecutor)
+    mb_CheckReagentAmount("Runic Mana Potion", 20)
 end
+
+mb_Paladin_Holy_tempThrottle = 0
 
 mb_Paladin_Holy_beaconUnit = nil
 mb_Paladin_Holy_useCooldownsCommandTime = 0
@@ -24,8 +27,16 @@ function mb_Paladin_Holy_OnUpdate()
         return
     end
 
-    if UnitAffectingCombat("player") and mb_UnitHealthPercentage("player") < 30 and mb_CastSpellWithoutTarget("Divine Shield") then
-        return
+    if UnitAffectingCombat("player") then
+        if mb_UnitHealthPercentage("player") < 30 and mb_CastSpellWithoutTarget("Divine Shield") then
+            return
+        end
+        if mb_UnitPowerPercentage("player") < 10 then
+            if mb_Paladin_Holy_tempThrottle + 60 < mb_time then
+                mb_SayRaid("Used Mana Potion")
+                mb_Paladin_Holy_tempThrottle = mb_time
+            end
+        end
     end
 
     if mb_Paladin_CastAura() then
@@ -156,7 +167,7 @@ function mb_Paladin_Holy_PreCastFinishCallback(spell, unit)
     end
 end
 
-function mb_Paladin_HealCdAcceptor(message, from)
+function mb_Paladin_Holy_HealCdAcceptor(message, from)
     if mb_GetBuffTimeRemaining("player", "Divine Plea") > 1 then
         return false
     end
@@ -169,7 +180,7 @@ function mb_Paladin_HealCdAcceptor(message, from)
     return true
 end
 
-function mb_Paladin_HealCdExecutor(message, from)
+function mb_Paladin_Holy_HealCdExecutor(message, from)
     mb_SayRaid("I'm popping my cooldowns!")
     mb_Paladin_Holy_useCooldownsCommandTime = mb_time
     return true

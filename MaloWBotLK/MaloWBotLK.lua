@@ -132,6 +132,19 @@ function mb_InitShared()
 	mb_UpdateClassOrder()
 	mb_InitClass()
 	mb_CheckDurability()
+
+	local numSkills = GetNumSkillLines()
+	for i = 1, numSkills do
+		if GetSkillLineInfo(i) == "Skinning" then
+			mb_isSkinner = true
+		end
+		if GetSkillLineInfo(i) == "Mining" then
+			mb_isMiner = true
+		end
+		if GetSkillLineInfo(i) == "Herbalism" then
+			mb_isHerbalist = true
+		end
+	end
 end
 
 function mb_InitClass()
@@ -218,6 +231,7 @@ mb_preCastFinishCallback = nil
 mb_shouldCallPreCastFinishCallback = false
 mb_currentCastTargetUnit = nil
 mb_IWTDistanceClosingRangeCheckSpell = nil
+mb_doAutoRotationAsCommander = false
 -- OnUpdate
 function mb_OnUpdate()
 	if not mb_isEnabled then
@@ -235,6 +249,9 @@ function mb_OnUpdate()
 	mb_RequestDesiredBuffsThrottled()
 	mb_FixRaidSetup()
 	if mb_isCommanding then
+		if mb_doAutoRotationAsCommander then
+			mb_classSpecificRunFunction()
+		end
 		return
 	end
 	if mb_commanderUnit ~= nil then
@@ -281,6 +298,9 @@ function mb_OnUpdate()
 		return
 	end
 	mb_classSpecificRunFunction()
+	if not mb_isCommanding then
+		mb_HarvestCreature()
+	end
 end
 
 function mb_HandleCommand(msg)
@@ -296,6 +316,13 @@ function mb_HandleCommand(msg)
 		mb_SayRaid("----------------------------------")
 		mb_SayRaid("Loot Council started for: " .. remainingString)
 		mb_SendMessage("lc ", remainingString)
+		return true
+	end
+
+	matches, remainingString = mb_StringStartsWith(msg, "bm")
+	if matches then
+		mb_BossModule_LoadModule(remainingString)
+		mb_SendMessage("remoteExecute ", "mb_BossModule_LoadModule(\"" .. remainingString .. "\")")
 		return true
 	end
 
@@ -380,6 +407,7 @@ function mb_HandleQueuedAcceptedRequest()
 			if mb_executorAttempts > 25 then
 				mb_executorAttempts = 0
 				mb_SayRaid("I'm stuck trying to fulfil a request of type: " .. request.type)
+				table.remove(mb_queuedAcceptedRequests, 1)
 			end
 		end
 		return true
@@ -526,7 +554,28 @@ function mb_FixRaidSetup()
 	mb_fixRaidSetupName = nil
 end
 
-
+mb_lastHarvestCheck = 0
+mb_isSkinner = false
+mb_isMiner = false
+mb_isHerbalist = false
+function mb_HarvestCreature()
+	if not mb_isMiner and not mb_isSkinner and not mb_isHerbalist then
+		return
+	end
+	if mb_lastHarvestCheck + 1 > mb_time then
+		return
+	end
+	mb_lastHarvestCheck = mb_time
+	if UnitExists("target") and UnitIsDead("target") then
+		if mb_isSkinner then
+			CastSpellByName("Skinning")
+		elseif mb_isMiner then
+			CastSpellByName("Mining")
+		elseif mb_isHerbalist then
+			CastSpellByName("Herbalism")
+		end
+	end
+end
 
 
 

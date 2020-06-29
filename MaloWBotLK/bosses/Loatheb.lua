@@ -1,5 +1,4 @@
 
-
 function mb_BossModule_Loatheb_GetMissingHealth_Override(unit)
     if mb_GetDebuffTimeRemaining(unit, "Necrotic Aura") > 0 then
         return 0
@@ -15,6 +14,7 @@ function mb_BossModule_Loatheb_PreOnUpdate()
         mb_Shaman_Enhancement_saveProcsForHeals = false
         mb_Paladin_Retribution_saveProcsForHeals = false
     end
+    return false
 end
 
 function mb_BossModule_Loatheb_OnLoad()

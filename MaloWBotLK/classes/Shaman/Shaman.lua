@@ -154,7 +154,7 @@ function mb_Shaman_GetHeroismName()
 end
 
 function mb_Shaman_HeroismRequestAcceptor(message, from)
-	if mb_GetRemainingSpellCooldown(mb_Shaman_GetHeroismName()) < 1.5 and mb_IsUsableSpell(mb_Shaman_GetHeroismName()) then
+	if mb_IsUsableSpell(mb_Shaman_GetHeroismName()) and mb_GetRemainingSpellCooldown(mb_Shaman_GetHeroismName()) < 1.5 then
 		return true
 	end
 	return false

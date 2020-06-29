@@ -1,5 +1,4 @@
 -- TODO:
--- Holy Wrath if fighting undead
 -- Lay on Hands on someone really low in the raid
 -- Divine Protection pre-taking damage, probably through a "use personals" macro
 -- Hammer of Justice targets, both as interrupt and as stun
@@ -101,6 +100,12 @@ function mb_Paladin_Retribution_OnUpdate()
         end
     end
 
+    if mb_cleaveMode > 0 and UnitCreatureType("target") == "Undead" and mb_IsSpellInRange("Crusader Strike", "target") then
+        if mb_CastSpellWithoutTarget("Holy Wrath") then
+            return
+        end
+    end
+
     if not mb_Paladin_Retribution_saveProcsForHeals and UnitBuff("player", "The Art of War") and mb_CastSpellOnTarget("Exorcism") then
         return
     end
@@ -114,6 +119,12 @@ function mb_Paladin_Retribution_OnUpdate()
             return
         end
         if not mb_Paladin_Retribution_saveProcsForHeals and mb_CastSpellOnTarget("Exorcism") then
+            return
+        end
+    end
+
+    if UnitCreatureType("target") == "Undead" and mb_IsSpellInRange("Crusader Strike", "target") then
+        if mb_CastSpellWithoutTarget("Holy Wrath") then
             return
         end
     end

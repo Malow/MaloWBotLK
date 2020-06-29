@@ -52,6 +52,9 @@ mb_spellEffectBaseValues["Chain Heal"][7] = 1205
 
 function mb_GetSpellEffect(spell)
     local _, rank = GetSpellInfo(spell)
+    if rank == nil or rank == "" then
+        rank = "Rank 1"
+    end
     local spellRank = tonumber(string.sub(rank, 5))
     local spellValues = mb_spellEffectBaseValues[spell]
     if spellValues == nil or spellValues[spellRank] == nil then

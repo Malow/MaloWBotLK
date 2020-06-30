@@ -223,6 +223,14 @@ function mb_CastSpellOnFriendly(unit, spell)
 	return true
 end
 
+function mb_CastSpellOnSelf(spell)
+    if not mb_CanCastSpell(spell) then
+        return false
+    end
+    CastSpellByName(spell, true)
+    return true
+end
+
 -- Returns true/false depending on if the unit is capable of resurrecting other players
 function mb_IsUnitResurrector(unit)
 	local unitClass = mb_GetClass(unit)
@@ -563,7 +571,7 @@ end
 -- Starts drinking if possible and if good to do so. Returns true if drinking
 mb_lastWaterWarningTime = 0
 function mb_Drink()
-	if UnitAffectingCombat("player") or mb_IsMoving() then
+	if UnitAffectingCombat("player") or mb_lastMovementTime + 1 > mb_time then
 		return false
 	end
 	if mb_IsDrinking() and mb_UnitPowerPercentage("player") < 99 then
@@ -634,6 +642,29 @@ end
 
 function mb_IsTank()
 	return mb_GetMySpecName() == "Protection" or mb_GetMySpecName() == "Feral Combat" or mb_GetMySpecName() == "Frost"
+end
+
+function mb_IsUnitStunned(unit)
+	if mb_GetBuffTimeRemaining(unit, "Hammer of Justice") > 0 then
+		return true
+	end
+	if mb_GetBuffTimeRemaining(unit, "Holy Wrath") > 0 then
+		return true
+	end
+	return false
+end
+
+function mb_IsUnitSlowed(unit)
+	if mb_GetBuffTimeRemaining(unit, "Frost Shock") > 0 then
+		return true
+	end
+	if mb_GetBuffTimeRemaining(unit, "Earthbind") > 0 then
+		return true
+	end
+	if mb_GetBuffTimeRemaining(unit, "Hamstring") > 0 then
+		return true
+	end
+	return false
 end
 
 --[[

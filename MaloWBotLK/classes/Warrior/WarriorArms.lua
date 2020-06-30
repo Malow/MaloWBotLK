@@ -43,7 +43,7 @@ function mb_Warrior_Arms_OnUpdate()
         return
     end
 
-    if CheckInteractDistance(mb_commanderUnit, 1) and CheckInteractDistance("target", 1) then
+    if (mb_commanderUnit == nil or CheckInteractDistance(mb_commanderUnit, 1)) and CheckInteractDistance("target", 1) then
         if mb_CastSpellOnTarget("Charge") then
             return
         end

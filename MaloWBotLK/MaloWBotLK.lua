@@ -232,6 +232,7 @@ mb_shouldCallPreCastFinishCallback = false
 mb_currentCastTargetUnit = nil
 mb_IWTDistanceClosingRangeCheckSpell = nil
 mb_doAutoRotationAsCommander = false
+mb_lastMovementTime = GetTime()
 -- OnUpdate
 function mb_OnUpdate()
 	if not mb_isEnabled then
@@ -248,8 +249,14 @@ function mb_OnUpdate()
 	mb_LootHandler_OnUpdate()
 	mb_RequestDesiredBuffsThrottled()
 	mb_FixRaidSetup()
+	if mb_IsMoving() then
+		mb_lastMovementTime = mb_time
+	end
 	if mb_isCommanding then
 		if mb_doAutoRotationAsCommander then
+			if mb_BossModule_PreOnUpdate() then
+				return
+			end
 			mb_classSpecificRunFunction()
 		end
 		return

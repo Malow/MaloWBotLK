@@ -15,7 +15,6 @@ function mb_Paladin_OnLoad()
 		mb_Paladin_Holy_OnLoad()
 	elseif mb_GetMySpecName() == "Protection" then
 		mb_classSpecificRunFunction = mb_Paladin_Protection_OnUpdate
-		mb_SpecNotSupported("Protection Paladins are not yet supported")
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	else
 		mb_classSpecificRunFunction = mb_Paladin_Retribution_OnUpdate
@@ -28,7 +27,7 @@ function mb_Paladin_OnLoad()
 	end
 
 	if mb_GetMySpecName() == "Protection" then -- Override class-order blessing for prot-palas since they have sanc
-		mb_RegisterMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_SancHandler)
+		mb_RegisterMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_SanctuaryHandler)
 		return
 	end
 	if mb_myClassOrderIndex == mb_config.classOrder.mightBlesser then
@@ -56,7 +55,7 @@ function mb_Paladin_KingsHandler(msg, from)
 	mb_Paladin_HandleBless(from, "Greater Blessing of Kings", "Blessing of Kings")
 end
 
-function mb_Paladin_SancHandler(msg, from)
+function mb_Paladin_SanctuaryHandler(msg, from)
 	mb_Paladin_HandleBless(from, "Greater Blessing of Sanctuary", "Blessing of Sanctuary")
 end
 

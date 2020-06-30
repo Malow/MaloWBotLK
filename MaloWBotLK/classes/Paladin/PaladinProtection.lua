@@ -24,7 +24,7 @@ function mb_Paladin_Protection_OnUpdate()
         return
     end
 
-    if not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnFriendly("player", "Sacred Shield") then
+    if not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnSelf("Sacred Shield") then
         return
     end
 
@@ -36,7 +36,7 @@ function mb_Paladin_Protection_OnUpdate()
         return
     end
 
-    if not mb_IsValidOffensiveUnit("target") then
+    if not mb_AcquireOffensiveTarget() then
         return
     end
 
@@ -75,6 +75,10 @@ function mb_Paladin_Protection_OnUpdate()
         return
     end
 
+    if mb_CastSpellOnTarget("Judgement of Light") then
+        return
+    end
+
     if mb_CastSpellOnTarget("Hammer of the Righteous") then
         return
     end
@@ -91,9 +95,5 @@ function mb_Paladin_Protection_OnUpdate()
         if mb_CastSpellWithoutTarget("Holy Wrath") then
             return
         end
-    end
-
-    if mb_CleanseRaid("Cleanse", "Magic", "Poison", "Disease") then
-        return
     end
 end

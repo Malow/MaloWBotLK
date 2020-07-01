@@ -227,7 +227,7 @@ function mb_CastSpellOnSelf(spell)
     if not mb_CanCastSpell(spell) then
         return false
     end
-    CastSpellByName(spell, true)
+    CastSpellByName(spell, "player")
     return true
 end
 
@@ -571,7 +571,7 @@ end
 -- Starts drinking if possible and if good to do so. Returns true if drinking
 mb_lastWaterWarningTime = 0
 function mb_Drink()
-	if UnitAffectingCombat("player") or mb_lastMovementTime + 1 > mb_time then
+	if UnitAffectingCombat("player") or UnitIsDeadOrGhost("player") or mb_lastMovementTime + 1 > mb_time then
 		return false
 	end
 	if mb_IsDrinking() and mb_UnitPowerPercentage("player") < 99 then

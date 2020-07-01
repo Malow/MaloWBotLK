@@ -26,16 +26,14 @@ function mb_Paladin_OnLoad()
 		CastSpellByName("Sense Undead")
 	end
 
-	if mb_GetMySpecName() == "Protection" then -- Override class-order blessing for prot-palas since they have sanc
-		mb_RegisterMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_SanctuaryHandler)
-		return
-	end
 	if mb_myClassOrderIndex == mb_config.classOrder.mightBlesser then
 		mb_RegisterMessageHandler(BUFF_MIGHT.requestType, mb_Paladin_MightHandler)
-	elseif mb_myClassOrderIndex == mb_config.classOrder.kingsBlesser then
-		mb_RegisterMessageHandler(BUFF_KINGS.requestType, mb_Paladin_KingsHandler)
 	elseif mb_myClassOrderIndex == mb_config.classOrder.wisdomBlesser then
 		mb_RegisterMessageHandler(BUFF_WISDOM.requestType, mb_Paladin_WisdomHandler)
+	elseif mb_myClassOrderIndex == mb_config.classOrder.kingsBlesser then
+		mb_RegisterMessageHandler(BUFF_KINGS.requestType, mb_Paladin_KingsHandler)
+	elseif mb_myClassOrderIndex == mb_config.classOrder.sancBlesser then
+		mb_RegisterMessageHandler(BUFF_SANCTUARY.requestType, mb_Paladin_SanctuaryHandler)
 	end
 
 	if not mb_isCommanding then

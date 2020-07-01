@@ -36,8 +36,9 @@ table.insert(mb_config.waters, "Conjured Mana Strudel")
 -- Class Order is the alphabetical order that the character is within its own class
 mb_config.classOrder = {}
 mb_config.classOrder.mightBlesser = 1
-mb_config.classOrder.kingsBlesser = 3
 mb_config.classOrder.wisdomBlesser = 2
+mb_config.classOrder.kingsBlesser = 3
+mb_config.classOrder.sancBlesser = 4
 mb_config.classOrder.retriAura = 1
 mb_config.classOrder.concentrationAura = 2
 mb_config.classOrder.frostAura = 3
@@ -56,21 +57,21 @@ mb_config.raidLayout["25man"] = {}
 mb_config.raidLayout["25man"][1] = {}
 table.insert(mb_config.raidLayout["25man"][1], "Malowtank")
 table.insert(mb_config.raidLayout["25man"][1], "Aerer")
-table.insert(mb_config.raidLayout["25man"][1], "Trudy")
 table.insert(mb_config.raidLayout["25man"][1], "Ninki")
 table.insert(mb_config.raidLayout["25man"][1], "Elweald")
+table.insert(mb_config.raidLayout["25man"][1], "Rewis")
 mb_config.raidLayout["25man"][2] = {}
 table.insert(mb_config.raidLayout["25man"][2], "Warde")
-table.insert(mb_config.raidLayout["25man"][2], "Rewis")
 table.insert(mb_config.raidLayout["25man"][2], "Riffin")
 table.insert(mb_config.raidLayout["25man"][2], "Tunbert")
 table.insert(mb_config.raidLayout["25man"][2], "Abith")
+table.insert(mb_config.raidLayout["25man"][2], "Elerien")
 mb_config.raidLayout["25man"][3] = {}
 table.insert(mb_config.raidLayout["25man"][3], "Puabi")
 table.insert(mb_config.raidLayout["25man"][3], "Verne")
 table.insert(mb_config.raidLayout["25man"][3], "Odia")
-table.insert(mb_config.raidLayout["25man"][3], "Elerien")
 table.insert(mb_config.raidLayout["25man"][3], "Necria")
+table.insert(mb_config.raidLayout["25man"][3], "Trudy")
 mb_config.raidLayout["25man"][4] = {}
 table.insert(mb_config.raidLayout["25man"][4], "Khalia")
 table.insert(mb_config.raidLayout["25man"][4], "Gwethriel")

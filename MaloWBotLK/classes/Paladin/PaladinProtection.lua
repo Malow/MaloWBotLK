@@ -44,11 +44,10 @@ function mb_Paladin_Protection_OnUpdate()
         InteractUnit("target")
     end
 
-    if not UnitBuff("player", "Holy Shield") and mb_CastSpellWithoutTarget("Holy Shield") then
-        return
-    end
-
     if mb_IsSpellInRange("Judgement of Light", "target") then
+        if not UnitBuff("player", "Holy Shield") and mb_CastSpellWithoutTarget("Holy Shield") then
+            return
+        end
         if not UnitBuff("player", "Divine Plea") then
             if mb_CastSpellWithoutTarget("Divine Plea") then
                 return

@@ -1,8 +1,8 @@
 -- TODO:
 -- Use Every Man For Himself on loss of control
--- Start using on-use trinkets
 -- Interrupt with pummel
 -- Recklessness on pre-pull
+-- Detect bleed immunity to avoid getting stuck on spemming rend.
 -- Some better check for Commanding Shout than CheckInteractDistance(unit, 4), that's 28 yards, range is 45 yards.
 -- 		Maybe some item you can use on friendly?
 
@@ -39,14 +39,14 @@ function mb_Warrior_Arms_OnUpdate()
         InteractUnit("target")
     end
 
-    if not UnitAffectingCombat("player") then
-        return
-    end
-
     if (mb_commanderUnit == nil or CheckInteractDistance(mb_commanderUnit, 1)) and CheckInteractDistance("target", 1) then
         if mb_CastSpellOnTarget("Charge") then
             return
         end
+    end
+
+    if not UnitAffectingCombat("player") then
+        return
     end
 
     mb_CastSpellWithoutTarget("Bloodrage")

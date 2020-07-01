@@ -667,33 +667,67 @@ function mb_IsUnitSlowed(unit)
 	return false
 end
 
---[[
--- Ongoing temporary stuff for exact dist checking
-mb_followStickLength = 2.73
-mb_positionMultiplier = nil
-function mb_SetPositionMultiplier()
-	local dist = mb_GetDistance("player", mb_commanderUnit)
-	mb_positionMultiplier = mb_followStickLength / dist
+mb_GoToPosition_hasReset = true
+mb_GoToPosition_hasReachedDestination = false
+-- Returns true as long as the character is busy running towards the place, returns false once it's there
+function mb_GoToPosition_Update(x, y, acceptedDistance)
+    local curX, curY = GetPlayerMapPosition("player")
+    local dX, dY = x - curX, y - curY
+    local distance = math.sqrt(dX * dX + dY * dY)
+    if mb_GoToPosition_hasReachedDestination and distance < acceptedDistance * 1.5 then -- Allow 50% leeway if you reached the destination previously.
+        return false
+    end
+    if distance < acceptedDistance then
+        TurnLeftStop()
+        TurnRightStop()
+        MoveForwardStop()
+        mb_GoToPosition_hasReachedDestination = true
+        mb_GoToPosition_hasReset = true
+        return false
+    end
+    mb_GoToPosition_hasReachedDestination = false
+    mb_GoToPosition_hasReset = false
+
+    local currentFacing = GetPlayerFacing()
+    local desiredFacing = math.atan2(dX, dY) + math.pi
+    local diff = desiredFacing - currentFacing
+    if diff > 0 then
+        if (currentFacing + 2 * math.pi) - desiredFacing < diff then
+            diff = (currentFacing + 2 * math.pi) - desiredFacing
+            TurnLeftStop()
+            TurnRightStart()
+        else
+            TurnRightStop()
+            TurnLeftStart()
+        end
+    else
+        if (currentFacing - 2 * math.pi) - desiredFacing > diff then
+            diff = (currentFacing - 2 * math.pi) - desiredFacing
+            TurnRightStop()
+            TurnLeftStart()
+        else
+            TurnLeftStop()
+            TurnRightStart()
+        end
+    end
+    if math.abs(diff) < math.pi / 2 then
+        MoveForwardStart()
+    else
+        MoveForwardStop()
+    end
+    return true
 end
 
--- Returns the Position of the unit, doesn't work for enemy units
-function mb_GetPosition(unit)
-	local x, y = GetPlayerMapPosition(unit)
-	if mb_positionMultiplier ~= nil then
-		x, y = x * mb_positionMultiplier, y * mb_positionMultiplier
-	end
-	return x, y
+-- Stops movement and camera turning, if the condition for GoToPosition changes before it has reached it destination characters can get stuck moving / turning otherwise.
+function mb_GoToPosition_Reset()
+    if mb_GoToPosition_hasReset then
+        return
+    end
+    mb_GoToPosition_hasReset = true
+    TurnLeftStop()
+    TurnRightStop()
+    MoveForwardStop()
 end
-
-function mb_GetDistance(unit1, unit2)
-	local x1, y1 = mb_GetPosition(unit1)
-	local x2, y2 = mb_GetPosition(unit2)
-	return sqrt((x1 - x2)^2 + (y1 - y2)^2)
-end
---]]
-
-
-
 
 
 

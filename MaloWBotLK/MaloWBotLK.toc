@@ -59,3 +59,6 @@ classes\Warrior\WarriorProtection.lua
 bosses\Bosses.lua
 bosses\Loatheb.lua
 bosses\Gluth.lua
+bosses\Thaddius.lua
+
+

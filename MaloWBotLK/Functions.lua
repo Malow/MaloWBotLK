@@ -683,10 +683,12 @@ function mb_GoToPosition_Update(x, y, acceptedDistance)
         MoveForwardStop()
         mb_GoToPosition_hasReachedDestination = true
         mb_GoToPosition_hasReset = true
+		mb_disableAutomaticMovement = false
         return false
     end
     mb_GoToPosition_hasReachedDestination = false
     mb_GoToPosition_hasReset = false
+	mb_disableAutomaticMovement = true
 
     local currentFacing = GetPlayerFacing()
     local desiredFacing = math.atan2(dX, dY) + math.pi
@@ -724,6 +726,7 @@ function mb_GoToPosition_Reset()
         return
     end
     mb_GoToPosition_hasReset = true
+	mb_disableAutomaticMovement = false
     TurnLeftStop()
     TurnRightStop()
     MoveForwardStop()

@@ -233,6 +233,7 @@ mb_currentCastTargetUnit = nil
 mb_IWTDistanceClosingRangeCheckSpell = nil
 mb_doAutoRotationAsCommander = false
 mb_lastMovementTime = GetTime()
+mb_disableAutomaticMovement = false
 -- OnUpdate
 function mb_OnUpdate()
 	if not mb_isEnabled then
@@ -261,32 +262,34 @@ function mb_OnUpdate()
 		end
 		return
 	end
-	if mb_commanderUnit ~= nil then
-		if mb_followMode == "lenient" or mb_IsDrinking() then
-            if not CheckInteractDistance(mb_commanderUnit, 2) then
-                FollowUnit(mb_commanderUnit)
-            end
-		elseif mb_followMode == "strict" then
-			FollowUnit(mb_commanderUnit)
-		end
-        if mb_followMode == "lenient" and not mb_IsDrinking() then
-			if not UnitAffectingCombat("player") or not mb_IsValidOffensiveUnit("target") then
+	if mb_disableAutomaticMovement then
+		if mb_commanderUnit ~= nil then
+			if mb_followMode == "lenient" or mb_IsDrinking() then
+				if not CheckInteractDistance(mb_commanderUnit, 2) then
+					FollowUnit(mb_commanderUnit)
+				end
+			elseif mb_followMode == "strict" then
 				FollowUnit(mb_commanderUnit)
 			end
-        end
-	end
-	if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then
-		MoveForwardStart()
-		MoveForwardStop()
-		mb_shouldStopMovingForwardAt = 0
-	end
-	if mb_IWTDistanceClosingRangeCheckSpell ~= nil and mb_IsValidOffensiveUnit("target") and (mb_commanderUnit == nil or CheckInteractDistance(mb_commanderUnit, 2)) then
-		if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
-			SetCVar("autoInteract", 1)
-			InteractUnit("target")
-			SetCVar("autoInteract", 0)
-		elseif mb_IsMoving() then
-            mb_shouldStopMovingForwardAt = mb_time
+			if mb_followMode == "lenient" and not mb_IsDrinking() then
+				if not UnitAffectingCombat("player") or not mb_IsValidOffensiveUnit("target") then
+					FollowUnit(mb_commanderUnit)
+				end
+			end
+		end
+		if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then
+			MoveForwardStart()
+			MoveForwardStop()
+			mb_shouldStopMovingForwardAt = 0
+		end
+		if mb_IWTDistanceClosingRangeCheckSpell ~= nil and mb_IsValidOffensiveUnit("target") and (mb_commanderUnit == nil or mb_followMode == "none" or CheckInteractDistance(mb_commanderUnit, 2)) then
+			if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
+				SetCVar("autoInteract", 1)
+				InteractUnit("target")
+				SetCVar("autoInteract", 0)
+			elseif mb_IsMoving() then
+				mb_shouldStopMovingForwardAt = mb_time
+			end
 		end
 	end
 	if mb_preCastFinishCallback ~= nil and mb_shouldCallPreCastFinishCallback then

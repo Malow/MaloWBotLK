@@ -33,7 +33,7 @@ function mb_Paladin_Retribution_OnUpdate()
     end
 
     if UnitBuff("player", "The Art of War") and not UnitBuff("player", "Divine Plea") then
-        if mb_RaidHeal("Flash of Light") then
+        if mb_RaidHeal("Flash of Light", 0.5) then
             return
         end
     end
@@ -60,7 +60,7 @@ function mb_Paladin_Retribution_OnUpdate()
 
     if not mb_AcquireOffensiveTarget() then
         if not UnitBuff("player", "Divine Plea") and mb_UnitPowerPercentage("player") > 30 then
-            if mb_RaidHeal("Flash of Light") then
+            if mb_RaidHeal("Flash of Light", 0.5) then
                 return
             end
         end
@@ -115,7 +115,7 @@ function mb_Paladin_Retribution_OnUpdate()
     end
 
     if mb_UnitPowerPercentage("player") > 30 and not mb_IsSpellInRange("Crusader Strike", "target") then
-        if not UnitBuff("player", "Divine Plea") and mb_RaidHeal("Flash of Light") then
+        if not UnitBuff("player", "Divine Plea") and mb_RaidHeal("Flash of Light", 0.5) then
             return
         end
         if not mb_Paladin_Retribution_saveProcsForHeals and mb_CastSpellOnTarget("Exorcism") then

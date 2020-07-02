@@ -56,8 +56,16 @@ function mb_Paladin_Holy_OnUpdate()
     end
 
     local mainTankUnit, offTankUnit = mb_GetUnitForPlayerName(mb_config.mainTank), mb_GetUnitForPlayerName(mb_config.offTank)
+    if mainTankUnit == nil or not mb_IsUnitValidFriendlyTarget(mainTankUnit, "Beacon of Light") then
+        if offTankUnit ~= nil and mb_IsUnitValidFriendlyTarget(offTankUnit, "Beacon of Light") then
+            mainTankUnit = offTankUnit
+        else
+            mainTankUnit = nil
+        end
+        offTankUnit = nil
+    end
     local sacredShieldTarget = mainTankUnit
-    if mb_GetClass(mainTankUnit) == "PALADIN" and offTankUnit ~= nil then
+    if mainTankUnit ~= nil and mb_GetClass(mainTankUnit) == "PALADIN" and offTankUnit ~= nil then
         sacredShieldTarget = offTankUnit
     end
 
@@ -106,7 +114,7 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
-    if mb_RaidHeal("Holy Light", 0.2) then
+    if mb_RaidHeal("Holy Light", 1.2) then
         return
     end
 

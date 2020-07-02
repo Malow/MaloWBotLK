@@ -262,7 +262,7 @@ function mb_OnUpdate()
 		end
 		return
 	end
-	if mb_disableAutomaticMovement then
+	if not mb_disableAutomaticMovement then
 		if mb_commanderUnit ~= nil then
 			if mb_followMode == "lenient" or mb_IsDrinking() then
 				if not CheckInteractDistance(mb_commanderUnit, 2) then

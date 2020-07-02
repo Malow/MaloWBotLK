@@ -58,7 +58,7 @@ function mb_Shaman_Enhancement_OnUpdate()
     end
 
     if mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 4 then
-        if mb_Shaman_ChainHealRaid() then
+        if mb_RaidHeal("Chain Heal", 0.5) then
             return
         end
     end
@@ -73,9 +73,7 @@ function mb_Shaman_Enhancement_OnUpdate()
 
     if not mb_AcquireOffensiveTarget() then
         if mb_UnitPowerPercentage("player") > 30 then
-            if mb_Shaman_ChainHealRaid() then
-                return
-            end
+            mb_RaidHeal("Chain Heal", 0.5)
         end
         return
     end
@@ -134,7 +132,7 @@ function mb_Shaman_Enhancement_OnUpdate()
     end
 
     if mb_UnitPowerPercentage("player") > 30 and not mb_IsSpellInRange("Stormstrike", "target") then
-        if mb_Shaman_ChainHealRaid() then
+        if mb_RaidHeal("Chain Heal", 0.5) then
             return
         end
 

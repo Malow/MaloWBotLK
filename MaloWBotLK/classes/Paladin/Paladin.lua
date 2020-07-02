@@ -16,6 +16,7 @@ function mb_Paladin_OnLoad()
 	elseif mb_GetMySpecName() == "Protection" then
 		mb_classSpecificRunFunction = mb_Paladin_Protection_OnUpdate
 		mb_RegisterDesiredBuff(BUFF_MIGHT)
+		mb_RegisterDesiredBuff(BUFF_THORNS)
 	else
 		mb_classSpecificRunFunction = mb_Paladin_Retribution_OnUpdate
 		mb_Paladin_Retribution_OnLoad()
@@ -93,10 +94,14 @@ function mb_Paladin_CastAura()
 end
 
 function mb_Paladin_ExternalRequestAcceptor(message, from)
-	if mb_IsUsableSpell("Hand of Sacrifice") and mb_GetRemainingSpellCooldown("Hand of Sacrifice") < 1.5 then
-		if mb_IsUnitValidFriendlyTarget(from, "Hand of Sacrifice") then
+	if message == "raid" then
+		if mb_IsUsableSpell("Divine Sacrifice") and mb_GetRemainingSpellCooldown("Divine Sacrifice") < 1.5 then
 			return true
 		end
+		return false
+	end
+	if mb_IsUsableSpell("Hand of Sacrifice", from) and mb_GetRemainingSpellCooldown("Hand of Sacrifice") < 1.5 then
+		return true
 	end
 	if mb_IsUsableSpell("Divine Sacrifice") and mb_GetRemainingSpellCooldown("Divine Sacrifice") < 1.5 and UnitInParty(mb_GetUnitForPlayerName(from)) then
 		if CheckInteractDistance(from, 4) then
@@ -110,8 +115,15 @@ function mb_Paladin_ExternalRequestExecutor(message, from)
 	if not mb_IsReadyForNewCast() then
 		return false
 	end
-	local targetUnit = mb_GetUnitForPlayerName(from)
+	if message == "raid" then
+		if mb_CastSpellWithoutTarget("Divine Sacrifice") then
+			mb_SayRaid("Casting Divine Sacrifice on raid")
+			return true
+		end
+		return false
+	end
 
+	local targetUnit = mb_GetUnitForPlayerName(from)
 	if mb_CastSpellOnFriendly(targetUnit, "Hand of Sacrifice") then
 		mb_SayRaid("Casting Hand of Sacrifice on " .. from)
 		return true

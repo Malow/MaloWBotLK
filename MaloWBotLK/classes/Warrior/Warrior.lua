@@ -24,7 +24,8 @@ function mb_Warrior_CommandingShout()
 		if UnitPower("player") < 10 then
 			return mb_CastSpellWithoutTarget("Bloodrage")
 		end
-		return mb_CastSpellWithoutTarget("Commanding Shout")
+		mb_CastSpellWithoutTarget("Commanding Shout")
+        return true
 	end
 	if mb_Warrior_lastCommandingShoutRaidCheck + 10 > mb_time then
 		return false
@@ -37,7 +38,8 @@ function mb_Warrior_CommandingShout()
 			if UnitPower("player") < 10 then
 				return mb_CastSpellWithoutTarget("Bloodrage")
 			end
-			return mb_CastSpellWithoutTarget("Commanding Shout")
+			mb_CastSpellWithoutTarget("Commanding Shout")
+            return true
 		end
 	end
 	return false

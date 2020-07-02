@@ -21,7 +21,7 @@ function mb_BossModule_Thaddius_PreOnUpdate()
             return false
         end
         local unit = mb_commanderUnit .. "target"
-        if UnitExists(unit) and UnitName(unit) ~= "Thaddius" and mb_UnitHealthPercentage(unit) < 30 then
+        if not UnitExists(unit) or (UnitName(unit) ~= "Thaddius" and mb_UnitHealthPercentage(unit) < 30) then
             return mb_BossModule_Thaddius_BlanketRaidSlowFall(slowFallSpell)
         end
     end
@@ -33,10 +33,14 @@ function mb_BossModule_Thaddius_BlanketRaidSlowFall(spell)
     for i = 1, members do
         local unit = mb_GetUnitFromPartyOrRaidIndex(i)
         if mb_GetBuffTimeRemaining(unit, "Slow Fall") < 3 and mb_GetBuffTimeRemaining(unit, "Levitate") < 3 then
-            if mb_CastSpellOnFriendly(unit, spell) then
+            if mb_IsUnitValidFriendlyTarget(unit, spell) then
+                mb_CastSpellOnFriendly(unit, spell)
                 return true
             end
         end
+    end
+    if UnitAffectingCombat("player") then
+        mb_SayRaid("Everyone has Slow Fall.")
     end
     return false
 end

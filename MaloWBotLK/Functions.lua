@@ -164,9 +164,13 @@ function mb_UnitPowerPercentage(unit)
 	return (UnitPower(unit) * 100) / UnitPowerMax(unit)
 end
 
-function mb_IsUsableSpell(spell)
+-- Unit is optional, if provided it will check that the spell can be cast on the unit
+function mb_IsUsableSpell(spell, unit)
 	local usable, nomana = IsUsableSpell(spell)
-	return usable == 1
+	if unit == nil then
+		return usable == 1
+	end
+	return mb_IsUnitValidFriendlyTarget(unit, spell)
 end
 
 -- Checks if there's no cooldown and if the spell use useable (have mana to cast it), and that if we're moving that it doesn't have a cast time
@@ -498,10 +502,10 @@ end
 -- Finds the most damaged member in the raid and casts the spell on that target as long as it doesn't over-heal
 function mb_RaidHeal(spell, acceptedOverheal)
 	if acceptedOverheal == nil then
-		acceptedOverheal = 0
+		acceptedOverheal = 1
 	end
 	local healUnit, missingHealth = mb_GetMostDamagedFriendly(spell)
-	if missingHealth * (1 + acceptedOverheal) > mb_GetSpellEffect(spell) then
+	if missingHealth * (acceptedOverheal) > mb_GetSpellEffect(spell) then
 		return mb_CastSpellOnFriendly(healUnit, spell)
 	end
 	return false
@@ -574,8 +578,13 @@ function mb_Drink()
 	if UnitAffectingCombat("player") or UnitIsDeadOrGhost("player") or mb_lastMovementTime + 1 > mb_time then
 		return false
 	end
-	if mb_IsDrinking() and mb_UnitPowerPercentage("player") < 99 then
-		return true
+	if mb_IsDrinking() then
+		if mb_UnitPowerPercentage("player") < 99 then
+			return true
+		else
+			SitStandOrDescendStart()
+			return false
+		end
 	end
 	if mb_UnitPowerPercentage("player") > 60 then
 		return false
@@ -672,6 +681,9 @@ mb_GoToPosition_hasReachedDestination = false
 -- Returns true as long as the character is busy running towards the place, returns false once it's there
 function mb_GoToPosition_Update(x, y, acceptedDistance)
     local curX, curY = GetPlayerMapPosition("player")
+	if curX == 0 and curY == 0 then
+		SetMapToCurrentZone()
+	end
     local dX, dY = x - curX, y - curY
     local distance = math.sqrt(dX * dX + dY * dY)
     if mb_GoToPosition_hasReachedDestination and distance < acceptedDistance * 1.5 then -- Allow 50% leeway if you reached the destination previously.

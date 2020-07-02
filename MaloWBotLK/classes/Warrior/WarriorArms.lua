@@ -94,20 +94,16 @@ function mb_Warrior_Arms_OnUpdate()
         end
     end
 
-    if mb_cleaveMode > 0 then
-        if not UnitDebuff("target", "Thunder Clap") and mb_IsSpellInRange("Mortal Strike", "target") then
-            mb_CastSpellWithoutTarget("Thunder Clap")
-            return
-        end
-        if mb_GetRemainingSpellCooldown("Sweeping Strikes") == 0 and mb_IsSpellInRange("Mortal Strike", "target") then
+    if mb_cleaveMode > 0 and mb_IsSpellInRange("Mortal Strike", "target") then
+        if mb_GetRemainingSpellCooldown("Sweeping Strikes") == 0 then
             mb_CastSpellWithoutTarget("Sweeping Strikes")
             return
         end
-        if mb_GetRemainingSpellCooldown("Bladestorm") == 0 and mb_IsSpellInRange("Mortal Strike", "target") then
+        if mb_GetRemainingSpellCooldown("Bladestorm") == 0 then
             mb_CastSpellWithoutTarget("Bladestorm")
             return
         end
-        if mb_cleaveMode > 1 and mb_GetRemainingSpellCooldown("Thunder Clap") == 0 and mb_IsSpellInRange("Mortal Strike", "target") then
+        if mb_cleaveMode > 1 and mb_GetRemainingSpellCooldown("Thunder Clap") == 0 then
             mb_CastSpellWithoutTarget("Thunder Clap")
             return
         end

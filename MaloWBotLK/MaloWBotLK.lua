@@ -584,7 +584,7 @@ function mb_HandleReadyCheck()
 		ready = false
 	end
 	for _, buff in pairs(mb_desiredBuffs) do
-		if mb_GetBuffTimeRemaining("player", buff.singleAuraName) < 600 and mb_GetBuffTimeRemaining("player", buff.groupAuraName) < 600 then
+		if mb_GetBuffTimeRemaining("player", buff.singleAuraName) < 540 and mb_GetBuffTimeRemaining("player", buff.groupAuraName) < 540 then
 			CancelUnitBuff("player", buff.singleAuraName)
 			CancelUnitBuff("player", buff.groupAuraName)
 			ready = false

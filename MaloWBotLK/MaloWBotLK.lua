@@ -66,9 +66,7 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 	elseif event == "GROUP_ROSTER_CHANGED" then
 		mb_UpdateClassOrder()
 	elseif event == "UI_ERROR_MESSAGE" then
-		if arg1 == "You are too far away!" then
-			mb_HandleTooFarAway()
-		elseif arg1 == "You are facing the wrong way!" or arg1 == "Target needs to be in front of you." then
+		if arg1 == "You are facing the wrong way!" or arg1 == "Target needs to be in front of you." then
 			mb_HandleFacingWrongWay()
 		end
 	elseif event == "UNIT_SPELLCAST_SENT" and arg1 == "player" then
@@ -478,7 +476,7 @@ function mb_RequestDesiredBuffsThrottled()
 end
 
 function mb_HandleFacingWrongWay()
-	if not mb_isEnabled or mb_isCommanding then
+	if not mb_isEnabled or mb_isCommanding or mb_disableAutomaticMovement then
 		return
 	end
 	if mb_followMode == "strict" then
@@ -492,18 +490,6 @@ end
 
 function mb_EnableIWTDistanceClosing(rangeCheckSpell)
 	mb_IWTDistanceClosingRangeCheckSpell = rangeCheckSpell
-end
-
-function mb_HandleTooFarAway()
-	if not mb_isEnabled or mb_isCommanding or mb_followMode == "none" or mb_IWTDistanceClosingRangeCheckSpell~= nil then
-		return
-	end
-	if mb_followMode == "lenient" then
-		SetCVar("autoInteract", 1)
-		InteractUnit("target")
-		SetCVar("autoInteract", 0)
-		mb_shouldStopMovingForwardAt = mb_time + 0.5
-	end
 end
 
 mb_lastError = 0

@@ -66,7 +66,7 @@ end
 
 -- Prints message in raid-chat
 function mb_SayRaid(message)
-	SendChatMessage(message, "RAID", "Common")
+	SendChatMessage(message, "RAID")
 end
 
 function mb_CreateMacro(name, body, actionSlot)
@@ -216,14 +216,7 @@ function mb_CastSpellOnFriendly(unit, spell)
 	if not mb_IsUnitValidFriendlyTarget(unit, spell) then
 		return false
 	end
-	-- If we're commanding we want self auto-cast on, which means we always need to target units to cast on them.
-	if mb_isCommanding or UnitIsFriend("target", "player") then
-		TargetUnit(unit)
-	end
-	CastSpellByName(spell)
-	if SpellIsTargeting() then
-		SpellTargetUnit(unit)
-	end
+	CastSpellByName(spell, unit)
 	return true
 end
 

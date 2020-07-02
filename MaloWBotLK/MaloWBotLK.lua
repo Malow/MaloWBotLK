@@ -72,6 +72,9 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 	elseif event == "UNIT_SPELLCAST_SENT" and arg1 == "player" then
 		mb_shouldCallPreCastFinishCallback = true
 		mb_currentCastTargetUnit = mb_GetUnitForPlayerName(arg4)
+	elseif event == "READY_CHECK" then
+		mb_HandleReadyCheck()
+		ReadyCheckFrame:Hide()
 	end
 end
 f:RegisterEvent("ADDON_LOADED")
@@ -86,6 +89,7 @@ f:RegisterEvent("QUEST_DETAIL")
 f:RegisterEvent("GROUP_ROSTER_CHANGED")
 f:RegisterEvent("UI_ERROR_MESSAGE")
 f:RegisterEvent("UNIT_SPELLCAST_SENT")
+f:RegisterEvent("READY_CHECK")
 f:SetScript("OnEvent", mb_OnEvent)
 
 mb_hasInitiated = false
@@ -572,6 +576,28 @@ function mb_HarvestCreature()
 		end
 	end
 end
+
+function mb_HandleReadyCheck()
+	local ready = true
+	if not mb_hasInitiated then
+		mb_SayRaid("I'm not initiated")
+		ready = false
+	end
+	for _, buff in pairs(mb_desiredBuffs) do
+		if mb_GetBuffTimeRemaining("player", buff.singleAuraName) < 600 and mb_GetBuffTimeRemaining("player", buff.groupAuraName) < 600 then
+			CancelUnitBuff("player", buff.singleAuraName)
+			CancelUnitBuff("player", buff.groupAuraName)
+			ready = false
+		end
+	end
+	local _, powerType = UnitPowerType("player")
+	if powerType == "MANA" and mb_UnitPowerPercentage("player") < 99 then
+		mb_Drink(true)
+		ready = false
+	end
+	ConfirmReadyCheck(ready)
+end
+
 
 
 

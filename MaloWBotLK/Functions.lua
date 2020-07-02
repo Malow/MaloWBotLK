@@ -567,9 +567,16 @@ end
 
 -- Starts drinking if possible and if good to do so. Returns true if drinking
 mb_lastWaterWarningTime = 0
-function mb_Drink()
-	if UnitAffectingCombat("player") or UnitIsDeadOrGhost("player") or mb_lastMovementTime + 1 > mb_time then
+function mb_Drink(force)
+	if UnitAffectingCombat("player") or UnitIsDeadOrGhost("player") then
 		return false
+	end
+	if force then
+		for _, water in pairs(mb_config.waters) do
+			if mb_UseItem(water) then
+				return true
+			end
+		end
 	end
 	if mb_IsDrinking() then
 		if mb_UnitPowerPercentage("player") < 99 then
@@ -580,6 +587,9 @@ function mb_Drink()
 		end
 	end
 	if mb_UnitPowerPercentage("player") > 60 then
+		return false
+	end
+	if mb_lastMovementTime + 1 > mb_time then
 		return false
 	end
 	for _, water in pairs(mb_config.waters) do

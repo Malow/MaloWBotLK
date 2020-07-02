@@ -10,21 +10,16 @@
 mb_Shaman_Enhancement_saveProcsForHeals = false
 
 function mb_Shaman_Enhancement_OnLoad()
-    local is25Man = mb_Is25ManRaid()
-    local _, _, _, _, improvedStrengthOfEarth = GetTalentInfo(2, 1);
-    if improvedStrengthOfEarth > 0 or not is25Man then
+    local _, _, _, _, improvedStrengthOfEarth = GetTalentInfo(2, 1)
+    if improvedStrengthOfEarth > 0 then
         mb_Shaman_SetEarthTotem("Strength of Earth Totem")
     else
         mb_Shaman_SetEarthTotem("Tremor Totem")
     end
     mb_Shaman_SetFireTotem("Magma Totem")
-    if not is25Man then
-        mb_Shaman_SetWaterTotem("Mana Spring Totem")
-    else
-        mb_Shaman_SetWaterTotem("Healing Stream Totem")
-    end
-    local _, _, _, _, improvedWindfury = GetTalentInfo(2, 13);
-    if improvedWindfury > 0 or not is25Man then
+    mb_Shaman_SetWaterTotem("Healing Stream Totem")
+    local _, _, _, _, improvedWindfury = GetTalentInfo(2, 13)
+    if improvedWindfury > 0 then
         mb_Shaman_SetAirTotem("Windfury Totem")
     else
         mb_Shaman_SetAirTotem("Grounding Totem")
@@ -67,8 +62,10 @@ function mb_Shaman_Enhancement_OnUpdate()
         return
     end
 
-    if not UnitBuff("player", "Lightning Shield") and mb_CastSpellWithoutTarget("Lightning Shield") then
-        return
+    if not UnitAffectingCombat("player") and not UnitBuff("player", "Lightning Shield") then
+        if mb_CastSpellWithoutTarget("Lightning Shield") then
+            return
+        end
     end
 
     if not mb_AcquireOffensiveTarget() then
@@ -91,6 +88,10 @@ function mb_Shaman_Enhancement_OnUpdate()
     end
 
     if mb_CastSpellOnTarget("Stormstrike") then
+        return
+    end
+
+    if mb_UnitPowerPercentage("player") < 10 then
         return
     end
 
@@ -117,6 +118,12 @@ function mb_Shaman_Enhancement_OnUpdate()
 
     if mb_GetMyDebuffTimeRemaining("target", "Flame Shock") == 0 and mb_CastSpellOnTarget("Flame Shock") then
         return
+    end
+
+    if not UnitBuff("player", "Lightning Shield") then
+        if mb_CastSpellWithoutTarget("Lightning Shield") then
+            return
+        end
     end
 
     if mb_GetMyDebuffTimeRemaining("target", "Flame Shock") > 6 and mb_CastSpellOnTarget("Earth Shock") then

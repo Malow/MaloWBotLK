@@ -70,13 +70,18 @@ end
 
 function mb_Shaman_HandleTotems()
 	local totemCount = mb_Shaman_GetTotemCount()
-	if totemCount > 0 and mb_Shaman_AreTotemsOutOfRange_Throttled() and mb_CastSpellWithoutTarget("Totemic Recall") then
+	if totemCount > 0 and mb_Shaman_AreTotemsOutOfRange_Throttled() then
+		mb_CastSpellWithoutTarget("Totemic Recall")
 		mb_Shaman_lastTotemCheck = mb_time
 		return true
 	end
 
 	if UnitAffectingCombat("player") then
 		if totemCount == 4 then
+			return false
+		end
+		local _, _, _, cost = GetSpellInfo("Call of the Elements")
+		if cost > UnitPower("player") then
 			return false
 		end
 		if totemCount < 2 then
@@ -96,22 +101,17 @@ function mb_Shaman_AreTotemsOutOfRange_Throttled()
 		return false
 	end
 	mb_Shaman_lastTotemCheck = mb_time
-	if not mb_Shaman_TargetAnyTotem() then
-		return false
-	end
-	if not CheckInteractDistance("target", 1) then
-		return true
-	end
-end
 
-function mb_Shaman_TargetAnyTotem()
-	ClearTarget()
+	local previousTarget = UnitName("target")
 	for i = 1, 4 do
 		TargetTotem(i)
-		if UnitExists("target") then
-			return true
+		if UnitExists("target") and UnitName("target") ~= previousTarget then
+			local inRange = CheckInteractDistance("target", 1) ~= 1
+			TargetLastTarget()
+			return inRange
 		end
 	end
+	TargetLastTarget()
 	return false
 end
 

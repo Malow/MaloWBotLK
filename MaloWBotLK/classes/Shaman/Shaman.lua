@@ -106,7 +106,7 @@ function mb_Shaman_AreTotemsOutOfRange_Throttled()
 	for i = 1, 4 do
 		TargetTotem(i)
 		if UnitExists("target") and UnitName("target") ~= previousTarget then
-			local inRange = CheckInteractDistance("target", 1) ~= 1
+			local inRange = CheckInteractDistance("target", 4) ~= 1
 			TargetLastTarget()
 			return inRange
 		end

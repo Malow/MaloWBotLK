@@ -58,7 +58,9 @@ classes\Warrior\WarriorProtection.lua
 
 bosses\Bosses.lua
 bosses\Loatheb.lua
+bosses\Kelthuzad.lua
 bosses\Gluth.lua
+bosses\Malygos.lua
 bosses\Thaddius.lua
 
 

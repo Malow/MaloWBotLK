@@ -75,6 +75,14 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 	elseif event == "READY_CHECK" then
 		mb_HandleReadyCheck()
 		ReadyCheckFrame:Hide()
+	elseif event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
+		if mb_registeredInterruptSpells ~= nil and arg1 == "target" then
+			mb_HandleTargetSpellcast()
+		end
+	elseif event == "UNIT_TARGET" then
+		if arg1 == "player" and mb_registeredInterruptSpells ~= nil then
+			mb_HandleTargetSpellcast()
+		end
 	end
 end
 f:RegisterEvent("ADDON_LOADED")
@@ -90,6 +98,9 @@ f:RegisterEvent("GROUP_ROSTER_CHANGED")
 f:RegisterEvent("UI_ERROR_MESSAGE")
 f:RegisterEvent("UNIT_SPELLCAST_SENT")
 f:RegisterEvent("READY_CHECK")
+f:RegisterEvent("UNIT_SPELLCAST_START")
+f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+f:RegisterEvent("UNIT_TARGET")
 f:SetScript("OnEvent", mb_OnEvent)
 
 mb_hasInitiated = false
@@ -236,6 +247,7 @@ mb_IWTDistanceClosingRangeCheckSpell = nil
 mb_doAutoRotationAsCommander = false
 mb_lastMovementTime = GetTime()
 mb_disableAutomaticMovement = false
+mb_isFollowing = false
 -- OnUpdate
 function mb_OnUpdate()
 	if not mb_isEnabled then
@@ -255,6 +267,12 @@ function mb_OnUpdate()
 	if mb_IsMoving() then
 		mb_lastMovementTime = mb_time
 	end
+	mb_CleanBlacklistedInterruptGUIDsList()
+	if mb_shouldInterruptTarget then
+		if mb_HandleInterruptTarget() then
+			return
+		end
+	end
 	if mb_isCommanding then
 		if mb_doAutoRotationAsCommander then
 			if mb_BossModule_PreOnUpdate() then
@@ -265,34 +283,7 @@ function mb_OnUpdate()
 		return
 	end
 	if not mb_disableAutomaticMovement then
-		if mb_commanderUnit ~= nil then
-			if mb_followMode == "lenient" or mb_IsDrinking() then
-				if not CheckInteractDistance(mb_commanderUnit, 2) then
-					FollowUnit(mb_commanderUnit)
-				end
-			elseif mb_followMode == "strict" then
-				FollowUnit(mb_commanderUnit)
-			end
-			if mb_followMode == "lenient" and not mb_IsDrinking() then
-				if not UnitAffectingCombat("player") or not mb_IsValidOffensiveUnit("target") then
-					FollowUnit(mb_commanderUnit)
-				end
-			end
-		end
-		if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then
-			MoveForwardStart()
-			MoveForwardStop()
-			mb_shouldStopMovingForwardAt = 0
-		end
-		if mb_IWTDistanceClosingRangeCheckSpell ~= nil and mb_IsValidOffensiveUnit("target") and (mb_commanderUnit == nil or mb_followMode == "none" or CheckInteractDistance(mb_commanderUnit, 2)) then
-			if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
-				SetCVar("autoInteract", 1)
-				InteractUnit("target")
-				SetCVar("autoInteract", 0)
-			elseif mb_IsMoving() then
-				mb_shouldStopMovingForwardAt = mb_time
-			end
-		end
+		mb_HandleAutomaticMovement()
 	end
 	if mb_preCastFinishCallback ~= nil and mb_shouldCallPreCastFinishCallback then
 		local spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, interrupt = UnitCastingInfo("player")
@@ -312,6 +303,37 @@ function mb_OnUpdate()
 	mb_classSpecificRunFunction()
 	if not mb_isCommanding then
 		mb_HarvestCreature()
+	end
+end
+
+function mb_HandleAutomaticMovement()
+	if mb_commanderUnit ~= nil then
+		if mb_followMode == "lenient" or mb_IsDrinking() then
+			if not CheckInteractDistance(mb_commanderUnit, 2) then
+				mb_FollowUnit(mb_commanderUnit)
+			end
+		elseif mb_followMode == "strict" then
+			mb_FollowUnit(mb_commanderUnit)
+		end
+		if mb_followMode == "lenient" and not mb_IsDrinking() then
+			if not UnitAffectingCombat("player") or not mb_IsValidOffensiveUnit("target") then
+				mb_FollowUnit(mb_commanderUnit)
+			end
+		end
+	end
+	if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then
+		MoveForwardStart()
+		MoveForwardStop()
+		mb_shouldStopMovingForwardAt = 0
+	end
+	if mb_IWTDistanceClosingRangeCheckSpell ~= nil and mb_IsValidOffensiveUnit("target") and (mb_commanderUnit == nil or mb_followMode == "none" or CheckInteractDistance(mb_commanderUnit, 2)) then
+		if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
+			SetCVar("autoInteract", 1)
+			InteractUnit("target")
+			SetCVar("autoInteract", 0)
+		elseif mb_IsMoving() then
+			mb_shouldStopMovingForwardAt = mb_time
+		end
 	end
 end
 
@@ -380,6 +402,23 @@ function mb_HandleIncomingMessage(mbCom)
 			table.insert(mb_queuedAcceptedRequests, mb_acceptedPendingExclusiveRequests[requestId])
 		end
 		mb_acceptedPendingExclusiveRequests[requestId] = nil
+		return
+	end
+
+	if messageType == "automatedInterrupt" then
+		local guid = string.sub(message, 1, string.find(message, ":") - 1)
+		if mbCom.from == UnitName("player") then
+			if mb_blacklistedInterruptGUIDs[guid] ~= nil and mb_blacklistedInterruptGUIDs[guid] > mb_time then
+				return
+			else
+				mb_shouldInterruptTarget = true
+				local spell = UnitCastingInfo("target")
+				mb_SayRaid("I'm interrupting " .. tostring(UnitName("target")) .. "'s " .. tostring(spell))
+			end
+		else
+			local exclusiveInterruptTime = string.sub(message, string.find(message, ":") + 1)
+			mb_blacklistedInterruptGUIDs[guid] = mb_time + tonumber(exclusiveInterruptTime)
+		end
 	end
 	
 	if mbCom.from == UnitName("player") and not mb_ShouldHandleMessageFromSelf(messageType) then
@@ -598,7 +637,87 @@ function mb_HandleReadyCheck()
 	ConfirmReadyCheck(ready)
 end
 
+mb_shouldInterruptTarget = false
+mb_blacklistedInterruptGUIDs = {}
+mb_registeredInterruptSpells = nil
+function mb_RegisterInterruptSpell(spell)
+	if mb_registeredInterruptSpells == nil then
+		mb_registeredInterruptSpells = {}
+	end
+	table.insert(mb_registeredInterruptSpells, spell)
+end
 
+function mb_CleanBlacklistedInterruptGUIDsList()
+	local deleteGUIDs = {}
+	for k, v in pairs(mb_blacklistedInterruptGUIDs) do
+		if v < mb_time then
+			table.insert(deleteGUIDs, k)
+		end
+	end
+	for _, v in pairs(deleteGUIDs) do
+		mb_blacklistedInterruptGUIDs[v] = nil
+	end
+end
 
+function mb_HandleTargetSpellcast()
+	if not mb_IsValidOffensiveUnit("target") then
+		return
+	end
+	local spell, _, _, _, _, endTime, _, _, notInterruptible = UnitCastingInfo("target")
+	local exclusiveInterruptTime = 0
+	if spell == nil then
+		spell, _, _, _, _, _, _, notInterruptible = UnitChannelInfo("target")
+		exclusiveInterruptTime = 0.5
+	else
+		exclusiveInterruptTime = (endTime / 1000.0) - mb_time
+	end
+	if spell == nil or notInterruptible then
+		return
+	end
 
+	local canInterrupt = false
+	for _, spell in pairs(mb_registeredInterruptSpells) do
+		if mb_IsUsableSpell(spell, "target") and mb_GetRemainingSpellCooldown(spell) < exclusiveInterruptTime then
+			canInterrupt = true
+		end
+	end
+	if not canInterrupt then
+		return
+	end
 
+	local guidShort = UnitGUID("target"):sub(13, 18)
+	mb_SendMessage("automatedInterrupt", guidShort .. ":" .. tostring(exclusiveInterruptTime))
+end
+
+function mb_HandleInterruptTarget()
+	if UnitChannelInfo("target") ~= nil then
+		for _, spell in pairs(mb_registeredInterruptSpells) do
+			mb_StopCast()
+			if mb_CastSpellOnTarget(spell) then
+				mb_shouldInterruptTarget = false
+				return true
+			end
+		end
+		return true
+	end
+
+	local spell, _, _, _, _, endTime = UnitCastingInfo("target")
+	if spell == nil then
+		mb_SayRaid(tostring(UnitName("target")) .. " wasn't casting anything")
+		mb_shouldInterruptTarget = false
+		return false
+	end
+
+	if (endTime / 1000.0) - 0.5 > mb_time then
+		return true
+	end
+
+	for _, spell in pairs(mb_registeredInterruptSpells) do
+		mb_StopCast()
+		if mb_CastSpellOnTarget(spell) then
+			mb_shouldInterruptTarget = false
+			return true
+		end
+	end
+	return true
+end

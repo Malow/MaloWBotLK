@@ -88,9 +88,6 @@ function mb_IsValidOffensiveUnit(unit)
 	if UnitIsDeadOrGhost(unit) then
 		return false
 	end
-	if UnitIsFriend("player", unit) then
-		return false
-	end
 	if not UnitCanAttack("player", unit) == 1 then
 		return false
 	end
@@ -109,12 +106,12 @@ function mb_IsSpellInRange(spell, unit)
 	return IsSpellInRange(spell, unit) == 1
 end
 
--- Checks if target exists, is visible, is friendly and if it's dead or ghost, and if the spell is in range if provided
+-- Checks if target exists, is friendly and if it's dead or ghost, and if the spell is in range if provided
 function mb_IsUnitValidFriendlyTarget(unit, spell)
     if UnitIsDeadOrGhost(unit) then
         return false
     end
-	if not UnitIsFriend(unit, "player") then
+	if UnitCanAttack("player", unit) == 1 then
 		return false
 	end
 	if spell ~= nil and not mb_IsSpellInRange(spell, unit) then
@@ -164,17 +161,22 @@ function mb_UnitPowerPercentage(unit)
 	return (UnitPower(unit) * 100) / UnitPowerMax(unit)
 end
 
--- Unit is optional, if provided it will check that the spell can be cast on the unit
+-- Unit is optional, if provided it will check that the spell can be cast on the unit (that it's a valid target and is in range)
 function mb_IsUsableSpell(spell, unit)
 	local usable, nomana = IsUsableSpell(spell)
 	if unit == nil then
 		return usable == 1
 	end
-	return mb_IsUnitValidFriendlyTarget(unit, spell)
+	if UnitCanAttack("player", unit) == 1 then
+		return mb_IsValidOffensiveUnit(unit) and mb_IsSpellInRange(spell, unit)
+	else
+		return mb_IsUnitValidFriendlyTarget(unit, spell)
+	end
 end
 
 -- Checks if there's no cooldown and if the spell use useable (have mana to cast it), and that if we're moving that it doesn't have a cast time
-function mb_CanCastSpell(spell)
+-- Unit is optional, if provided it will check that the spell can be cast on the unit (that it's a valid target and is in range)
+function mb_CanCastSpell(spell, unit)
 	if GetSpellCooldown(spell) ~= 0 then
 		return false
 	end
@@ -184,15 +186,12 @@ function mb_CanCastSpell(spell)
 			return false
 		end
 	end
-	return mb_IsUsableSpell(spell)
+	return mb_IsUsableSpell(spell, unit)
 end
 
 -- Returns true on success
 function mb_CastSpellOnTarget(spell)
-	if not mb_CanCastSpell(spell) then
-		return false
-	end
-	if not mb_IsSpellInRange(spell, "target") then
+	if not mb_CanCastSpell(spell, "target") then
 		return false
 	end
 	CastSpellByName(spell)
@@ -210,10 +209,7 @@ end
 
 -- Casts directly without changing your current target unless required to do so. Returns true on success
 function mb_CastSpellOnFriendly(unit, spell)
-	if not mb_CanCastSpell(spell) then
-		return false
-	end
-	if not mb_IsUnitValidFriendlyTarget(unit, spell) then
+	if not mb_CanCastSpell(spell, unit) then
 		return false
 	end
 	CastSpellByName(spell, unit)
@@ -551,13 +547,16 @@ function mb_GetItemLocation(itemName)
 	return nil
 end
 
+function mb_HasItem(itemName)
+	return GetItemCount(itemName) ~= 0
+end
+
 -- tries to use an item in the bags, returns true/false depending on if successful
 function mb_UseItem(itemName)
-	local bag, slot = mb_GetItemLocation(itemName)
-	if bag == nil then
+	if GetItemCount(itemName) == 0 then
 		return false
 	end
-	UseContainerItem(bag, slot)
+	UseItemByName(itemName)
 	return true
 end
 
@@ -571,37 +570,43 @@ function mb_Drink(force)
 	if UnitAffectingCombat("player") or UnitIsDeadOrGhost("player") then
 		return false
 	end
-	if force then
-		for _, water in pairs(mb_config.waters) do
-			if mb_UseItem(water) then
-				return true
-			end
+    if mb_IsDrinking() then
+        if mb_UnitPowerPercentage("player") < 99 then
+            return true
+        else
+            SitStandOrDescendStart()
+            return false
+        end
+    end
+	local waterName = nil
+	for _, water in pairs(mb_config.waters) do
+		if mb_HasItem(water) then
+			waterName = water
+			break
 		end
 	end
-	if mb_IsDrinking() then
-		if mb_UnitPowerPercentage("player") < 99 then
-			return true
-		else
-			SitStandOrDescendStart()
-			return false
+	if waterName == nil then
+		if mb_lastWaterWarningTime + 60 < mb_time then
+			mb_SayRaid("I don't have any water")
+			mb_lastWaterWarningTime = mb_time
 		end
+		return false
+	end
+
+	if force then
+		return mb_UseItem(waterName)
 	end
 	if mb_UnitPowerPercentage("player") > 60 then
 		return false
 	end
-	if mb_lastMovementTime + 1 > mb_time then
+	if mb_lastMovementTime + 2 > mb_time then
 		return false
 	end
-	for _, water in pairs(mb_config.waters) do
-		if mb_UseItem(water) then
-			return true
-		end
-	end
-	if mb_lastWaterWarningTime + 60 < mb_time then
-		mb_SayRaid("Didn't find any water in my bags")
-		mb_lastWaterWarningTime = mb_time
-	end
-	return false
+	--if mb_isFollowing and mb_followMode == "lenient" then
+	--	mb_BreakFollow()
+	--	return true
+	--end
+	return mb_UseItem(waterName)
 end
 
 function mb_StopCast()
@@ -656,6 +661,10 @@ function mb_IsTank()
 	return mb_GetMySpecName() == "Protection" or mb_GetMySpecName() == "Feral Combat" or mb_GetMySpecName() == "Frost"
 end
 
+function mb_IsHealer()
+    return mb_GetMySpecName() == "Holy" or mb_GetMySpecName() == "Restoration" or mb_GetMySpecName() == "Discipline"
+end
+
 function mb_IsUnitStunned(unit)
 	if mb_GetBuffTimeRemaining(unit, "Hammer of Justice") > 0 then
 		return true
@@ -679,14 +688,20 @@ function mb_IsUnitSlowed(unit)
 	return false
 end
 
+function mb_GetMapPosition(unit)
+	local x, y = GetPlayerMapPosition(unit)
+	if curX == 0 and curY == 0 then
+		SetMapToCurrentZone()
+		x, y = GetPlayerMapPosition(unit)
+	end
+	return x, y
+end
+
 mb_GoToPosition_hasReset = true
 mb_GoToPosition_hasReachedDestination = false
 -- Returns true as long as the character is busy running towards the place, returns false once it's there
 function mb_GoToPosition_Update(x, y, acceptedDistance)
-    local curX, curY = GetPlayerMapPosition("player")
-	if curX == 0 and curY == 0 then
-		SetMapToCurrentZone()
-	end
+    local curX, curY = mb_GetMapPosition("player")
     local dX, dY = x - curX, y - curY
     local distance = math.sqrt(dX * dX + dY * dY)
     if mb_GoToPosition_hasReachedDestination and distance < acceptedDistance * 1.5 then -- Allow 50% leeway if you reached the destination previously.
@@ -747,10 +762,43 @@ function mb_GoToPosition_Reset()
     MoveForwardStop()
 end
 
+function mb_FollowUnit(unit)
+	mb_isFollowing = true
+	FollowUnit(unit)
+end
 
+function mb_BreakFollow()
+	mb_isFollowing = false
+	TurnLeftStart()
+	TurnLeftStop()
+end
 
+mb_crowdControlSpells = {
+	"Fear",
+	"Polymorph",
+	"Death Coil",
+	"Hammer of Justice",
+	"Hex"
+}
+function mb_CrowdControl(unit)
+	for _, ccSpell in pairs(mb_crowdControlSpells) do
+		if mb_GetDebuffTimeRemaining(unit, ccSpell) > 0 then
+			if UnitCastingInfo("player") ~= nil and mb_currentCastTargetUnit == unit then
+				mb_StopCast()
+			end
+			return false
+		end
+	end
 
-
+	for _, ccSpell in pairs(mb_crowdControlSpells) do
+		if mb_CanCastSpell(ccSpell, unit) then
+			TargetUnit(unit)
+			CastSpellByName(ccSpell)
+			return true
+		end
+	end
+	return false
+end
 
 
 

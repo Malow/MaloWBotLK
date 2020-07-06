@@ -25,6 +25,7 @@ function mb_Shaman_Enhancement_OnLoad()
         mb_Shaman_SetAirTotem("Grounding Totem")
     end
     mb_EnableIWTDistanceClosing("Stormstrike")
+    mb_RegisterInterruptSpell("Wind Shear")
 end
 
 function mb_Shaman_Enhancement_OnUpdate()

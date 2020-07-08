@@ -13,6 +13,8 @@ mb_Paladin_Retribution_saveProcsForHeals = false
 
 function mb_Paladin_Retribution_OnLoad()
     mb_EnableIWTDistanceClosing("Crusader Strike")
+    mb_RegisterDesiredBuff(BUFF_MIGHT)
+    mb_RegisterClassSpecificReadyCheckFunction(mb_Paladin_Retribution_ReadyCheck)
 end
 
 function mb_Paladin_Retribution_OnUpdate()
@@ -33,7 +35,7 @@ function mb_Paladin_Retribution_OnUpdate()
     end
 
     if UnitBuff("player", "The Art of War") and not UnitBuff("player", "Divine Plea") then
-        if mb_RaidHeal("Flash of Light", 0.5) then
+        if mb_RaidHeal("Flash of Light", 0.3) then
             return
         end
     end
@@ -60,7 +62,7 @@ function mb_Paladin_Retribution_OnUpdate()
 
     if not mb_AcquireOffensiveTarget() then
         if not UnitBuff("player", "Divine Plea") and mb_UnitPowerPercentage("player") > 30 then
-            if mb_RaidHeal("Flash of Light", 0.5) then
+            if mb_RaidHeal("Flash of Light", 0.3) then
                 return
             end
         end
@@ -86,8 +88,10 @@ function mb_Paladin_Retribution_OnUpdate()
         return
     end
 
-    if mb_CastSpellOnTarget("Hammer of Wrath") then
-        return
+    if mb_UnitHealthPercentage("target") < 20 then
+        if mb_CastSpellOnTarget("Hammer of Wrath") then
+            return
+        end
     end
 
     if mb_IsSpellInRange("Crusader Strike", "target") and mb_CastSpellWithoutTarget("Divine Storm") then
@@ -141,4 +145,13 @@ function mb_Paladin_Retribution_CastSeal()
     return false
 end
 
+function mb_Paladin_Retribution_ReadyCheck()
+    local ready = true
+    if mb_GetBuffTimeRemaining("player", "Seal of Vengeance") < 540 and mb_GetBuffTimeRemaining("player", "Seal of Command") < 540 then
+        CancelUnitBuff("player", "Seal of Vengeance")
+        CancelUnitBuff("player", "Seal of Command")
+        ready = false
+    end
+    return ready
+end
 

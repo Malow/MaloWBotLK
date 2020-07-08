@@ -167,6 +167,9 @@ function mb_IsUsableSpell(spell, unit)
 	if unit == nil then
 		return usable == 1
 	end
+	if usable == nil then
+		return false
+	end
 	if UnitCanAttack("player", unit) == 1 then
 		return mb_IsValidOffensiveUnit(unit) and mb_IsSpellInRange(spell, unit)
 	else
@@ -690,7 +693,7 @@ end
 
 function mb_GetMapPosition(unit)
 	local x, y = GetPlayerMapPosition(unit)
-	if curX == 0 and curY == 0 then
+	if x == 0 and y == 0 then
 		SetMapToCurrentZone()
 		x, y = GetPlayerMapPosition(unit)
 	end
@@ -792,8 +795,7 @@ function mb_CrowdControl(unit)
 
 	for _, ccSpell in pairs(mb_crowdControlSpells) do
 		if mb_CanCastSpell(ccSpell, unit) then
-			TargetUnit(unit)
-			CastSpellByName(ccSpell)
+			CastSpellByName(ccSpell, unit)
 			return true
 		end
 	end

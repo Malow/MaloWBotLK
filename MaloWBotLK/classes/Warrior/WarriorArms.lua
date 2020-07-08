@@ -9,6 +9,7 @@
 function mb_Warrior_Arms_OnLoad()
     mb_EnableIWTDistanceClosing("Mortal Strike")
     mb_CombatLogModule_Enable()
+    mb_RegisterClassSpecificReadyCheckFunction(mb_Warrior_Arms_ReadyCheck)
 end
 
 function mb_Warrior_Arms_OnUpdate()
@@ -135,4 +136,13 @@ function mb_Warrior_Arms_OnUpdate()
     if mb_CastSpellOnTarget("Heroic Throw") then
         return
     end
+end
+
+function mb_Warrior_Arms_ReadyCheck()
+    local ready = true
+    if mb_GetBuffTimeRemaining("player", "Commanding Shout") < 60 then
+        CancelUnitBuff("player", "Commanding Shout")
+        ready = false
+    end
+    return ready
 end

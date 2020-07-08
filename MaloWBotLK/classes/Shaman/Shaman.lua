@@ -14,7 +14,6 @@ function mb_Shaman_OnLoad()
 	elseif mb_GetMySpecName() == "Enhancement" then
 		mb_classSpecificRunFunction = mb_Shaman_Enhancement_OnUpdate
 		mb_Shaman_Enhancement_OnLoad()
-		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	else
 		mb_classSpecificRunFunction = mb_Shaman_Restoration_OnUpdate
 		mb_SpecNotSupported("Restoration Shamans are not yet supported")

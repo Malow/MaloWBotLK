@@ -33,6 +33,12 @@ mb_config.waters = {}
 table.insert(mb_config.waters, "Conjured Mana Strudel")
 
 
+-- List of profession CD's to use automatically (in order)
+mb_config.professionCooldowns = {}
+mb_config.professionCooldowns["Alchemy"] = {}
+table.insert(mb_config.professionCooldowns["Alchemy"], "Transmute: Eternal Shadow to Life")
+
+
 -- Class Order is the alphabetical order that the character is within its own class
 mb_config.classOrder = {}
 mb_config.classOrder.mightBlesser = 1

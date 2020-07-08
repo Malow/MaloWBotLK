@@ -5,7 +5,7 @@ function mb_BossModule_Malygos_PreOnUpdate()
     end
     TargetUnit("Malygos")
     mb_IWTDistanceClosingRangeCheckSpell = nil
-    if mb_IsHealer() then
+    if mb_IsHealer() or mb_IsTank() then
         if GetComboPoints("playerpet", "playerpet") == 5 then
             CastSpellByName("Life Burst", "playerpet")
             return true

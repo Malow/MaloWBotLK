@@ -8,6 +8,7 @@ function mb_Paladin_Holy_OnLoad()
     mb_preCastFinishCallback = mb_Paladin_Holy_PreCastFinishCallback
     mb_RegisterExclusiveRequestHandler("healcd", mb_Paladin_Holy_HealCdAcceptor, mb_Paladin_Holy_HealCdExecutor)
     mb_CheckReagentAmount("Runic Mana Potion", 20)
+    mb_RegisterClassSpecificReadyCheckFunction(mb_Paladin_Holy_ReadyCheck)
 end
 
 mb_Paladin_Holy_tempThrottle = 0
@@ -192,4 +193,13 @@ function mb_Paladin_Holy_HealCdExecutor(message, from)
     mb_SayRaid("I'm popping my cooldowns!")
     mb_Paladin_Holy_useCooldownsCommandTime = mb_time
     return true
+end
+
+function mb_Paladin_Holy_ReadyCheck()
+    local ready = true
+    if mb_GetBuffTimeRemaining("player", "Seal of Wisdom") < 540 then
+        CancelUnitBuff("player", "Seal of Wisdom")
+        ready = false
+    end
+    return ready
 end

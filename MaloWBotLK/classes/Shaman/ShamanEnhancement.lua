@@ -26,6 +26,8 @@ function mb_Shaman_Enhancement_OnLoad()
     end
     mb_EnableIWTDistanceClosing("Stormstrike")
     mb_RegisterInterruptSpell("Wind Shear")
+    mb_RegisterDesiredBuff(BUFF_MIGHT)
+    mb_RegisterClassSpecificReadyCheckFunction(mb_Shaman_Enhancement_ReadyCheck)
 end
 
 function mb_Shaman_Enhancement_OnUpdate()
@@ -158,7 +160,23 @@ function mb_Shaman_Enhancement_OnUpdate()
     end
 end
 
-
+function mb_Shaman_Enhancement_ReadyCheck()
+    local ready = true
+    if mb_GetBuffTimeRemaining("player", "Lightning Shield") < 540 then
+        CancelUnitBuff("player", "Lightning Shield")
+        ready = false
+    end
+    local _, mainHandExpiration, _, _, offHandExpiration = GetWeaponEnchantInfo()
+    if mainHandExpiration / 1000 < 540 then
+        CancelItemTempEnchantment(1)
+        ready = false
+    end
+    if offHandExpiration / 1000 < 540 then
+        CancelItemTempEnchantment(2)
+        ready = false
+    end
+    return ready
+end
 
 
 

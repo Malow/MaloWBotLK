@@ -1,5 +1,14 @@
 
 function mb_BossModule_Kelthuzad_PreOnUpdate()
+    if UnitIsDeadOrGhost("player") then
+        return
+    end
+    if mb_commanderUnit == nil and UnitName("target") ~= "Kel'Thuzad" then
+        return
+    end
+    if mb_commanderUnit ~= nil and UnitName(mb_commanderUnit .. "target") ~= "Kel'Thuzad" then
+        return
+    end
     if mb_BossModule_Kelthuzad_ManaDetonation() then
         return
     end
@@ -67,28 +76,28 @@ mb_BossModule_Kelthuzad_lastDetectedVoidZone = 0
 mb_BossModule_Kelthuzad_isMovingFromVoidZone = false
 function mb_BossModule_Kelthuzad_VoidZone()
     local timeSinceVoidZone = mb_time - mb_BossModule_Kelthuzad_lastDetectedVoidZone
-    if timeSinceVoidZone > 13 then
-        if mb_BossModule_Kelthuzad_isMovingFromVoidZone then
-            StrafeLeftStop()
-            StrafeRightStop()
-            mb_disableAutomaticMovement = false
-            mb_BossModule_Kelthuzad_isMovingFromVoidZone = false
-        end
-    elseif timeSinceVoidZone > 11 then
-        StrafeLeftStop()
-        StrafeRightStart()
-        mb_disableAutomaticMovement = true
-        mb_BossModule_Kelthuzad_isMovingFromVoidZone = true
-    elseif timeSinceVoidZone > 2 then
-        StrafeLeftStop()
-        StrafeRightStop()
-        mb_disableAutomaticMovement = false
-        mb_BossModule_Kelthuzad_isMovingFromVoidZone = false
-    else
+    if timeSinceVoidZone < 3 then
+        return
+    end
+    if timeSinceVoidZone < 5 then
         StrafeRightStop()
         StrafeLeftStart()
         mb_disableAutomaticMovement = true
         mb_BossModule_Kelthuzad_isMovingFromVoidZone = true
+        return
+    end
+    if timeSinceVoidZone < 7 then
+        StrafeLeftStop()
+        StrafeRightStart()
+        mb_disableAutomaticMovement = true
+        mb_BossModule_Kelthuzad_isMovingFromVoidZone = true
+        return
+    end
+    if mb_BossModule_Kelthuzad_isMovingFromVoidZone then
+        StrafeLeftStop()
+        StrafeRightStop()
+        mb_disableAutomaticMovement = false
+        mb_BossModule_Kelthuzad_isMovingFromVoidZone = false
     end
 end
 

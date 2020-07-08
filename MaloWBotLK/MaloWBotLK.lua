@@ -248,6 +248,7 @@ mb_doAutoRotationAsCommander = false
 mb_lastMovementTime = GetTime()
 mb_disableAutomaticMovement = false
 mb_isFollowing = false
+mb_hasCheckedProfessionCooldowns = false
 -- OnUpdate
 function mb_OnUpdate()
 	if not mb_isEnabled then
@@ -256,6 +257,7 @@ function mb_OnUpdate()
 	if GetRealmName() ~= "LichKingMBW" then
 		return
 	end
+	DescendStop() -- Fix a big where you get stuck moving downwards
 	if not mb_hasInitiated then
 		mb_InitAsSlave()
 		return
@@ -304,6 +306,36 @@ function mb_OnUpdate()
 	if not mb_isCommanding then
 		mb_HarvestCreature()
 	end
+	if not mb_hasCheckedProfessionCooldowns then
+		mb_HandleProfessionCooldowns()
+	end
+end
+
+mb_lastHandleProfessionCooldowns = 0
+function mb_HandleProfessionCooldowns()
+	if mb_lastHandleProfessionCooldowns + 1 > mb_time then
+		return
+	end
+	mb_lastHandleProfessionCooldowns = mb_time
+	if UnitCastingInfo("player") ~= nil then
+		return
+	end
+	for profession, spells in pairs(mb_config.professionCooldowns) do
+		if GetTradeSkillLine() ~= profession then
+			CastSpellByName(profession)
+		end
+		for _, spell in pairs(spells) do
+			for i = 1, GetNumTradeSkills() do
+				local skillName = GetTradeSkillInfo(i)
+				if skillName == spell and GetTradeSkillCooldown(i) == nil then
+					DoTradeSkill(i)
+					mb_SayRaid("Casting " .. skillName)
+					return
+				end
+			end
+		end
+	end
+	mb_hasCheckedProfessionCooldowns = true
 end
 
 function mb_HandleAutomaticMovement()
@@ -502,6 +534,11 @@ function mb_RequestDesiredBuffsThrottled()
 		return
 	end
 	mb_lastBuffRequest = mb_time
+
+	if UnitAffectingCombat("player") then
+		return
+	end
+
 	for _, buff in pairs(mb_desiredBuffs) do
 		local hasBuff = false
 
@@ -616,6 +653,11 @@ function mb_HarvestCreature()
 	end
 end
 
+mb_readyCheckClassSpecificFunction = nil
+function mb_RegisterClassSpecificReadyCheckFunction(func)
+	mb_readyCheckClassSpecificFunction = func
+end
+
 function mb_HandleReadyCheck()
 	local ready = true
 	if not mb_hasInitiated then
@@ -623,9 +665,20 @@ function mb_HandleReadyCheck()
 		ready = false
 	end
 	for _, buff in pairs(mb_desiredBuffs) do
-		if mb_GetBuffTimeRemaining("player", buff.singleAuraName) < 540 and mb_GetBuffTimeRemaining("player", buff.groupAuraName) < 540 then
-			CancelUnitBuff("player", buff.singleAuraName)
-			CancelUnitBuff("player", buff.groupAuraName)
+		if (buff.singleAuraName == nil or mb_GetBuffTimeRemaining("player", buff.singleAuraName) < 540) and (buff.groupAuraName == nil or mb_GetBuffTimeRemaining("player", buff.groupAuraName) < 540) then
+			if buff.singleAuraName ~= nil then
+				CancelUnitBuff("player", buff.singleAuraName)
+			end
+			if buff.groupAuraName ~= nil then
+				CancelUnitBuff("player", buff.groupAuraName)
+			end
+			ready = false
+		end
+	end
+	if mb_readyCheckClassSpecificFunction == nil then
+		mb_Print("I don't have a class-specific ready-check function defined to make me refresh class-buffs")
+	else
+		if not mb_readyCheckClassSpecificFunction() then
 			ready = false
 		end
 	end
@@ -660,7 +713,7 @@ function mb_CleanBlacklistedInterruptGUIDsList()
 end
 
 function mb_HandleTargetSpellcast()
-	if not mb_IsValidOffensiveUnit("target") then
+	if not mb_IsValidOffensiveUnit("target") or UnitIsDeadOrGhost("player") then
 		return
 	end
 	local spell, _, _, _, _, endTime, _, _, notInterruptible = UnitCastingInfo("target")
@@ -690,6 +743,11 @@ function mb_HandleTargetSpellcast()
 end
 
 function mb_HandleInterruptTarget()
+	if UnitIsDeadOrGhost("player") then
+		mb_shouldInterruptTarget = false
+		return true
+	end
+
 	if UnitChannelInfo("target") ~= nil then
 		for _, spell in pairs(mb_registeredInterruptSpells) do
 			mb_StopCast()

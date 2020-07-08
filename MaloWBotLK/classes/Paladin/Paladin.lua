@@ -15,12 +15,10 @@ function mb_Paladin_OnLoad()
 		mb_Paladin_Holy_OnLoad()
 	elseif mb_GetMySpecName() == "Protection" then
 		mb_classSpecificRunFunction = mb_Paladin_Protection_OnUpdate
-		mb_RegisterDesiredBuff(BUFF_MIGHT)
-		mb_RegisterDesiredBuff(BUFF_THORNS)
+		mb_Paladin_Protection_OnLoad()
 	else
 		mb_classSpecificRunFunction = mb_Paladin_Retribution_OnUpdate
 		mb_Paladin_Retribution_OnLoad()
-		mb_RegisterDesiredBuff(BUFF_MIGHT)
 	end
 
 	if GetTrackingTexture() ~= "Interface\\Icons\\Spell_Holy_SenseUndead" then

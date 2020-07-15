@@ -71,27 +71,28 @@ function mb_Shaman_HandleTotems()
 	local totemCount = mb_Shaman_GetTotemCount()
 	if totemCount > 0 and mb_Shaman_AreTotemsOutOfRange_Throttled() then
 		mb_CastSpellWithoutTarget("Totemic Recall")
-		mb_Shaman_lastTotemCheck = mb_time
 		return true
 	end
 
-	if UnitAffectingCombat("player") then
-		if totemCount == 4 then
-			return false
-		end
-		local _, _, _, cost = GetSpellInfo("Call of the Elements")
-		if cost > UnitPower("player") then
-			return false
-		end
-		if totemCount < 2 then
-		 	mb_CastSpellWithoutTarget("Call of the Elements")
-			mb_Shaman_lastTotemCheck = mb_time
-			return true
-		end
-		mb_CastSpellWithoutTarget(mb_Shaman_totems[mb_Shaman_GetMissingTotemIndex()])
+	if not UnitAffectingCombat("player") or totemCount == 4 then
+		return false
+	end
+
+	if mb_lastMovementTime + 1 > mb_time then
+		return false
+	end
+
+	local _, _, _, cost = GetSpellInfo("Call of the Elements")
+	if cost > UnitPower("player") then
+		return false
+	end
+	if totemCount < 2 then
+		mb_CastSpellWithoutTarget("Call of the Elements")
+		mb_Shaman_lastTotemCheck = mb_time
 		return true
 	end
-	return false
+	mb_CastSpellWithoutTarget(mb_Shaman_totems[mb_Shaman_GetMissingTotemIndex()])
+	return true
 end
 
 mb_Shaman_lastTotemCheck = 0
@@ -110,7 +111,6 @@ function mb_Shaman_AreTotemsOutOfRange_Throttled()
 			return inRange
 		end
 	end
-	TargetLastTarget()
 	return false
 end
 

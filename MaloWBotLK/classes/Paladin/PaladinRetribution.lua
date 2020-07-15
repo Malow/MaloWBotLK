@@ -56,15 +56,14 @@ function mb_Paladin_Retribution_OnUpdate()
         return
     end
 
-    if not UnitAffectingCombat("player") and not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnFriendly("player", "Sacred Shield") then
-        return
-    end
-
     if not mb_AcquireOffensiveTarget() then
         if not UnitBuff("player", "Divine Plea") and mb_UnitPowerPercentage("player") > 30 then
             if mb_RaidHeal("Flash of Light", 0.3) then
                 return
             end
+        end
+        if not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnFriendly("player", "Sacred Shield") then
+            return
         end
         return
     end

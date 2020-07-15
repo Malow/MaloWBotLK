@@ -88,7 +88,7 @@ function mb_IsValidOffensiveUnit(unit)
 	if UnitIsDeadOrGhost(unit) then
 		return false
 	end
-	if not UnitCanAttack("player", unit) == 1 then
+	if UnitCanAttack("player", unit) == nil then
 		return false
 	end
 	if not UnitAffectingCombat(unit) then
@@ -802,7 +802,13 @@ function mb_CrowdControl(unit)
 	return false
 end
 
-
+mb_lastIWTClickToMove = 0
+function mb_IWTClickToMove(unit)
+	SetCVar("autoInteract", 1)
+	InteractUnit(unit)
+	SetCVar("autoInteract", 0)
+	mb_lastIWTClickToMove = mb_time
+end
 
 
 

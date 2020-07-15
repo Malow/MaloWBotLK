@@ -339,32 +339,45 @@ function mb_HandleProfessionCooldowns()
 end
 
 function mb_HandleAutomaticMovement()
+	if mb_lastIWTClickToMove + 0.2 > mb_time then
+		return
+	end
+	if mb_shouldStopMovingForwardAt ~= 0  then
+		if mb_shouldStopMovingForwardAt < mb_time then
+			MoveForwardStart()
+			MoveForwardStop()
+			mb_shouldStopMovingForwardAt = 0
+		end
+		return
+	end
 	if mb_commanderUnit ~= nil then
+		if mb_followMode == "strict" then
+			mb_FollowUnit(mb_commanderUnit)
+			return
+		end
 		if mb_followMode == "lenient" or mb_IsDrinking() then
 			if not CheckInteractDistance(mb_commanderUnit, 2) then
 				mb_FollowUnit(mb_commanderUnit)
+				return
 			end
-		elseif mb_followMode == "strict" then
-			mb_FollowUnit(mb_commanderUnit)
 		end
 		if mb_followMode == "lenient" and not mb_IsDrinking() then
-			if not UnitAffectingCombat("player") or not mb_IsValidOffensiveUnit("target") then
+			if not mb_IsValidOffensiveUnit(mb_commanderUnit .. "target") then
 				mb_FollowUnit(mb_commanderUnit)
+				return
 			end
 		end
 	end
-	if mb_shouldStopMovingForwardAt ~= 0 and mb_shouldStopMovingForwardAt < mb_time then
-		MoveForwardStart()
-		MoveForwardStop()
-		mb_shouldStopMovingForwardAt = 0
-	end
-	if mb_IWTDistanceClosingRangeCheckSpell ~= nil and mb_IsValidOffensiveUnit("target") and (mb_commanderUnit == nil or mb_followMode == "none" or CheckInteractDistance(mb_commanderUnit, 2)) then
+	if mb_IWTDistanceClosingRangeCheckSpell ~= nil then
+		if not mb_IsValidOffensiveUnit("target") then
+			return
+		end
+		if mb_followMode == "lenient" and mb_commanderUnit ~= nil and not CheckInteractDistance(mb_commanderUnit, 2) then
+			return
+		end
+
 		if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
-			SetCVar("autoInteract", 1)
-			InteractUnit("target")
-			SetCVar("autoInteract", 0)
-		elseif mb_IsMoving() then
-			mb_shouldStopMovingForwardAt = mb_time
+			mb_IWTClickToMove("target")
 		end
 	end
 end
@@ -562,10 +575,7 @@ function mb_HandleFacingWrongWay()
 	if mb_followMode == "strict" then
 		return
 	end
-	SetCVar("autoInteract", 1)
-	InteractUnit("target")
-	SetCVar("autoInteract", 0)
-	mb_shouldStopMovingForwardAt = mb_time
+	mb_IWTClickToMove("target")
 end
 
 function mb_EnableIWTDistanceClosing(rangeCheckSpell)

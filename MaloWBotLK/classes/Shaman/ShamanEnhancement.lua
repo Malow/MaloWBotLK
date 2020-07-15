@@ -61,10 +61,6 @@ function mb_Shaman_Enhancement_OnUpdate()
         end
     end
 
-    if mb_Shaman_HandleTotems() then
-        return
-    end
-
     if not UnitAffectingCombat("player") and not UnitBuff("player", "Lightning Shield") then
         if mb_CastSpellWithoutTarget("Lightning Shield") then
             return
@@ -74,6 +70,10 @@ function mb_Shaman_Enhancement_OnUpdate()
     if not mb_AcquireOffensiveTarget() then
         if mb_UnitPowerPercentage("player") > 30 then
             mb_RaidHeal("Chain Heal", 0.5)
+        end
+
+        if mb_Shaman_HandleTotems() then
+            return
         end
         return
     end
@@ -91,6 +91,10 @@ function mb_Shaman_Enhancement_OnUpdate()
     end
 
     if mb_CastSpellOnTarget("Stormstrike") then
+        return
+    end
+
+    if mb_IsSpellInRange("Stormstrike", "target") and mb_Shaman_HandleTotems() then
         return
     end
 

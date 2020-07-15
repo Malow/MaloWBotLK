@@ -271,6 +271,11 @@ function mb_OnUpdate()
 	end
 	mb_CleanBlacklistedInterruptGUIDsList()
 
+	-- Clear a previously pending cast that didn't succeed and is now held in cursor
+	if SpellIsTargeting() then
+		SpellStopTargeting()
+	end
+
 	-- If we have a loot window open disable running to allow manually looting
 	if GetNumLootItems() > 0 then
 		return

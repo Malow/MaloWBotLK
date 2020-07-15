@@ -257,7 +257,7 @@ function mb_OnUpdate()
 	if GetRealmName() ~= "LichKingMBW" then
 		return
 	end
-	DescendStop() -- Fix a big where you get stuck moving downwards
+	DescendStop() -- Fix a bug where you get stuck moving downwards
 	if not mb_hasInitiated then
 		mb_InitAsSlave()
 		return
@@ -270,11 +270,18 @@ function mb_OnUpdate()
 		mb_lastMovementTime = mb_time
 	end
 	mb_CleanBlacklistedInterruptGUIDsList()
+
+	-- If we have a loot window open disable running to allow manually looting
+	if GetNumLootItems() > 0 then
+		return
+	end
+
 	if mb_shouldInterruptTarget then
 		if mb_HandleInterruptTarget() then
 			return
 		end
 	end
+
 	if mb_isCommanding then
 		if mb_doAutoRotationAsCommander then
 			if mb_BossModule_PreOnUpdate() then
@@ -284,9 +291,11 @@ function mb_OnUpdate()
 		end
 		return
 	end
+
 	if not mb_disableAutomaticMovement then
 		mb_HandleAutomaticMovement()
 	end
+
 	if mb_preCastFinishCallback ~= nil and mb_shouldCallPreCastFinishCallback then
 		local spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, interrupt = UnitCastingInfo("player")
 		if spell ~= nil then
@@ -296,16 +305,21 @@ function mb_OnUpdate()
 			end
 		end
 	end
+
 	if mb_HandleQueuedAcceptedRequest() then
 		return
 	end
+
 	if mb_BossModule_PreOnUpdate() then
 		return
 	end
+
 	mb_classSpecificRunFunction()
+
 	if not mb_isCommanding then
 		mb_HarvestCreature()
 	end
+
 	if not mb_hasCheckedProfessionCooldowns then
 		mb_HandleProfessionCooldowns()
 	end
@@ -351,15 +365,15 @@ function mb_HandleAutomaticMovement()
 		return
 	end
 	if mb_commanderUnit ~= nil then
-		if mb_followMode == "strict" then
-			mb_FollowUnit(mb_commanderUnit)
-			return
-		end
 		if mb_followMode == "lenient" or mb_IsDrinking() then
 			if not CheckInteractDistance(mb_commanderUnit, 2) then
 				mb_FollowUnit(mb_commanderUnit)
 				return
 			end
+		end
+		if mb_followMode == "strict" then
+			mb_FollowUnit(mb_commanderUnit)
+			return
 		end
 		if mb_followMode == "lenient" and not mb_IsDrinking() then
 			if not mb_IsValidOffensiveUnit(mb_commanderUnit .. "target") then

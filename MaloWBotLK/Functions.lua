@@ -164,11 +164,11 @@ end
 -- Unit is optional, if provided it will check that the spell can be cast on the unit (that it's a valid target and is in range)
 function mb_IsUsableSpell(spell, unit)
 	local usable, nomana = IsUsableSpell(spell)
-	if unit == nil then
-		return usable == 1
-	end
 	if usable == nil then
 		return false
+	end
+	if unit == nil then
+		return true
 	end
 	if UnitCanAttack("player", unit) == 1 then
 		return mb_IsValidOffensiveUnit(unit) and mb_IsSpellInRange(spell, unit)
@@ -262,8 +262,13 @@ end
 
 -- Will try to resurrect a dead raid member
 function mb_ResurrectRaid(resurrectionSpell)
-	if UnitIsDead("target") and UnitCastingInfo("player") == resurrectionSpell then
-		return true
+	if UnitIsDead("target") then
+		if UnitCastingInfo("player") == resurrectionSpell then
+			return true
+		end
+		if UnitInRaid("target") then
+			ClearTarget()
+		end
 	end
 
 	if UnitAffectingCombat("player") or mb_IsDrinking() then
@@ -527,6 +532,11 @@ function mb_ShouldBuff()
 		local unit = mb_GetUnitFromPartyOrRaidIndex(i)
 		if UnitIsConnected(unit) then
 			if not mb_IsUnitValidFriendlyTarget(unit) or not CheckInteractDistance(unit, 4) then
+				return false
+			end
+		end
+		if mb_GetClass(unit) == "WARLOCK" or mb_GetClass(unit) == "HUNTER" then
+			if not UnitExists(unit .. "pet") then
 				return false
 			end
 		end

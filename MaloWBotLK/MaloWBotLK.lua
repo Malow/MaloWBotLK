@@ -272,7 +272,8 @@ function mb_OnUpdate()
 	mb_CleanBlacklistedInterruptGUIDsList()
 
 	-- Clear a previously pending cast that didn't succeed and is now held in cursor
-	if SpellIsTargeting() then
+	-- Only do it when the player doesn't have a trade skill open to allow manually doing enchants etc.
+	if SpellIsTargeting() and GetTradeSkillLine() == "UNKNOWN" then
 		SpellStopTargeting()
 	end
 

@@ -534,10 +534,10 @@ function mb_ShouldBuff()
 			if not mb_IsUnitValidFriendlyTarget(unit) or not CheckInteractDistance(unit, 4) then
 				return false
 			end
-		end
-		if mb_GetClass(unit) == "WARLOCK" or mb_GetClass(unit) == "HUNTER" then
-			if not UnitExists(unit .. "pet") then
-				return false
+			if mb_GetClass(unit) == "WARLOCK" or mb_GetClass(unit) == "HUNTER" then
+				if not UnitExists(unit .. "pet") then
+					return false
+				end
 			end
 		end
 	end

@@ -35,55 +35,71 @@ SLASH_MBCOMMAND1 = "/" .. MY_ABBREVIATION;
 -- Events
 local hasLoaded = false
 function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
-	if event == "ADDON_LOADED" and arg1 == MY_NAME then
-		hasLoaded = true
-	elseif event == "CHAT_MSG_ADDON" and arg1 == "MB" then
-		local mbCom = {}
-		mbCom.message = arg2
-		mbCom.from = arg4
-		mb_HandleIncomingMessage(mbCom)
-	elseif event == "PLAYER_ENTER_COMBAT" then
-		mb_isAutoAttacking = true
-	elseif event == "PLAYER_LEAVE_COMBAT" then
-		mb_isAutoAttacking = false
-	elseif event == "PARTY_INVITE_REQUEST" then
-		if mb_IsTrustedCharacter(arg1) then
-			AcceptGroup()
-			StaticPopup1:Hide()
-		end
-	elseif event == "CONFIRM_SUMMON" then
-		if mb_isEnabled and not mb_isCommanding then
-			ConfirmSummon()
-			StaticPopup1:Hide()
-		end
-	elseif event == "RESURRECT_REQUEST" then
-		AcceptResurrect()
-		StaticPopup1:Hide()
-	elseif event == "QUEST_ACCEPT_CONFIRM" or event == "QUEST_DETAIL" then
-		AcceptQuest()
-		ConfirmAcceptQuest()
-		StaticPopup1:Hide()
-	elseif event == "GROUP_ROSTER_CHANGED" then
-		mb_UpdateClassOrder()
-	elseif event == "UI_ERROR_MESSAGE" then
-		if arg1 == "You are facing the wrong way!" or arg1 == "Target needs to be in front of you." then
-			mb_HandleFacingWrongWay()
-		end
-	elseif event == "UNIT_SPELLCAST_SENT" and arg1 == "player" then
-		mb_shouldCallPreCastFinishCallback = true
-		mb_currentCastTargetUnit = mb_GetUnitForPlayerName(arg4)
-	elseif event == "READY_CHECK" then
-		mb_HandleReadyCheck()
-		ReadyCheckFrame:Hide()
-	elseif event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
-		if mb_registeredInterruptSpells ~= nil and arg1 == "target" then
-			mb_HandleTargetSpellcast()
-		end
-	elseif event == "UNIT_TARGET" then
-		if arg1 == "player" and mb_registeredInterruptSpells ~= nil then
-			mb_HandleTargetSpellcast()
-		end
-	end
+    if event == "ADDON_LOADED" and arg1 == MY_NAME then
+        hasLoaded = true
+    elseif event == "CHAT_MSG_ADDON" and arg1 == "MB" then
+        local mbCom = {}
+        mbCom.message = arg2
+        mbCom.from = arg4
+        mb_HandleIncomingMessage(mbCom)
+    elseif event == "PLAYER_ENTER_COMBAT" then
+        mb_isAutoAttacking = true
+    elseif event == "PLAYER_LEAVE_COMBAT" then
+        mb_isAutoAttacking = false
+    elseif event == "PARTY_INVITE_REQUEST" then
+        if mb_IsTrustedCharacter(arg1) then
+            AcceptGroup()
+            StaticPopup1:Hide()
+        end
+    elseif event == "CONFIRM_SUMMON" then
+        if mb_isEnabled and not mb_isCommanding then
+            ConfirmSummon()
+            StaticPopup1:Hide()
+        end
+    elseif event == "RESURRECT_REQUEST" then
+        AcceptResurrect()
+        StaticPopup1:Hide()
+    elseif event == "QUEST_ACCEPT_CONFIRM" or event == "QUEST_DETAIL" then
+        AcceptQuest()
+        ConfirmAcceptQuest()
+        StaticPopup1:Hide()
+    elseif event == "GROUP_ROSTER_CHANGED" then
+        mb_UpdateClassOrder()
+    elseif event == "UI_ERROR_MESSAGE" then
+        if arg1 == "You are facing the wrong way!" or arg1 == "Target needs to be in front of you." then
+            mb_HandleFacingWrongWay()
+        end
+    elseif event == "UNIT_SPELLCAST_SENT" and arg1 == "player" then
+        mb_shouldCallPreCastFinishCallback = true
+        mb_currentCastTargetUnit = mb_GetUnitForPlayerName(arg4)
+    elseif event == "READY_CHECK" then
+        mb_HandleReadyCheck()
+        ReadyCheckFrame:Hide()
+    elseif event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
+        if mb_registeredInterruptSpells ~= nil and arg1 == "target" then
+            mb_HandleTargetSpellcast()
+        end
+    elseif event == "UNIT_TARGET" then
+        if arg1 == "player" and mb_registeredInterruptSpells ~= nil then
+            mb_HandleTargetSpellcast()
+        end
+    elseif event == "UNIT_SPELLCAST_FAILED" then
+        if arg1 == "player" and (arg2 == "Shred" or arg2 == "Backstab") then
+            mb_lastStrafe = mb_time
+            if mb_lastStrafe + 0.5 > mb_time then
+                StrafeLeftStop()
+                StrafeRightStart()
+            else
+                StrafeLeftStop()
+                StrafeRightStop()
+            end
+        end
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        if arg1 == "player" and (arg2 == "Shred" or arg2 == "Backstab") then
+            StrafeLeftStop()
+            StrafeRightStop()
+        end
+    end
 end
 f:RegisterEvent("ADDON_LOADED")
 f:RegisterEvent("CHAT_MSG_ADDON")
@@ -101,6 +117,8 @@ f:RegisterEvent("READY_CHECK")
 f:RegisterEvent("UNIT_SPELLCAST_START")
 f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
 f:RegisterEvent("UNIT_TARGET")
+f:RegisterEvent("UNIT_SPELLCAST_FAILED")
+f:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 f:SetScript("OnEvent", mb_OnEvent)
 
 mb_hasInitiated = false
@@ -231,6 +249,7 @@ mb_cleaveMode = 0 -- 0 = Single-target, 1 = Cleave, 2 = Full AoE
 mb_GCDSpell = nil
 mb_isCommanding = false
 mb_commanderUnit = nil
+mb_ShouldCombatRess = false
 -- "none" = Never follows, not allowed to move if out of range of target, free to turn to face the right way
 -- "lenient" = Only follow-spams when commander is more than 11 yards away, free to turn or move if out of range of target automatically if within those 11 yards of commander
 -- "strict" = Spams follow constantly, not free to turn or move
@@ -239,6 +258,7 @@ mb_isEnabled = false
 mb_isAutoAttacking = false
 mb_time = GetTime()
 mb_shouldStopMovingForwardAt = 0
+mb_lastStrafe = 0
 -- This callback will be called 0.3 seconds before a spell-cast finishes, to let you mb_StopCast() it if you want
 mb_preCastFinishCallback = nil
 mb_shouldCallPreCastFinishCallback = false

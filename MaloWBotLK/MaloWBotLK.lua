@@ -16,7 +16,7 @@ local function mb_Update(self, elapsed)
 	if total >= 0.1 then
 		total = 0
 		mb_OnUpdate()
-	end
+    end
 end
 local f = CreateFrame("frame", MY_NAME .. "Frame", UIParent)
 f:SetPoint("CENTER")
@@ -69,6 +69,11 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 		if arg1 == "You are facing the wrong way!" or arg1 == "Target needs to be in front of you." then
 			mb_HandleFacingWrongWay()
 		end
+		if arg1 == "You must be behind your target." then
+			mb_stopStrafingAt = mb_time + 1.5
+			StrafeLeftStop()
+			StrafeRightStart()
+		end
 	elseif event == "UNIT_SPELLCAST_SENT" and arg1 == "player" then
 		mb_shouldCallPreCastFinishCallback = true
 		mb_currentCastTargetUnit = mb_GetUnitForPlayerName(arg4)
@@ -82,22 +87,6 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 	elseif event == "UNIT_TARGET" then
 		if arg1 == "player" and mb_registeredInterruptSpells ~= nil then
 			mb_HandleTargetSpellcast()
-		end
-	elseif event == "UNIT_SPELLCAST_FAILED" then
-		if arg1 == "player" and (arg2 == "Shred" or arg2 == "Backstab") then
-			mb_lastStrafe = mb_time
-			if mb_lastStrafe + 0.5 > mb_time then
-				StrafeLeftStop()
-				StrafeRightStart()
-			else
-				StrafeLeftStop()
-				StrafeRightStop()
-			end
-		end
-	elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-		if arg1 == "player" and (arg2 == "Shred" or arg2 == "Backstab") then
-			StrafeLeftStop()
-			StrafeRightStop()
 		end
 	end
 end
@@ -221,9 +210,9 @@ function mb_UpdateClassOrder()
 	local name = UnitName("player")
 	mb_classOrder = {}
 	table.insert(mb_classOrder, name)
-	local members = mb_GetNumPartyOrRaidMembers()
-	for i = 1, members do
-		local unit = mb_GetUnitFromPartyOrRaidIndex(i)
+    local members = mb_GetNumPartyOrRaidMembers()
+    for i = 1, members do
+        local unit = mb_GetUnitFromPartyOrRaidIndex(i)
 		if mb_GetClass(unit) == mb_GetClass("player") and UnitIsConnected(unit) then
 			name = UnitName(unit)
 			table.insert(mb_classOrder, name)
@@ -257,7 +246,7 @@ mb_isEnabled = false
 mb_isAutoAttacking = false
 mb_time = GetTime()
 mb_shouldStopMovingForwardAt = 0
-mb_lastStrafe = 0
+mb_stopStrafingAt = 0
 -- This callback will be called 0.3 seconds before a spell-cast finishes, to let you mb_StopCast() it if you want
 mb_preCastFinishCallback = nil
 mb_shouldCallPreCastFinishCallback = false
@@ -381,6 +370,12 @@ function mb_HandleAutomaticMovement()
 	if mb_lastIWTClickToMove + 0.2 > mb_time then
 		return
 	end
+	if mb_stopStrafingAt ~= 0 then
+		if mb_stopStrafingAt < mb_time then
+			StrafeRightStop()
+			mb_stopStrafingAt = 0
+		end
+	end
 	if mb_shouldStopMovingForwardAt ~= 0  then
 		if mb_shouldStopMovingForwardAt < mb_time then
 			MoveForwardStart()
@@ -422,7 +417,7 @@ function mb_HandleAutomaticMovement()
 end
 
 function mb_HandleCommand(msg)
-	-- remoteExecute
+    -- remoteExecute
 	local matches, remainingString = mb_StringStartsWith(msg, "re")
 	if matches then
 		mb_SendMessage("remoteExecute ", remainingString)
@@ -444,11 +439,11 @@ function mb_HandleCommand(msg)
 		return true
 	end
 
-	matches, remainingString = mb_StringStartsWith(msg, "InitAsCommander")
-	if matches then
-		mb_InitAsCommander()
-		return true
-	end
+    matches, remainingString = mb_StringStartsWith(msg, "InitAsCommander")
+    if matches then
+        mb_InitAsCommander()
+        return true
+    end
 	return false
 end
 

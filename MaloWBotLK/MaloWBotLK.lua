@@ -106,8 +106,6 @@ f:RegisterEvent("READY_CHECK")
 f:RegisterEvent("UNIT_SPELLCAST_START")
 f:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
 f:RegisterEvent("UNIT_TARGET")
-f:RegisterEvent("UNIT_SPELLCAST_FAILED")
-f:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 f:SetScript("OnEvent", mb_OnEvent)
 
 mb_hasInitiated = false

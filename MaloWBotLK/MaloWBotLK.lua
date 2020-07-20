@@ -69,6 +69,11 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 		if arg1 == "You are facing the wrong way!" or arg1 == "Target needs to be in front of you." then
 			mb_HandleFacingWrongWay()
 		end
+		if arg1 == "You must be behind your target." then
+			mb_stopStrafingAt = mb_time + 1.5
+			StrafeLeftStop()
+			StrafeRightStart()
+		end
 	elseif event == "UNIT_SPELLCAST_SENT" and arg1 == "player" then
 		mb_shouldCallPreCastFinishCallback = true
 		mb_currentCastTargetUnit = mb_GetUnitForPlayerName(arg4)
@@ -239,6 +244,7 @@ mb_isEnabled = false
 mb_isAutoAttacking = false
 mb_time = GetTime()
 mb_shouldStopMovingForwardAt = 0
+mb_stopStrafingAt = 0
 -- This callback will be called 0.3 seconds before a spell-cast finishes, to let you mb_StopCast() it if you want
 mb_preCastFinishCallback = nil
 mb_shouldCallPreCastFinishCallback = false
@@ -361,6 +367,12 @@ end
 function mb_HandleAutomaticMovement()
 	if mb_lastIWTClickToMove + 0.2 > mb_time then
 		return
+	end
+	if mb_stopStrafingAt ~= 0 then
+		if mb_stopStrafingAt < mb_time then
+			StrafeRightStop()
+			mb_stopStrafingAt = 0
+		end
 	end
 	if mb_shouldStopMovingForwardAt ~= 0  then
 		if mb_shouldStopMovingForwardAt < mb_time then

@@ -1,4 +1,3 @@
-
 function mb_BossModule_Malygos_PreOnUpdate()
     if not UnitInVehicle("player") then
         return false

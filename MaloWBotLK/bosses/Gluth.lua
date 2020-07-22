@@ -1,4 +1,3 @@
-
 mb_BossModule_Gluth_lastExternalRequest = 0
 function mb_BossModule_Gluth_PreOnUpdate()
     if mb_IsTank() then

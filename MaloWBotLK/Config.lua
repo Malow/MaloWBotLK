@@ -1,4 +1,4 @@
-mb_config ={}
+mb_config = {}
 
 mb_config.mainTank = "Malowtank"
 mb_config.offTank = "Elerien"
@@ -19,12 +19,12 @@ table.insert(mb_config.trustedCharacters, "Verne")
 table.insert(mb_config.trustedCharacters, "Carin")
 
 function mb_IsTrustedCharacter(charName)
-	for _, name in pairs(mb_config.trustedCharacters) do
-		if name == charName then
-			return true
-		end
-	end
-	return false
+    for _, name in pairs(mb_config.trustedCharacters) do
+        if name == charName then
+            return true
+        end
+    end
+    return false
 end
 
 
@@ -55,8 +55,8 @@ mb_config.classOrder.shadowAura = 7
 
 
 -- Blacklisted interrupt spells, spell that are not interruptible but that shows as interruptible
-mb_config.blacklistedInterruptSpells  = {}
-mb_config.blacklistedInterruptSpells["Malygos"] = {"Arcane Breath"}
+mb_config.blacklistedInterruptSpells = {}
+mb_config.blacklistedInterruptSpells["Malygos"] = { "Arcane Breath" }
 
 
 

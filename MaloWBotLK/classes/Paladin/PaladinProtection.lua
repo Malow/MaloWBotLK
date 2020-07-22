@@ -1,4 +1,3 @@
-
 -- TODO:
 -- Every man for himself on loss of control
 -- LayOnHand low friendly

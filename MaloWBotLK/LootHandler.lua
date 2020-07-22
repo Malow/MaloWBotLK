@@ -1,4 +1,3 @@
-
 mb_LootHandler_queuedLootCouncilMsg = nil
 
 function mb_LootHandler_OnUpdate()
@@ -11,7 +10,7 @@ end
 
 function mb_LootHandler_HandleLootCouncilRequest(msg)
     local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount,
-        itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(msg)
+    itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(msg)
     if itemName == nil then
         mb_LootHandler_queuedLootCouncilMsg = msg
         GameTooltip:SetHyperlink(msg)
@@ -75,59 +74,145 @@ end
 -- Hardcoded translation functions --
 -- ----------------------------------
 function mb_LootHandler_GetUsableSlotsForItemEquipLoc(itemEquipLoc)
-    if itemEquipLoc == "INVTYPE_HEAD" then return {1} end
-    if itemEquipLoc == "INVTYPE_NECK" then return {2} end
-    if itemEquipLoc == "INVTYPE_SHOULDER" then return {3} end
-    if itemEquipLoc == "INVTYPE_CHEST" or itemEquipLoc == "INVTYPE_ROBE" then return {5} end
-    if itemEquipLoc == "INVTYPE_WAIST" then return {6} end
-    if itemEquipLoc == "INVTYPE_LEGS" then return {7} end
-    if itemEquipLoc == "INVTYPE_FEET" then return {8} end
-    if itemEquipLoc == "INVTYPE_WRIST" then return {9} end
-    if itemEquipLoc == "INVTYPE_HAND" then return {10} end
-    if itemEquipLoc == "INVTYPE_FINGER" then return {11, 12} end
-    if itemEquipLoc == "INVTYPE_TRINKET" then return {13, 14} end
-    if itemEquipLoc == "INVTYPE_CLOAK" then return {15} end
-    if itemEquipLoc == "INVTYPE_WEAPON" then return {16, 17} end
-    if itemEquipLoc == "INVTYPE_2HWEAPON" or itemEquipLoc == "INVTYPE_WEAPONMAINHAND" then return {16} end
-    if itemEquipLoc == "INVTYPE_SHIELD" or itemEquipLoc == "INVTYPE_WEAPONOFFHAND" or itemEquipLoc == "INVTYPE_HOLDABLE" then return {17} end
-    if itemEquipLoc == "INVTYPE_RANGED" or itemEquipLoc == "INVTYPE_RANGEDRIGHT" or itemEquipLoc == "INVTYPE_THROWN" or itemEquipLoc == "INVTYPE_RELIC" then return {18} end
+    if itemEquipLoc == "INVTYPE_HEAD" then
+        return { 1 }
+    end
+    if itemEquipLoc == "INVTYPE_NECK" then
+        return { 2 }
+    end
+    if itemEquipLoc == "INVTYPE_SHOULDER" then
+        return { 3 }
+    end
+    if itemEquipLoc == "INVTYPE_CHEST" or itemEquipLoc == "INVTYPE_ROBE" then
+        return { 5 }
+    end
+    if itemEquipLoc == "INVTYPE_WAIST" then
+        return { 6 }
+    end
+    if itemEquipLoc == "INVTYPE_LEGS" then
+        return { 7 }
+    end
+    if itemEquipLoc == "INVTYPE_FEET" then
+        return { 8 }
+    end
+    if itemEquipLoc == "INVTYPE_WRIST" then
+        return { 9 }
+    end
+    if itemEquipLoc == "INVTYPE_HAND" then
+        return { 10 }
+    end
+    if itemEquipLoc == "INVTYPE_FINGER" then
+        return { 11, 12 }
+    end
+    if itemEquipLoc == "INVTYPE_TRINKET" then
+        return { 13, 14 }
+    end
+    if itemEquipLoc == "INVTYPE_CLOAK" then
+        return { 15 }
+    end
+    if itemEquipLoc == "INVTYPE_WEAPON" then
+        return { 16, 17 }
+    end
+    if itemEquipLoc == "INVTYPE_2HWEAPON" or itemEquipLoc == "INVTYPE_WEAPONMAINHAND" then
+        return { 16 }
+    end
+    if itemEquipLoc == "INVTYPE_SHIELD" or itemEquipLoc == "INVTYPE_WEAPONOFFHAND" or itemEquipLoc == "INVTYPE_HOLDABLE" then
+        return { 17 }
+    end
+    if itemEquipLoc == "INVTYPE_RANGED" or itemEquipLoc == "INVTYPE_RANGEDRIGHT" or itemEquipLoc == "INVTYPE_THROWN" or itemEquipLoc == "INVTYPE_RELIC" then
+        return { 18 }
+    end
 end
 
 function mb_LootHandler_GetGoodStatName(badStatName)
     -- Base stats
-    if badStatName == "ITEM_MOD_AGILITY_SHORT" then return "agility" end
-    if badStatName == "ITEM_MOD_INTELLECT_SHORT" then return "intellect" end
-    if badStatName == "ITEM_MOD_SPIRIT_SHORT" then return "spirit" end
-    if badStatName == "ITEM_MOD_STRENGTH_SHORT" then return "strength" end
-    if badStatName == "ITEM_MOD_STAMINA_SHORT" then return "stamina" end
+    if badStatName == "ITEM_MOD_AGILITY_SHORT" then
+        return "agility"
+    end
+    if badStatName == "ITEM_MOD_INTELLECT_SHORT" then
+        return "intellect"
+    end
+    if badStatName == "ITEM_MOD_SPIRIT_SHORT" then
+        return "spirit"
+    end
+    if badStatName == "ITEM_MOD_STRENGTH_SHORT" then
+        return "strength"
+    end
+    if badStatName == "ITEM_MOD_STAMINA_SHORT" then
+        return "stamina"
+    end
 
     -- Ratings
-    if badStatName == "ITEM_MOD_CRIT_RATING_SHORT" then return "critRating" end
-    if badStatName == "ITEM_MOD_RESILIENCE_RATING_SHORT" then return "resilienceRating" end
-    if badStatName == "ITEM_MOD_DEFENSE_SKILL_RATING_SHORT" then return "defenseRating" end
-    if badStatName == "ITEM_MOD_EXPERTISE_RATING_SHORT" then return "expertiseRating" end
-    if badStatName == "ITEM_MOD_DODGE_RATING_SHORT" then return "dodgeRating" end
-    if badStatName == "ITEM_MOD_PARRY_RATING_SHORT" then return "parryRating" end
-    if badStatName == "ITEM_MOD_BLOCK_RATING_SHORT" then return "blockRating" end
-    if badStatName == "ITEM_MOD_ARMOR_PENETRATION_RATING_SHORT" then return "armorPenetrationRating" end
-    if badStatName == "ITEM_MOD_HIT_RATING_SHORT" then return "hitRating" end
-    if badStatName == "ITEM_MOD_HASTE_RATING_SHORT" then return "hasteRating" end
+    if badStatName == "ITEM_MOD_CRIT_RATING_SHORT" then
+        return "critRating"
+    end
+    if badStatName == "ITEM_MOD_RESILIENCE_RATING_SHORT" then
+        return "resilienceRating"
+    end
+    if badStatName == "ITEM_MOD_DEFENSE_SKILL_RATING_SHORT" then
+        return "defenseRating"
+    end
+    if badStatName == "ITEM_MOD_EXPERTISE_RATING_SHORT" then
+        return "expertiseRating"
+    end
+    if badStatName == "ITEM_MOD_DODGE_RATING_SHORT" then
+        return "dodgeRating"
+    end
+    if badStatName == "ITEM_MOD_PARRY_RATING_SHORT" then
+        return "parryRating"
+    end
+    if badStatName == "ITEM_MOD_BLOCK_RATING_SHORT" then
+        return "blockRating"
+    end
+    if badStatName == "ITEM_MOD_ARMOR_PENETRATION_RATING_SHORT" then
+        return "armorPenetrationRating"
+    end
+    if badStatName == "ITEM_MOD_HIT_RATING_SHORT" then
+        return "hitRating"
+    end
+    if badStatName == "ITEM_MOD_HASTE_RATING_SHORT" then
+        return "hasteRating"
+    end
 
     -- Others
-    if badStatName == "ITEM_MOD_ATTACK_POWER_SHORT" then return "attackPower" end
-    if badStatName == "RESISTANCE0_NAME" then return "armor" end
-    if badStatName == "ITEM_MOD_BLOCK_VALUE_SHORT" then return "blockValue" end
-    if badStatName == "ITEM_MOD_SPELL_POWER_SHORT" then return "spellPower" end
-    if badStatName == "ITEM_MOD_MANA_REGENERATION_SHORT" then return "mp5" end
-    if badStatName == "ITEM_MOD_POWER_REGEN0_SHORT" then return "mp5" end
-    if badStatName == "ITEM_MOD_DAMAGE_PER_SECOND_SHORT" then return "dps" end
-    if badStatName == "ITEM_MOD_FERAL_ATTACK_POWER_SHORT" then return "attackPower" end
+    if badStatName == "ITEM_MOD_ATTACK_POWER_SHORT" then
+        return "attackPower"
+    end
+    if badStatName == "RESISTANCE0_NAME" then
+        return "armor"
+    end
+    if badStatName == "ITEM_MOD_BLOCK_VALUE_SHORT" then
+        return "blockValue"
+    end
+    if badStatName == "ITEM_MOD_SPELL_POWER_SHORT" then
+        return "spellPower"
+    end
+    if badStatName == "ITEM_MOD_MANA_REGENERATION_SHORT" then
+        return "mp5"
+    end
+    if badStatName == "ITEM_MOD_POWER_REGEN0_SHORT" then
+        return "mp5"
+    end
+    if badStatName == "ITEM_MOD_DAMAGE_PER_SECOND_SHORT" then
+        return "dps"
+    end
+    if badStatName == "ITEM_MOD_FERAL_ATTACK_POWER_SHORT" then
+        return "attackPower"
+    end
 
     -- Sockets
-    if badStatName == "EMPTY_SOCKET_META" then return "socketMeta" end
-    if badStatName == "EMPTY_SOCKET_RED" then return "socketColored" end
-    if badStatName == "EMPTY_SOCKET_BLUE" then return "socketColored" end
-    if badStatName == "EMPTY_SOCKET_YELLOW" then return "socketColored" end
+    if badStatName == "EMPTY_SOCKET_META" then
+        return "socketMeta"
+    end
+    if badStatName == "EMPTY_SOCKET_RED" then
+        return "socketColored"
+    end
+    if badStatName == "EMPTY_SOCKET_BLUE" then
+        return "socketColored"
+    end
+    if badStatName == "EMPTY_SOCKET_YELLOW" then
+        return "socketColored"
+    end
 
     return nil
 end

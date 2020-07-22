@@ -1,4 +1,3 @@
-
 -- TODO:
 -- Add a DPS rotation if high mana
 -- Lay on Hands, is an external CD due to talent

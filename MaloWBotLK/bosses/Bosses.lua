@@ -1,4 +1,3 @@
-
 mb_BossModule_registeredModules = {}
 function mb_BossModule_RegisterModule(name, onLoadFunc)
     mb_BossModule_registeredModules[name] = onLoadFunc

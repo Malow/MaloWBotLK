@@ -1,4 +1,3 @@
-
 mb_spellEffectBaseValues = {}
 -- Flash of Light
 mb_spellEffectBaseValues["Flash of Light"] = {}
@@ -48,7 +47,6 @@ mb_spellEffectBaseValues["Chain Heal"][4] = 691
 mb_spellEffectBaseValues["Chain Heal"][5] = 942
 mb_spellEffectBaseValues["Chain Heal"][6] = 1034
 mb_spellEffectBaseValues["Chain Heal"][7] = 1205
-
 
 function mb_GetSpellEffect(spell)
     local _, rank = GetSpellInfo(spell)

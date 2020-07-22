@@ -1,9 +1,9 @@
 function mb_RegisterMessageHandlers()
-	mb_RegisterMessageHandler("lc", mb_LcHandler)
+    mb_RegisterMessageHandler("lc", mb_LcHandler)
 
-	if mb_isCommanding then
-		return
-	end
+    if mb_isCommanding then
+        return
+    end
 
     mb_RegisterMessageHandler("remoteExecute", mb_RemoteExecuteHandler)
     mb_RegisterMessageHandler("setCommander", mb_SetCommanderHandler)
@@ -13,51 +13,51 @@ function mb_RegisterMessageHandlers()
 end
 
 function mb_RemoteExecuteHandler(msg, from)
-	if not mb_IsTrustedCharacter(from) then
-		return
-	end
-	local func = loadstring(msg)
-	if func == nil then
-		mb_SayRaid("Bad Code: " .. msg)
-	else
-		func()
-	end
+    if not mb_IsTrustedCharacter(from) then
+        return
+    end
+    local func = loadstring(msg)
+    if func == nil then
+        mb_SayRaid("Bad Code: " .. msg)
+    else
+        func()
+    end
 end
 
 function mb_SetCommanderHandler(msg, from)
-	if not mb_IsTrustedCharacter(from) then
-		return
-	end
-	mb_commanderUnit = mb_GetUnitForPlayerName(msg)
+    if not mb_IsTrustedCharacter(from) then
+        return
+    end
+    mb_commanderUnit = mb_GetUnitForPlayerName(msg)
 end
 
 function mb_MountHandler(msg, from)
-	if not mb_IsTrustedCharacter(from) then
-		return
-	end
-	if IsMounted() then
-		return
-	end
-	CallCompanion("MOUNT", 1)
+    if not mb_IsTrustedCharacter(from) then
+        return
+    end
+    if IsMounted() then
+        return
+    end
+    CallCompanion("MOUNT", 1)
 end
 
 function mb_AcceptHandler(msg, from)
-	if not mb_IsTrustedCharacter(from) then
-		return
-	end
+    if not mb_IsTrustedCharacter(from) then
+        return
+    end
     AcceptGuild()
     RetrieveCorpse()
-	AcceptTrade()
+    AcceptTrade()
 end
 
 function mb_MoveForwardHandler(msg, from)
-	if not mb_IsTrustedCharacter(from) then
-		return
-	end
-	mb_shouldStopMovingForwardAt = mb_time + 2
-	MoveForwardStart()
+    if not mb_IsTrustedCharacter(from) then
+        return
+    end
+    mb_shouldStopMovingForwardAt = mb_time + 2
+    MoveForwardStart()
 end
 
 function mb_LcHandler(msg, from)
-	mb_LootHandler_HandleLootCouncilRequest(msg)
+    mb_LootHandler_HandleLootCouncilRequest(msg)
 end

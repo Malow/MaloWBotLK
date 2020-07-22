@@ -1,4 +1,3 @@
-
 function mb_BossModule_Kelthuzad_PreOnUpdate()
     if UnitIsDeadOrGhost("player") then
         return
@@ -46,12 +45,12 @@ function mb_BossModule_Kelthuzad_ManaDetonation()
 end
 
 mb_BossModule_Kelthuzad_safeManaDetonationSpots = {
-    {x = 0.31086, y = 0.17621}, -- NW
-    {x = 0.30254, y = 0.24763}, -- W
-    {x = 0.32986, y = 0.31212}, -- SW
-    {x = 0.37876, y = 0.32598}, -- SE
-    {x = 0.42104, y = 0.28386}, -- E
-    {x = 0.43086, y = 0.21019}, -- NE
+    { x = 0.31086, y = 0.17621 }, -- NW
+    { x = 0.30254, y = 0.24763 }, -- W
+    { x = 0.32986, y = 0.31212 }, -- SW
+    { x = 0.37876, y = 0.32598 }, -- SE
+    { x = 0.42104, y = 0.28386 }, -- E
+    { x = 0.43086, y = 0.21019 }, -- NE
 }
 function mb_BossModule_Kelthuzad_GetClosestSafeManaDetonationSpot()
     local curX, curY = mb_GetMapPosition("player")

@@ -1,4 +1,3 @@
-
 function mb_BossModule_Thaddius_PreOnUpdate()
     if mb_GetDebuffTimeRemaining("player", "Positive Charge") > 0 then
         mb_followMode = "none"

@@ -77,26 +77,22 @@ mb_BossModule_Kelthuzad_isMovingFromVoidZone = false
 function mb_BossModule_Kelthuzad_VoidZone()
     local timeSinceVoidZone = mb_time - mb_BossModule_Kelthuzad_lastDetectedVoidZone
     if timeSinceVoidZone < 3 then
+        mb_DisableAutomaticMovement()
+        mb_BossModule_Kelthuzad_isMovingFromVoidZone = true
         return
     end
     if timeSinceVoidZone < 5 then
-        StrafeRightStop()
         StrafeLeftStart()
-        mb_disableAutomaticMovement = true
-        mb_BossModule_Kelthuzad_isMovingFromVoidZone = true
         return
     end
     if timeSinceVoidZone < 7 then
         StrafeLeftStop()
         StrafeRightStart()
-        mb_disableAutomaticMovement = true
-        mb_BossModule_Kelthuzad_isMovingFromVoidZone = true
         return
     end
     if mb_BossModule_Kelthuzad_isMovingFromVoidZone then
-        StrafeLeftStop()
-        StrafeRightStop()
-        mb_disableAutomaticMovement = false
+        mb_StopMoving()
+        mb_EnableAutomaticMovement()
         mb_BossModule_Kelthuzad_isMovingFromVoidZone = false
     end
 end

@@ -5,9 +5,7 @@
 -- Hand of Freedom when someone or self is slowed
 -- Hand of Protection on a friendly who has aggro who shouldn't have aggro
 -- Hand of Reckoning if the tank is almost undead, maybe as the prot in waiting, equipping a shield and using SotR and a personal CD
--- Hand of Salvation constantly on people with high threat
 -- Use Every Man For Himself on loss of control
--- Click away Divine Shield if full health
 
 mb_Paladin_Retribution_saveProcsForHeals = false
 
@@ -31,6 +29,11 @@ function mb_Paladin_Retribution_OnUpdate()
     end
 
     if UnitAffectingCombat("player") and mb_UnitHealthPercentage("player") < 30 and mb_CastSpellWithoutTarget("Divine Shield") then
+        return
+    end
+
+    if UnitBuff("player", "Divine Shield") and mb_UnitHealthPercentage("player") > 80 then
+        CancelUnitBuff("player", "Divine Shield")
         return
     end
 
@@ -67,6 +70,8 @@ function mb_Paladin_Retribution_OnUpdate()
         end
         return
     end
+
+    mb_HandleAutomaticSalvationRequesting()
 
     if not mb_isAutoAttacking then
         InteractUnit("target")

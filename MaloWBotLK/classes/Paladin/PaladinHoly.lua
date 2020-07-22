@@ -3,6 +3,7 @@
 -- Add a DPS rotation if high mana
 -- Lay on Hands, is an external CD due to talent
 -- Divine Protection pre-taking damage, probably through a "use personals" macro
+-- If low on mana, and if next auto-hit on target is less than like 0.3 seconds away, delay healing until after auto-hit to proc Seal of Wisdom and Judgement of Wisdom
 
 function mb_Paladin_Holy_OnLoad()
     mb_preCastFinishCallback = mb_Paladin_Holy_PreCastFinishCallback
@@ -105,7 +106,9 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
+    local hasValidEnemyTarget = false
     if mb_AcquireOffensiveTarget() then
+        hasValidEnemyTarget = true
         if not mb_isAutoAttacking then
             InteractUnit("target")
         end
@@ -133,6 +136,10 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
+    if hasValidEnemyTarget and mb_CastSpellOnTarget("Judgement of Light") then
+        return
+    end
+
     if UnitAffectingCombat("player") then
         if offTankUnit ~= nil and mb_CastSpellOnFriendly(offTankUnit, "Holy Light") then
             return
@@ -140,18 +147,13 @@ function mb_Paladin_Holy_OnUpdate()
             return
         end
     end
-
-    if mainTankUnit ~= nil then
-        if mb_GetMissingHealth(mainTankUnit) > mb_GetSpellEffect("Flash of Light") then
-            if mb_CastSpellOnFriendly("player", "Flash of Light") then
-                return
-            end
-        end
-    end
 end
 
 function mb_Paladin_Holy_PreCastFinishCallback(spell, unit)
     if spell ~= "Holy Light" and spell ~= "Flash of Light" then
+        return
+    end
+    if unit == nil then
         return
     end
     local spellTargetUnitMissingHealth = mb_GetMissingHealth(unit)

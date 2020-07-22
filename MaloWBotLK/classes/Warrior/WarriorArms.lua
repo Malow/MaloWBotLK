@@ -36,6 +36,8 @@ function mb_Warrior_Arms_OnUpdate()
         return
     end
 
+    mb_HandleAutomaticSalvationRequesting()
+
     if not mb_isAutoAttacking then
         InteractUnit("target")
     end

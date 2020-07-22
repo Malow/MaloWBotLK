@@ -24,11 +24,6 @@ function mb_GetNumOnlinePartyOrRaidMembers()
 	return count
 end
 
--- Returns true if there's more than 20 online people in the raid
-function mb_Is25ManRaid()
-	return mb_GetNumOnlinePartyOrRaidMembers() > 20
-end
-
 -- Returns the unit that has specified raidIndex
 function mb_GetUnitFromPartyOrRaidIndex(index)
 	if index ~= 0 then
@@ -179,8 +174,12 @@ end
 
 -- Checks if there's no cooldown and if the spell use useable (have mana to cast it), and that if we're moving that it doesn't have a cast time
 -- Unit is optional, if provided it will check that the spell can be cast on the unit (that it's a valid target and is in range)
-function mb_CanCastSpell(spell, unit)
-	if GetSpellCooldown(spell) ~= 0 then
+function mb_CanCastSpell(spell, unit, withinNextGlobal)
+	local cd = 0
+	if withinNextGlobal then
+		cd = 1.5
+	end
+	if mb_GetRemainingSpellCooldown(spell) > cd then
 		return false
 	end
 	if mb_IsMoving() then
@@ -419,13 +418,15 @@ function mb_ShouldUseDpsCooldowns(rangeCheckSpell)
 	if not mb_IsSpellInRange(rangeCheckSpell, "target") then
 		return false
 	end
-	local members = mb_GetNumPartyOrRaidMembers()
-	if UnitHealthMax("target") > UnitHealthMax("player") * members * 2 then
+
+	local targetStrength = mb_GetTargetStrength()
+	if targetStrength == 3 then
 		return true
 	end
-	if UnitHealth("target") > UnitHealthMax("player") * members then
+	if targetStrength == 2 and mb_UnitHealthPercentage("target") > 50 then
 		return true
 	end
+
 	return false
 end
 
@@ -721,17 +722,15 @@ function mb_GoToPosition_Update(x, y, acceptedDistance)
         return false
     end
     if distance < acceptedDistance then
-        TurnLeftStop()
-        TurnRightStop()
-        MoveForwardStop()
+		mb_StopMoving()
         mb_GoToPosition_hasReachedDestination = true
         mb_GoToPosition_hasReset = true
-		mb_disableAutomaticMovement = false
+		mb_EnableAutomaticMovement()
         return false
     end
     mb_GoToPosition_hasReachedDestination = false
     mb_GoToPosition_hasReset = false
-	mb_disableAutomaticMovement = true
+	mb_DisableAutomaticMovement()
 
     local currentFacing = GetPlayerFacing()
     local desiredFacing = math.atan2(dX, dY) + math.pi
@@ -769,10 +768,8 @@ function mb_GoToPosition_Reset()
         return
     end
     mb_GoToPosition_hasReset = true
-	mb_disableAutomaticMovement = false
-    TurnLeftStop()
-    TurnRightStop()
-    MoveForwardStop()
+	mb_EnableAutomaticMovement()
+	mb_StopMoving()
 end
 
 function mb_FollowUnit(unit)
@@ -791,7 +788,8 @@ mb_crowdControlSpells = {
 	"Polymorph",
 	"Death Coil",
 	"Hammer of Justice",
-	"Hex"
+	"Hex",
+	"Blind"
 }
 function mb_CrowdControl(unit)
 	for _, ccSpell in pairs(mb_crowdControlSpells) do
@@ -820,9 +818,74 @@ function mb_IWTClickToMove(unit)
 	mb_lastIWTClickToMove = mb_time
 end
 
+-- Returns how close you are to actually pull aggro on your target, returns a value between 0 and 100, ranged over-aggro at 130% is baked in.
+function mb_GetMyThreatPercentage(unit)
+	local _, _, threatPercentage = UnitDetailedThreatSituation("player", unit)
+	if threatPercentage == nil then
+		threatPercentage = 0
+	end
+	return threatPercentage
+end
 
+mb_lastSalvationCheck = 0
+function mb_HandleAutomaticSalvationRequesting()
+	if mb_lastSalvationCheck + 3 > mb_time then
+		return
+	end
+	mb_lastSalvationCheck = mb_time
 
+	if not mb_IsValidOffensiveUnit("target") then
+		return
+	end
+	if mb_GetTargetStrength() < 2 then
+		return
+	end
+	if mb_GetBuffTimeRemaining("player", "Hand of Salvation") > 0 then
+		return
+	end
+	if mb_GetMyThreatPercentage("target") > 90 then
+		mb_SendExclusiveRequest("salvation")
+	end
+end
 
+-- Returns a number between 0 and 3 corresponding to how strong the target is. Scales depending on your own max-hp and how many members are in your raid.
+function mb_GetTargetStrength()
+	local members = mb_GetNumPartyOrRaidMembers()
+	if UnitHealthMax("target") > UnitHealthMax("player") * members * 2 then
+		return 3
+	end
+	if UnitHealthMax("target") > UnitHealthMax("player") * members then
+		return 2
+	end
+	if UnitHealthMax("target") > UnitHealthMax("player") then
+		return 1
+	end
+	return 0
+end
 
+function mb_StopMoving()
+	TurnLeftStop()
+	TurnRightStop()
+	MoveForwardStop()
+	MoveBackwardStop()
+	StrafeLeftStop()
+	StrafeRightStop()
+end
+
+function mb_DisableAutomaticMovement()
+	if not mb_disabledAutomaticMovement then
+		mb_StopMoving()
+		mb_disabledAutomaticMovement = true
+	end
+end
+
+function mb_EnableAutomaticMovement()
+	mb_disabledAutomaticMovement = false
+end
+
+-- Hard-coded player -> target
+function mb_GetComboPoints()
+	return GetComboPoints("player", "target")
+end
 
 

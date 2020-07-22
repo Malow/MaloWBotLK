@@ -1,11 +1,10 @@
 
 -- TODO:
 -- Gift of the Naruu on tanks?
--- Wind Shear to interrupt
--- Fire Elemental Totem on CD
+-- Fire Elemental Totem on CD?
 -- Earth Elemental Totem? Seems when you use one it starts a shared CD with the other for 2 mins, but each still has 10 min CD
 --      Avoid Totemic Recall when Elemental Totem is down, also go back to normal totems after the Elemental totem is gone.
--- If I'm within melee range of the target, but my fire totem is not very close to me, re-place it, otherwise Fire Nova will miss
+-- Detect Fire Nova not hitting any target or not hitting my target, and try to do something about that.
 
 mb_Shaman_Enhancement_saveProcsForHeals = false
 
@@ -67,16 +66,20 @@ function mb_Shaman_Enhancement_OnUpdate()
         end
     end
 
+    if mb_UnitPowerPercentage("player") > 10 and mb_Shaman_HandleTotems() then
+        return
+    end
+
     if not mb_AcquireOffensiveTarget() then
         if mb_UnitPowerPercentage("player") > 30 then
             mb_RaidHeal("Chain Heal", 0.5)
         end
 
-        if mb_Shaman_HandleTotems() then
-            return
-        end
+        mb_Shaman_disableCastingTotems = true
         return
     end
+
+    mb_HandleAutomaticSalvationRequesting()
 
     if UnitExists("playerpet") then
         PetAttack()
@@ -84,6 +87,10 @@ function mb_Shaman_Enhancement_OnUpdate()
 
     if not mb_isAutoAttacking then
         InteractUnit("target")
+    end
+
+    if mb_Shaman_PurgeTarget() then
+        return
     end
 
     if mb_IsSpellInRange("Stormstrike", "target") and mb_CastSpellWithoutTarget("Shamanistic Rage") then
@@ -94,8 +101,10 @@ function mb_Shaman_Enhancement_OnUpdate()
         return
     end
 
-    if mb_IsSpellInRange("Stormstrike", "target") and mb_Shaman_HandleTotems() then
-        return
+    if mb_IsSpellInRange("Stormstrike", "target") then
+        mb_Shaman_disableCastingTotems = false
+    else
+        mb_Shaman_disableCastingTotems = true
     end
 
     if mb_UnitPowerPercentage("player") < 10 then

@@ -8,7 +8,6 @@ table.insert(mb_config.trustedCharacters, "Malowtank")
 table.insert(mb_config.trustedCharacters, "Aerer")
 table.insert(mb_config.trustedCharacters, "Rewis")
 table.insert(mb_config.trustedCharacters, "Warde")
-table.insert(mb_config.trustedCharacters, "Elweald")
 table.insert(mb_config.trustedCharacters, "Ceolmar")
 table.insert(mb_config.trustedCharacters, "Riffin")
 table.insert(mb_config.trustedCharacters, "Tunbert")
@@ -17,6 +16,7 @@ table.insert(mb_config.trustedCharacters, "Abith")
 table.insert(mb_config.trustedCharacters, "Puabi")
 table.insert(mb_config.trustedCharacters, "Igal")
 table.insert(mb_config.trustedCharacters, "Verne")
+table.insert(mb_config.trustedCharacters, "Carin")
 
 function mb_IsTrustedCharacter(charName)
 	for _, name in pairs(mb_config.trustedCharacters) do
@@ -43,15 +43,20 @@ table.insert(mb_config.professionCooldowns["Alchemy"], "Transmute: Eternal Shado
 mb_config.classOrder = {}
 mb_config.classOrder.mightBlesser = 1
 mb_config.classOrder.wisdomBlesser = 2
-mb_config.classOrder.kingsBlesser = 3
-mb_config.classOrder.sancBlesser = 4
+mb_config.classOrder.sancBlesser = 3
+mb_config.classOrder.kingsBlesser = 4
 mb_config.classOrder.retriAura = 1
 mb_config.classOrder.concentrationAura = 2
-mb_config.classOrder.frostAura = 3
-mb_config.classOrder.devoAura = 4
+mb_config.classOrder.devoAura = 3
+mb_config.classOrder.frostAura = 4
 mb_config.classOrder.fireAura = 5
 mb_config.classOrder.crusaderAura = 6
 mb_config.classOrder.shadowAura = 7
+
+
+-- Blacklisted interrupt spells, spell that are not interruptible but that shows as interruptible
+mb_config.blacklistedInterruptSpells  = {}
+mb_config.blacklistedInterruptSpells["Malygos"] = {"Arcane Breath"}
 
 
 
@@ -64,7 +69,7 @@ mb_config.raidLayout["25man"][1] = {}
 table.insert(mb_config.raidLayout["25man"][1], "Malowtank")
 table.insert(mb_config.raidLayout["25man"][1], "Aerer")
 table.insert(mb_config.raidLayout["25man"][1], "Ninki")
-table.insert(mb_config.raidLayout["25man"][1], "Elweald")
+table.insert(mb_config.raidLayout["25man"][1], "Carin")
 table.insert(mb_config.raidLayout["25man"][1], "Rewis")
 mb_config.raidLayout["25man"][2] = {}
 table.insert(mb_config.raidLayout["25man"][2], "Warde")
@@ -233,8 +238,33 @@ mb_config.statWeights["Warrior"]["Arms"].dps = 0.0
 mb_config.statWeights["Warrior"]["Arms"].socketMeta = 100
 mb_config.statWeights["Warrior"]["Arms"].socketColored = 16
 
-
-
+-- Rogue
+mb_config.statWeights["Rogue"] = {}
+-- Combat
+mb_config.statWeights["Rogue"]["Combat"] = {}
+mb_config.statWeights["Rogue"]["Combat"].agility = 1.0
+mb_config.statWeights["Rogue"]["Combat"].intellect = 0.0
+mb_config.statWeights["Rogue"]["Combat"].spirit = 0.0
+mb_config.statWeights["Rogue"]["Combat"].strength = 0.55
+mb_config.statWeights["Rogue"]["Combat"].stamina = 0.01
+mb_config.statWeights["Rogue"]["Combat"].critRating = 0.75
+mb_config.statWeights["Rogue"]["Combat"].resilienceRating = 0.0
+mb_config.statWeights["Rogue"]["Combat"].defenseRating = 0.0
+mb_config.statWeights["Rogue"]["Combat"].expertiseRating = 0.82
+mb_config.statWeights["Rogue"]["Combat"].dodgeRating = 0.0
+mb_config.statWeights["Rogue"]["Combat"].parryRating = 0.0
+mb_config.statWeights["Rogue"]["Combat"].blockRating = 0.0
+mb_config.statWeights["Rogue"]["Combat"].armorPenetrationRating = 1.0
+mb_config.statWeights["Rogue"]["Combat"].hitRating = 0.8
+mb_config.statWeights["Rogue"]["Combat"].hasteRating = 0.73
+mb_config.statWeights["Rogue"]["Combat"].attackPower = 0.5
+mb_config.statWeights["Rogue"]["Combat"].armor = 0.0
+mb_config.statWeights["Rogue"]["Combat"].blockValue = 0.0
+mb_config.statWeights["Rogue"]["Combat"].spellPower = 0.0
+mb_config.statWeights["Rogue"]["Combat"].mp5 = 0.0
+mb_config.statWeights["Rogue"]["Combat"].dps = 0.0
+mb_config.statWeights["Rogue"]["Combat"].socketMeta = 100
+mb_config.statWeights["Rogue"]["Combat"].socketColored = 16
 
 
 

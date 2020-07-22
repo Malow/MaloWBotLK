@@ -1,7 +1,9 @@
 # MaloWBotLK
 3.3.5 version of MaloWBot, specifically designed for the 'Wrath of the Multiboxer' private server: https://discord.gg/wwKfnKR
 
-Currently only supports: Retribution Paladins, Enhancement Shamans, Arms Warriors and Holy Paladins. If you have just a little coding experience then adding more classes and specs is easy by modifying the files in the /classes/ folder.
+Currently only supports: Retribution Paladins, Enhancement Shamans, Arms Warriors, Holy Paladins, Protection Paladins and Combat Rogues. You can find more supported classes over on Devon's fork: https://github.com/ChrisCGalbraith/MaloWBotLK   
+
+If you have just a little coding experience then adding more classes and specs is easy by modifying the files in the /classes/ folder.
 
 This addon requires Lua-unlocking to work, as it automates rotations and stuff. You can find a Lua-unlocker that I've coded in the above Discord Server in the #faq room.
 
@@ -56,7 +58,7 @@ Makes all your slaves move forward for 2 seconds. Useful to make them go through
 /run mb_SendMessage("moveForward")
 
 Request a Heroism/Bloodlust from one of your Enhancement Shamans:  
-/run mb_SendExclusiveRequest("heroism", "")
+/run mb_SendExclusiveRequest("heroism")
 
 Make all your slaves Interct With Target, useful for looting/skinning etc:  
 /mb re InteractUnit("target")
@@ -77,11 +79,17 @@ Where "Elerien" is the name of the new character that they should follow, and "M
 Change commander on the fly for a single character:  
 /mb re if UnitName("player") == "Ceolmar" then mb_commanderUnit = mb_GetUnitForPlayerName("Odia") end
 
+Request a tank to taunt your current target:  
+/run mb_SendExclusiveRequest("taunt")
+
 Request a healer to use a CD (for example when there's large raid damage):  
-/run mb_SendExclusiveRequest("healcd", "")
+/run mb_SendExclusiveRequest("healcd")
 
 Request an external cooldown to be cast on you like Pain Supression or Hand of Sacrifice:  
-/run mb_SendExclusiveRequest("external", "")
+/run mb_SendExclusiveRequest("external")
+
+Request an external cooldown to be cast on the raid like improved Divine Sacrifice:  
+/run mb_SendExclusiveRequest("external", "raid")
 
 Toggle auto-rotation on/off on your commander:  
 /run if mb_doAutoRotationAsCommander then mb_doAutoRotationAsCommander = false; else mb_doAutoRotationAsCommander = true; end

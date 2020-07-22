@@ -70,13 +70,25 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
 			mb_HandleFacingWrongWay()
 		end
 		if arg1 == "You must be behind your target." then
+			if not mb_isEnabled or mb_isCommanding or mb_disabledAutomaticMovement then
+				return
+			end
+			if mb_followMode == "strict" then
+				return
+			end
 			mb_stopStrafingAt = mb_time + 1.5
 			StrafeLeftStop()
 			StrafeRightStart()
 		end
 	elseif event == "UNIT_SPELLCAST_SENT" and arg1 == "player" then
+		local unit = mb_GetUnitForPlayerName(arg4)
+		if unit == nil then
+			if UnitExists("focus") and UnitName("focus") == arg4 then
+				unit = "focus"
+			end
+		end
 		mb_shouldCallPreCastFinishCallback = true
-		mb_currentCastTargetUnit = mb_GetUnitForPlayerName(arg4)
+		mb_currentCastTargetUnit = unit
 	elseif event == "READY_CHECK" then
 		mb_HandleReadyCheck()
 		ReadyCheckFrame:Hide()
@@ -252,7 +264,7 @@ mb_currentCastTargetUnit = nil
 mb_IWTDistanceClosingRangeCheckSpell = nil
 mb_doAutoRotationAsCommander = false
 mb_lastMovementTime = GetTime()
-mb_disableAutomaticMovement = false
+mb_disabledAutomaticMovement = false
 mb_isFollowing = false
 mb_hasCheckedProfessionCooldowns = false
 -- OnUpdate
@@ -304,7 +316,7 @@ function mb_OnUpdate()
 		return
 	end
 
-	if not mb_disableAutomaticMovement then
+	if not mb_disabledAutomaticMovement then
 		mb_HandleAutomaticMovement()
 	end
 
@@ -450,6 +462,9 @@ function mb_SendMessage(messageType, message)
 end
 
 function mb_SendExclusiveRequest(requestType, message)
+	if message == nil then
+		message = ""
+	end
 	local requestId = tostring(math.random(9999999))
 	mb_SendMessage("exclusiveRequest", requestId .. ":" .. requestType .. ":" .. message)
 end
@@ -494,7 +509,7 @@ function mb_HandleIncomingMessage(mbCom)
 			end
 		else
 			local exclusiveInterruptTime = string.sub(message, string.find(message, ":") + 1)
-			mb_blacklistedInterruptGUIDs[guid] = mb_time + tonumber(exclusiveInterruptTime)
+			mb_blacklistedInterruptGUIDs[guid] = mb_time + tonumber(exclusiveInterruptTime) - 0.25 -- Account for 250ms ping
 		end
 	end
 	
@@ -601,7 +616,7 @@ function mb_RequestDesiredBuffsThrottled()
 end
 
 function mb_HandleFacingWrongWay()
-	if not mb_isEnabled or mb_isCommanding or mb_disableAutomaticMovement then
+	if not mb_isEnabled or mb_isCommanding or mb_disabledAutomaticMovement then
 		return
 	end
 	if mb_followMode == "strict" then
@@ -768,6 +783,13 @@ function mb_HandleTargetSpellcast()
 	end
 	if spell == nil or notInterruptible then
 		return
+	end
+	if mb_config.blacklistedInterruptSpells[UnitName("target")] ~= nil then
+		for _, blacklistedSpell in pairs(mb_config.blacklistedInterruptSpells[UnitName("target")]) do
+			if blacklistedSpell == spell then
+				return
+			end
+		end
 	end
 
 	local canInterrupt = false

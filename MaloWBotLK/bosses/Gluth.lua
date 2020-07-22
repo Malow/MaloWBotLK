@@ -41,7 +41,7 @@ function mb_BossModule_Gluth_Tank_OnUpdate()
     elseif UnitBuff("target", "Enrage") then
         if mb_BossModule_Gluth_lastExternalRequest + 10 < mb_time then
             mb_BossModule_Gluth_lastExternalRequest = mb_time
-            mb_SendExclusiveRequest("external", "")
+            mb_SendExclusiveRequest("external")
         end
         mb_UseItemCooldowns()
         if mb_GetClass("player") == "PALADIN" then

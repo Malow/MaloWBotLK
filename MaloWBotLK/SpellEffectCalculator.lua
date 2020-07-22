@@ -64,7 +64,17 @@ function mb_GetSpellEffect(spell)
     local baseValue = spellValues[spellRank]
     local coefficient = spellValues.coefficient
     local spellPower = GetSpellBonusHealing()
-    return (baseValue + coefficient * spellPower) * 1.06 -- Count on having Improved Devotion Aura
+    local classModifier = 1.0
+    if mb_GetClass("player") == "PALADIN" then
+        if mb_GetMySpecName() == "Holy" then
+            classModifier = 1.17 -- 17% flat increase from talents
+        end
+        if mb_GetBuffTimeRemaining("player", "Divine Plea") > 0 then
+            classModifier = classModifier * 0.5
+        end
+    end
+    local spellEffect = (baseValue + coefficient * spellPower) * 1.06 * classModifier -- Count on having Improved Devotion Aura, or Tree Form on the raid
+    return spellEffect
 end
 
 

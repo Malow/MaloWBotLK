@@ -67,6 +67,7 @@ function mb_Shaman_SetAirTotem(spell)
 	mb_Shaman_totems[4] = spell
 end
 
+mb_Shaman_disableCastingTotems = false
 function mb_Shaman_HandleTotems()
 	local totemCount = mb_Shaman_GetTotemCount()
 	if totemCount > 0 and mb_Shaman_AreTotemsOutOfRange_Throttled() then
@@ -74,7 +75,20 @@ function mb_Shaman_HandleTotems()
 		return true
 	end
 
-	if not UnitAffectingCombat("player") or totemCount == 4 then
+	if mb_Shaman_disableCastingTotems then
+		return false
+	end
+
+	if not UnitAffectingCombat("player") then
+		return false
+	end
+
+	if totemCount == 4 then
+		if mb_StringStartsWith(mb_Shaman_totems[1], "Magma Totem") then
+			if mb_Shaman_ShouldRecastMagmaTotem() then
+				mb_CastSpellWithoutTarget(mb_Shaman_totems[1])
+			end
+		end
 		return false
 	end
 
@@ -114,6 +128,23 @@ function mb_Shaman_AreTotemsOutOfRange_Throttled()
 	return false
 end
 
+mb_Shaman_lastMagmaTotemCheck = 0
+function mb_Shaman_ShouldRecastMagmaTotem()
+	if mb_Shaman_lastMagmaTotemCheck + 3 > mb_time then
+		return false
+	end
+	mb_Shaman_lastMagmaTotemCheck = mb_time
+
+	local previousTarget = UnitName("target")
+	TargetTotem(1)
+	if UnitExists("target") and UnitName("target") ~= previousTarget then
+		local inRange = CheckInteractDistance("target", 3) ~= 1
+		TargetLastTarget()
+		return inRange
+	end
+	return false
+end
+
 function mb_Shaman_GetMissingTotemIndex()
 	for i = 1, 4 do
 		local haveTotem, totemName, startTime, duration = GetTotemInfo(i)
@@ -139,7 +170,11 @@ function mb_Shaman_PurgeTarget()
 	for i = 1, 40 do
 		local name, rank, icon, count, buffType, duration, expirationTime, unitCaster, isStealable, shouldConsolidate, spellId = UnitBuff("target", i)
 		if buffType == "Magic" then
-			return mb_CastSpellOnTarget("Purge")
+			if mb_CastSpellOnTarget("Purge") then
+				mb_SayRaid("Purged " .. name .. " from " .. UnitName("target"))
+				return true
+			end
+			return false
 		end
 	end
 	return false
@@ -153,7 +188,7 @@ function mb_Shaman_GetHeroismName()
 end
 
 function mb_Shaman_HeroismRequestAcceptor(message, from)
-	if mb_IsUsableSpell(mb_Shaman_GetHeroismName()) and mb_GetRemainingSpellCooldown(mb_Shaman_GetHeroismName()) < 1.5 then
+	if mb_CanCastSpell(mb_Shaman_GetHeroismName(), nil, true) then
 		return true
 	end
 	return false

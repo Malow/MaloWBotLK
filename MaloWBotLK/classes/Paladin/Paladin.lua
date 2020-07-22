@@ -37,6 +37,7 @@ function mb_Paladin_OnLoad()
 
 	if not mb_isCommanding then
 		mb_RegisterExclusiveRequestHandler("external", mb_Paladin_ExternalRequestAcceptor, mb_Paladin_ExternalRequestExecutor)
+		mb_RegisterExclusiveRequestHandler("salvation", mb_Paladin_SalvationRequestAcceptor, mb_Paladin_SalvationRequestExecutor)
 	end
 end
 
@@ -93,15 +94,12 @@ end
 
 function mb_Paladin_ExternalRequestAcceptor(message, from)
 	if message == "raid" then
-		if mb_IsUsableSpell("Divine Sacrifice") and mb_GetRemainingSpellCooldown("Divine Sacrifice") < 1.5 then
-			return true
-		end
-		return false
+		return mb_CanCastSpell("Divine Sacrifice", nil, true)
 	end
-	if mb_IsUsableSpell("Hand of Sacrifice", from) and mb_GetRemainingSpellCooldown("Hand of Sacrifice") < 1.5 then
+	if mb_CanCastSpell("Hand of Sacrifice", from, true) then
 		return true
 	end
-	if mb_IsUsableSpell("Divine Sacrifice") and mb_GetRemainingSpellCooldown("Divine Sacrifice") < 1.5 and UnitInParty(mb_GetUnitForPlayerName(from)) then
+	if mb_CanCastSpell("Divine Sacrifice", nil, true) and UnitInParty(mb_GetUnitForPlayerName(from)) then
 		if CheckInteractDistance(from, 4) then
 			return true
 		end
@@ -132,6 +130,25 @@ function mb_Paladin_ExternalRequestExecutor(message, from)
 	end
 	return false
 end
+
+function mb_Paladin_SalvationRequestAcceptor(message, from)
+	return mb_CanCastSpell("Hand of Salvation", from, true)
+end
+
+function mb_Paladin_SalvationRequestExecutor(message, from)
+	if not mb_IsReadyForNewCast() then
+		return false
+	end
+
+	local targetUnit = mb_GetUnitForPlayerName(from)
+	if mb_CastSpellOnFriendly(targetUnit, "Hand of Salvation") then
+		mb_SayRaid("Casting Hand of Salvation on " .. from)
+		return true
+	end
+
+	return false
+end
+
 
 
 

@@ -4,13 +4,13 @@
 -- LayOnHand low friendly
 -- Divine Shield + Taunt into click away if low and all those CDs are ready
 -- BoP friendly who has aggro
--- Salv friendly who is high on threat
 -- Auto-taunt off non-tanks
 
 function mb_Paladin_Protection_OnLoad()
     mb_RegisterDesiredBuff(BUFF_MIGHT)
     mb_RegisterDesiredBuff(BUFF_THORNS)
     mb_RegisterClassSpecificReadyCheckFunction(mb_Paladin_Protection_ReadyCheck)
+    mb_RegisterExclusiveRequestHandler("taunt", mb_Paladin_Protection_TauntAcceptor, mb_Paladin_Protection_TauntExecutor)
 end
 
 function mb_Paladin_Protection_OnUpdate()
@@ -119,3 +119,28 @@ function mb_Paladin_Protection_ReadyCheck()
     end
     return ready
 end
+
+function mb_Paladin_Protection_TauntAcceptor(message, from)
+    if UnitExists("target") and UnitIsUnit("target", mb_GetUnitForPlayerName(from) .. "target") then
+        if mb_CanCastSpell("Hand of Reckoning", "target") or mb_CanCastSpell("Righteous Defense", "target") then
+            return true
+        end
+        return false
+    end
+end
+
+function mb_Paladin_Protection_TauntExecutor(message, from)
+    if UnitExists("target") and UnitIsUnit("target", mb_GetUnitForPlayerName(from) .. "target") then
+        if mb_CastSpellOnTarget("Hand of Reckoning") then
+            mb_SayRaid("Im Taunting!")
+            return true
+        end
+        if mb_CastSpellOnTarget("Righteous Defense") then
+            mb_SayRaid("Im Taunting!")
+            return true
+        end
+    end
+    return false
+end
+
+

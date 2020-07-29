@@ -54,7 +54,7 @@ function mb_MoveForwardHandler(msg, from)
     if not mb_IsTrustedCharacter(from) then
         return
     end
-    mb_shouldStopMovingForwardAt = mb_time + 2
+    mb_shouldStopMovingAt = mb_time + 2
     MoveForwardStart()
 end
 

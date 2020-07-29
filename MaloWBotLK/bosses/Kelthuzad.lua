@@ -1,18 +1,18 @@
 function mb_BossModule_Kelthuzad_PreOnUpdate()
     if UnitIsDeadOrGhost("player") then
-        return
+        return false
     end
     if mb_commanderUnit == nil and UnitName("target") ~= "Kel'Thuzad" then
-        return
+        return false
     end
     if mb_commanderUnit ~= nil and UnitName(mb_commanderUnit .. "target") ~= "Kel'Thuzad" then
-        return
+        return false
     end
     if mb_BossModule_Kelthuzad_ManaDetonation() then
-        return
+        return false
     end
     mb_BossModule_Kelthuzad_VoidZone()
-    mb_BossModule_Kelthuzad_DoRangeCheck()
+    mb_BossModule_Kelthuzad_DoRangeCheckAndMindControlCC()
     return false
 end
 
@@ -27,21 +27,19 @@ function mb_BossModule_Kelthuzad_ManaDetonation()
             mb_SayRaid("Detonate Mana on me!")
         end
         local x, y = mb_BossModule_Kelthuzad_GetClosestSafeManaDetonationSpot()
-        if mb_GoToPosition_Update(x, y, 0.003) then
-            return
-        else
+        mb_GoToPosition_SetDestination(x, y, 0.003)
+        if mb_GoToPosition_Update() then
             mb_GoToPosition_Reset()
         end
-    else
-        if mb_BossModule_Kelthuzad_positionPreManaDetonation == nil then
+        return true
+    elseif mb_BossModule_Kelthuzad_positionPreManaDetonation ~= nil then
+        mb_GoToPosition_SetDestination(mb_BossModule_Kelthuzad_positionPreManaDetonation.x, mb_BossModule_Kelthuzad_positionPreManaDetonation.y, 0.003)
+        if mb_GoToPosition_Update() then
+            mb_BossModule_Kelthuzad_positionPreManaDetonation = nil
             mb_GoToPosition_Reset()
-        else
-            if not mb_GoToPosition_Update(mb_BossModule_Kelthuzad_positionPreManaDetonation.x, mb_BossModule_Kelthuzad_positionPreManaDetonation.y, 0.003) then
-                mb_BossModule_Kelthuzad_positionPreManaDetonation = nil
-                mb_GoToPosition_Reset()
-            end
         end
     end
+    return false
 end
 
 mb_BossModule_Kelthuzad_safeManaDetonationSpots = {
@@ -97,7 +95,7 @@ function mb_BossModule_Kelthuzad_VoidZone()
 end
 
 mb_BossModule_Kelthuzad_lastRangeCheck = 0
-function mb_BossModule_Kelthuzad_DoRangeCheck()
+function mb_BossModule_Kelthuzad_DoRangeCheckAndMindControlCC()
     if mb_BossModule_Kelthuzad_lastRangeCheck + 1 > mb_time then
         return
     end

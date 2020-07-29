@@ -1,7 +1,6 @@
 mb_config = {}
 
-mb_config.mainTank = "Malowtank"
-mb_config.offTank = "Elerien"
+mb_config.tanks = {"Malowtank", "Elerien", "Tunbert", "Maligna"}
 
 mb_config.trustedCharacters = {}
 table.insert(mb_config.trustedCharacters, "Malowtank")
@@ -54,9 +53,10 @@ mb_config.classOrder.crusaderAura = 6
 mb_config.classOrder.shadowAura = 7
 
 
--- Blacklisted interrupt spells, spell that are not interruptible but that shows as interruptible
+-- Blacklisted interrupt spells, spells that are not interruptible but that shows as interruptible
 mb_config.blacklistedInterruptSpells = {}
 mb_config.blacklistedInterruptSpells["Malygos"] = { "Arcane Breath" }
+mb_config.blacklistedInterruptSpells["Sartharion"] = { "Flame Breath" }
 
 
 
@@ -166,12 +166,12 @@ mb_config.statWeights["Paladin"]["Retribution"].stamina = 0.01
 mb_config.statWeights["Paladin"]["Retribution"].critRating = 0.4
 mb_config.statWeights["Paladin"]["Retribution"].resilienceRating = 0.0
 mb_config.statWeights["Paladin"]["Retribution"].defenseRating = 0.0
-mb_config.statWeights["Paladin"]["Retribution"].expertiseRating = 0.66
+mb_config.statWeights["Paladin"]["Retribution"].expertiseRating = 0.33
 mb_config.statWeights["Paladin"]["Retribution"].dodgeRating = 0.0
 mb_config.statWeights["Paladin"]["Retribution"].parryRating = 0.0
 mb_config.statWeights["Paladin"]["Retribution"].blockRating = 0.0
 mb_config.statWeights["Paladin"]["Retribution"].armorPenetrationRating = 0.2
-mb_config.statWeights["Paladin"]["Retribution"].hitRating = 1.0
+mb_config.statWeights["Paladin"]["Retribution"].hitRating = 0.5
 mb_config.statWeights["Paladin"]["Retribution"].hasteRating = 0.25
 mb_config.statWeights["Paladin"]["Retribution"].attackPower = 0.34
 mb_config.statWeights["Paladin"]["Retribution"].armor = 0.0
@@ -227,7 +227,7 @@ mb_config.statWeights["Warrior"]["Arms"].dodgeRating = 0.0
 mb_config.statWeights["Warrior"]["Arms"].parryRating = 0.0
 mb_config.statWeights["Warrior"]["Arms"].blockRating = 0.0
 mb_config.statWeights["Warrior"]["Arms"].armorPenetrationRating = 0.4
-mb_config.statWeights["Warrior"]["Arms"].hitRating = 0.9
+mb_config.statWeights["Warrior"]["Arms"].hitRating = 0.45
 mb_config.statWeights["Warrior"]["Arms"].hasteRating = 0.1
 mb_config.statWeights["Warrior"]["Arms"].attackPower = 0.45
 mb_config.statWeights["Warrior"]["Arms"].armor = 0.0

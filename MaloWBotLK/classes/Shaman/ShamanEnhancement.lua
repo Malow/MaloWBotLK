@@ -1,9 +1,9 @@
 -- TODO:
--- Gift of the Naruu on tanks?
 -- Fire Elemental Totem on CD?
 -- Earth Elemental Totem? Seems when you use one it starts a shared CD with the other for 2 mins, but each still has 10 min CD
 --      Avoid Totemic Recall when Elemental Totem is down, also go back to normal totems after the Elemental totem is gone.
 -- Detect Fire Nova not hitting any target or not hitting my target, and try to do something about that.
+-- Extract gift of the naaru code and make it run outside of the class-code, so that it runs regardless of class and spec
 
 mb_Shaman_Enhancement_saveProcsForHeals = false
 
@@ -79,6 +79,15 @@ function mb_Shaman_Enhancement_OnUpdate()
     end
 
     mb_HandleAutomaticSalvationRequesting()
+
+    if mb_GetRemainingSpellCooldown("Gift of the Naaru") == 0 then
+        if math.random(20) == 1 then -- Stagger them a bit, otherwise they will all cast at the same time
+            local tanks = mb_GetTanks("Gift of the Naaru")
+            if tanks[1] ~= nil and mb_GetBuffTimeRemaining(tanks[1], "Gift of the Naaru") == 0 then
+                mb_CastSpellOnFriendly(tanks[1], "Gift of the Naaru")
+            end
+        end
+    end
 
     if UnitExists("playerpet") then
         PetAttack()

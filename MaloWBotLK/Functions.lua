@@ -9,7 +9,7 @@ function mb_GetNumPartyOrRaidMembers()
     else
         return GetNumPartyMembers()
     end
-    return 0
+    return 1
 end
 
 function mb_GetNumOnlinePartyOrRaidMembers()
@@ -76,7 +76,7 @@ function mb_CreateMacro(name, body, actionSlot)
     ClearCursor()
 end
 
-function mb_IsValidOffensiveUnit(unit)
+function mb_IsValidOffensiveUnit(unit, requireCombat)
     if not UnitExists(unit) then
         return false
     end
@@ -86,8 +86,10 @@ function mb_IsValidOffensiveUnit(unit)
     if UnitCanAttack("player", unit) == nil then
         return false
     end
-    if not UnitAffectingCombat(unit) then
-        return false
+    if requireCombat then
+        if not UnitAffectingCombat(unit) then
+            return false
+        end
     end
     return true
 end
@@ -176,6 +178,9 @@ end
 -- Checks if there's no cooldown and if the spell use useable (have mana to cast it), and that if we're moving that it doesn't have a cast time
 -- Unit is optional, if provided it will check that the spell can be cast on the unit (that it's a valid target and is in range)
 function mb_CanCastSpell(spell, unit, withinNextGlobal)
+    if not mb_IsUsableSpell(spell, unit) then
+        return false
+    end
     local cd = 0
     if withinNextGlobal then
         cd = 1.5
@@ -189,7 +194,7 @@ function mb_CanCastSpell(spell, unit, withinNextGlobal)
             return false
         end
     end
-    return mb_IsUsableSpell(spell, unit)
+    return true
 end
 
 -- Returns true on success
@@ -413,7 +418,7 @@ function mb_ShouldUseDpsCooldowns(rangeCheckSpell)
     if mb_forceBlockDpsCooldowns then
         return false
     end
-    if not mb_IsValidOffensiveUnit("target") then
+    if not mb_IsValidOffensiveUnit("target", true) then
         return false
     end
     if not mb_IsSpellInRange(rangeCheckSpell, "target") then
@@ -514,14 +519,14 @@ end
 -- Returns true/false depending on if a valid offensive target was acquired.
 function mb_AcquireOffensiveTarget()
     if mb_commanderUnit == nil then
-        return mb_IsValidOffensiveUnit("target")
+        return mb_IsValidOffensiveUnit("target", true)
     end
     if not UnitExists(mb_commanderUnit .. "target") then
         ClearTarget()
         return false
     end
     AssistUnit(mb_commanderUnit)
-    return mb_IsValidOffensiveUnit("target")
+    return mb_IsValidOffensiveUnit("target", true)
 end
 
 -- Checks whether it's a good time to buff, returns true/false
@@ -712,27 +717,54 @@ function mb_GetMapPosition(unit)
     return x, y
 end
 
-mb_GoToPosition_hasReset = true
-mb_GoToPosition_hasReachedDestination = false
--- Returns true as long as the character is busy running towards the place, returns false once it's there
-function mb_GoToPosition_Update(x, y, acceptedDistance)
-    local curX, curY = mb_GetMapPosition("player")
-    local dX, dY = x - curX, y - curY
-    local distance = math.sqrt(dX * dX + dY * dY)
-    if mb_GoToPosition_hasReachedDestination and distance < acceptedDistance * 1.5 then
-        -- Allow 50% leeway if you reached the destination previously.
-        return false
+mb_GoToPosition_destination = nil
+-- Called once to initiate a movement to a specific x/y map coordinate. The character will continue to try to stay close to that place until mb_GoToPosition_Reset is called
+function mb_GoToPosition_SetDestination(x, y, acceptedDistance, preventAutomaticMovementDisabling)
+    if mb_GoToPosition_destination ~= nil then
+        if mb_GoToPosition_destination.x == x and mb_GoToPosition_destination.y == y and mb_GoToPosition_destination.acceptedDistance == acceptedDistance then
+            return
+        end
     end
-    if distance < acceptedDistance then
+    mb_GoToPosition_destination = {}
+    mb_GoToPosition_destination.x = x
+    mb_GoToPosition_destination.y = y
+    mb_GoToPosition_destination.acceptedDistance = acceptedDistance
+    mb_GoToPosition_hasReachedDestination = false
+    if not preventAutomaticMovementDisabling then
+        mb_DisableAutomaticMovement()
+    end
+end
+
+-- Stops movement, if the condition for GoToPosition changes before it has reached it destination characters can get stuck moving / turning otherwise.
+function mb_GoToPosition_Reset()
+    if mb_GoToPosition_destination == nil then
+        return
+    end
+    mb_GoToPosition_destination = nil
+    mb_StopMoving()
+    mb_EnableAutomaticMovement()
+end
+
+mb_GoToPosition_hasReachedDestination = false
+-- Returns false while the character is running towards the point. Returns true once the character reaches it.
+function mb_GoToPosition_Update()
+    if mb_GoToPosition_destination == nil then
+        return true
+    end
+
+    local curX, curY = mb_GetMapPosition("player")
+    local dX, dY = mb_GoToPosition_destination.x - curX, mb_GoToPosition_destination.y - curY
+    local distance = math.sqrt(dX * dX + dY * dY)
+    if mb_GoToPosition_hasReachedDestination and distance < mb_GoToPosition_destination.acceptedDistance * 1.5 then
+        -- Allow 50% leeway if you reached the destination previously.
+        return true
+    end
+    if distance < mb_GoToPosition_destination.acceptedDistance then
         mb_StopMoving()
         mb_GoToPosition_hasReachedDestination = true
-        mb_GoToPosition_hasReset = true
-        mb_EnableAutomaticMovement()
-        return false
+        return true
     end
     mb_GoToPosition_hasReachedDestination = false
-    mb_GoToPosition_hasReset = false
-    mb_DisableAutomaticMovement()
 
     local currentFacing = GetPlayerFacing()
     local desiredFacing = math.atan2(dX, dY) + math.pi
@@ -761,22 +793,18 @@ function mb_GoToPosition_Update(x, y, acceptedDistance)
     else
         MoveForwardStop()
     end
-    return true
-end
-
--- Stops movement and camera turning, if the condition for GoToPosition changes before it has reached it destination characters can get stuck moving / turning otherwise.
-function mb_GoToPosition_Reset()
-    if mb_GoToPosition_hasReset then
-        return
-    end
-    mb_GoToPosition_hasReset = true
-    mb_EnableAutomaticMovement()
-    mb_StopMoving()
+    return false
 end
 
 function mb_FollowUnit(unit)
-    mb_isFollowing = true
-    FollowUnit(unit)
+    if CheckInteractDistance(unit, 4) then
+        mb_isFollowing = true
+        FollowUnit(unit)
+        mb_GoToPosition_Reset()
+        return true
+    end
+    mb_isFollowing = false
+    return false
 end
 
 function mb_BreakFollow()
@@ -791,7 +819,8 @@ mb_crowdControlSpells = {
     "Death Coil",
     "Hammer of Justice",
     "Hex",
-    "Blind"
+    "Blind",
+    "Repentance"
 }
 function mb_CrowdControl(unit)
     for _, ccSpell in pairs(mb_crowdControlSpells) do
@@ -836,7 +865,7 @@ function mb_HandleAutomaticSalvationRequesting()
     end
     mb_lastSalvationCheck = mb_time
 
-    if not mb_IsValidOffensiveUnit("target") then
+    if not mb_IsValidOffensiveUnit("target", true) then
         return
     end
     if mb_GetTargetStrength() < 2 then
@@ -889,5 +918,21 @@ end
 function mb_GetComboPoints()
     return GetComboPoints("player", "target")
 end
+
+-- Returns a list of unit-references of tanks, filtered by if they're valid targets and actually tanking something
+-- Filtered by in-range if rangeCheckSpell is provided
+function mb_GetTanks(rangeCheckSpell)
+    local tanks = {}
+    for _, tank in pairs(mb_config.tanks) do
+        local unit = mb_GetUnitForPlayerName(tank)
+        if unit ~= nil and mb_IsUnitValidFriendlyTarget(unit, rangeCheckSpell) then
+            if not UnitAffectingCombat("player") or UnitIsUnit(unit, unit .. "targettarget") then
+                table.insert(tanks, unit)
+            end
+        end
+    end
+    return tanks
+end
+
 
 

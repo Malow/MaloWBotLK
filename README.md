@@ -20,7 +20,7 @@ The addon currently has a hard-coded check that realm-name is "LichKingMBW", and
 
 You might want to set mb_config.mainTank and mb_config.offTank, these values decides on whom the healers cast things like Beacon of Light. The mb_config.classOrder decides which member of the raid that should do what. Each member of the raid of the same class is sorted alphabetically and given a class-order number based on that order. The mb_config.raidLayout stuff is used by running "/run mb_fixRaidSetupName = "25man";", it should automatically invite all those people to your raid and set FFA-loot, and in the future it will also automatically move people around to create the specific sub-groups specified here. The mb_config.statWeights stuff is used by "/mb lc [itemlink]" to make each raid-member say if they need an item that dropped.
 
-By default each slave will have 1 macros automatically placed on their bars. The macro on button "1" will cause them to reload their UI. and the macro on button "2" will set their commander to nil, which means they stop following and assisting. This is useful if you need to break off a character and play it manually, maybe to mind-control some mob, or to off-tank some mob.
+By default each slave will have 2 macros automatically placed on their bars. The macro on button "1" will cause them to reload their UI. and the macro on button "2" will set their commander to nil, which means they stop following and assisting. This is useful if you need to break off a character and play it manually, maybe to mind-control some mob, or to off-tank some mob.
   
 # Supported Commands through /mb:
 Initialize the addon with you as commander and the rest of the raid as your slaves:  
@@ -88,8 +88,8 @@ Request a healer to use a CD (for example when there's large raid damage):
 Request an external cooldown to be cast on you like Pain Supression or Hand of Sacrifice:  
 /run mb_SendExclusiveRequest("external")
 
-Request an external cooldown to be cast on the raid like improved Divine Sacrifice:  
-/run mb_SendExclusiveRequest("external", "raid")
+Request a Paladin with Improved Divine Sacrifice to cast it:  
+/run mb_SendExclusiveRequest("impdivinesac")
 
 Toggle auto-rotation on/off on your commander:  
 /run if mb_doAutoRotationAsCommander then mb_doAutoRotationAsCommander = false; else mb_doAutoRotationAsCommander = true; end

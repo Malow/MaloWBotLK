@@ -1,44 +1,70 @@
 mb_LootHandler_queuedLootCouncilMsg = nil
+mb_LootHandler_queryRetries = 0
 
 function mb_LootHandler_OnUpdate()
-    if mb_LootHandler_queuedLootCouncilMsg ~= nil then
-        local msg = mb_LootHandler_queuedLootCouncilMsg
+    if mb_LootHandler_queryRetries > 25 then
         mb_LootHandler_queuedLootCouncilMsg = nil
-        mb_LootHandler_HandleLootCouncilRequest(msg)
+        mb_LootHandler_queryRetries = 0
+        return
     end
+    if mb_LootHandler_queuedLootCouncilMsg ~= nil then
+        mb_LootHandler_HandleLootCouncilRequest(mb_LootHandler_queuedLootCouncilMsg)
+        return
+    end
+    mb_LootHandler_queryRetries = 0
 end
 
 function mb_LootHandler_HandleLootCouncilRequest(msg)
-    local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount,
-    itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(msg)
+    if msg == nil or msg == ""or msg == " " then
+        return
+    end
+    local itemName, itemLink, _, itemLevel, _, _, itemSubType, _, itemEquipLoc = GetItemInfo(msg)
     if itemName == nil then
         mb_LootHandler_queuedLootCouncilMsg = msg
+        mb_LootHandler_queryRetries = mb_LootHandler_queryRetries + 1
+        mb_Print("a" .. msg .. "b")
         GameTooltip:SetHyperlink(msg)
         return
     end
+    mb_LootHandler_queuedLootCouncilMsg = nil
     if not mb_LootHandler_CanEquipItem(itemSubType) then
         return
     end
     local usableSlots = mb_LootHandler_GetUsableSlotsForItemEquipLoc(itemEquipLoc)
     local output = ""
-    local currentItemValue = 99999999
+    local currentItemsValues = {}
+    local newItemValue = mb_LootHandler_GetNormalizedValueForItem(itemLink)
+    local isUpgrade = false
     for _, v in pairs(usableSlots) do
         local currentItemLink = GetInventoryItemLink("player", v)
         if currentItemLink == nil then
-            currentItemValue = 0
+            table.insert(currentItemsValues, 0)
         else
             local currentItemName, _, _, currentItemLevel = GetItemInfo(currentItemLink)
             if currentItemName == itemName and currentItemLevel == itemLevel then
                 return
             end
-            output = output .. currentItemLink .. "   "
-            currentItemValue = min(currentItemValue, mb_LootHandler_GetNormalizedValueForItem(currentItemLink))
+            if output ~= "" then
+                output = output .. "/"
+            end
+            output = output .. currentItemLink
+            local currentItemValue = mb_LootHandler_GetNormalizedValueForItem(currentItemLink)
+            table.insert(currentItemsValues, currentItemValue)
+            if currentItemValue < newItemValue then
+                isUpgrade = true
+            end
         end
     end
-    local newItemValue = mb_LootHandler_GetNormalizedValueForItem(itemLink)
-    if newItemValue > currentItemValue then
-        local valueIncrease = newItemValue - currentItemValue
-        mb_SayRaid(floor(valueIncrease) .. " score increase over " .. output)
+    if isUpgrade then
+        local s = ""
+        for _, currentItemValue in pairs(currentItemsValues) do
+            if s ~= "" then
+                s = s .. "/"
+            end
+            local valueIncrease = newItemValue - currentItemValue
+            s = s .. tostring(floor(valueIncrease))
+        end
+        mb_SayRaid(s .. " score increase over " .. output)
     end
 end
 
@@ -218,28 +244,86 @@ function mb_LootHandler_GetGoodStatName(badStatName)
 end
 
 function mb_LootHandler_CanEquipItem(itemSubType)
-    local myClass = UnitClass("player")
+    local myClass = mb_GetClass("player")
     local mySpec = mb_GetMySpecName()
+    -- Armors
     if itemSubType == "Plate" then
-        if myClass == "Paladin" or myClass == "Warrior" or myClass == "Deathknight" then
+        if myClass == "PALADIN" or myClass == "WARRIOR" or myClass == "DEATHKNIGHT" then
             return true
         end
         return false
     end
     if itemSubType == "Mail" then
-        if myClass == "Paladin" or myClass == "Warrior" or myClass == "Deathknight" or myClass == "Shaman" or myClass == "Hunter" then
+        if myClass == "PALADIN" or myClass == "WARRIOR" or myClass == "DEATHKNIGHT" or myClass == "SHAMAN" or myClass == "HUNTER" then
             return true
         end
         return false
     end
     if itemSubType == "Leather" then
-        if myClass == "Mage" or myClass == "Warlock" or myClass == "Priest" then
+        if myClass == "MAGE" or myClass == "WARLOCK" or myClass == "PRIEST" then
             return false
         end
         return true
     end
+    -- Ranged
     if itemSubType == "Bows" or itemSubType == "Guns" or itemSubType == "Crossbows" or itemSubType == "Thrown" then
-        if myClass == "Warrior" or myClass == "Rogue" or myClass == "Hunter" then
+        if myClass == "WARRIOR" or myClass == "ROGUE" or myClass == "HUNTER" then
+            return true
+        end
+        return false
+    end
+    -- One-handed weapons
+    if itemSubType == "One-Handed Maces" or itemSubType == "One-Handed Axes" or itemSubType == "Daggers" or itemSubType == "Fist Weapons" or itemSubType == "One-Handed Swords" then
+        if myClass == "PALADIN" and mySpec == "Retribution" then
+            return false
+        end
+        if myClass == "WARRIOR" and mySpec ~= "Protection" then
+            return false
+        end
+        return true
+    end
+    -- Shields
+    if itemSubType == "Shields" then
+        if mySpec == "Protection" then
+            return true
+        end
+        if myClass == "SHAMAN" and mySpec ~= "Enhancement" then
+            return true
+        end
+        return false
+    end
+    -- Two-handed weapons
+    if itemSubType == "Polearms" or itemSubType == "Staves" or itemSubType == "Two-Handed Maces" or itemSubType == "Two-Handed Swords" or itemSubType == "Two-Handed Axes" then
+        if myClass == "ROGUE" then
+            return false
+        end
+        if myClass == "SHAMAN" and mySpec == "Enhancement" then
+            return false
+        end
+        if mySpec == "Protection" then
+            return false
+        end
+        return true
+    end
+    -- Wands
+    if itemSubType == "Wands" then
+        if myClass == "MAGE" or myClass == "PRIEST" or myClass == "WARLOCK" then
+            return true
+        end
+        return false
+    end
+    -- Offhands
+    if itemSubType == "Miscellaneous" then
+        if myClass == "MAGE" or myClass == "PRIEST" or myClass == "WARLOCK" then
+            return true
+        end
+        if myClass == "DRUID" and mySpec ~= "Feral Combat" then
+            return true
+        end
+        if myClass == "PALADIN" and mySpec == "Holy" then
+            return true
+        end
+        if myClass == "SHAMAN" and mySpec ~= "Enhancement" then
             return true
         end
         return false

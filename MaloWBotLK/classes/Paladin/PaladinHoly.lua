@@ -28,6 +28,10 @@ function mb_Paladin_Holy_OnUpdate()
         return
     end
 
+    if mb_Paladin_Holy_beaconUnit ~= nil and not UnitBuff(mb_Paladin_Holy_beaconUnit, "Beacon of Light") then
+        mb_Paladin_Holy_beaconUnit = nil
+    end
+
     if UnitAffectingCombat("player") then
         if mb_UnitHealthPercentage("player") < 30 and mb_CastSpellWithoutTarget("Divine Shield") then
             return
@@ -56,32 +60,22 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
-    local mainTankUnit, offTankUnit = mb_GetUnitForPlayerName(mb_config.mainTank), mb_GetUnitForPlayerName(mb_config.offTank)
-    if mainTankUnit == nil or not mb_IsUnitValidFriendlyTarget(mainTankUnit, "Beacon of Light") then
-        if offTankUnit ~= nil and mb_IsUnitValidFriendlyTarget(offTankUnit, "Beacon of Light") then
-            mainTankUnit = offTankUnit
-        else
-            mainTankUnit = nil
-        end
-        offTankUnit = nil
-    end
-    local sacredShieldTarget = mainTankUnit
-    if mainTankUnit ~= nil and mb_GetClass(mainTankUnit) == "PALADIN" and offTankUnit ~= nil then
-        sacredShieldTarget = offTankUnit
-    end
-
-    if sacredShieldTarget ~= nil then
-        if not UnitBuff(sacredShieldTarget, "Sacred Shield") and mb_CastSpellOnFriendly(sacredShieldTarget, "Sacred Shield") then
+    local tanks = mb_GetTanks("Flash of Light")
+    if mb_Paladin_Holy_beaconUnit == nil and tanks[1] ~= nil then
+        if mb_CastSpellOnFriendly(tanks[1], "Beacon of Light") then
+            mb_Paladin_Holy_beaconUnit = tanks[1]
             return
         end
     end
-
-    if mainTankUnit ~= nil and not UnitBuff(mainTankUnit, "Beacon of Light") then
-        if mb_CastSpellOnFriendly(mainTankUnit, "Beacon of Light") then
-            mb_Paladin_Holy_beaconUnit = mainTankUnit
-            return
-        else
-            mb_Paladin_Holy_beaconUnit = nil
+    for _, tank in pairs(tanks) do
+        if mb_GetClass(tank) ~= "PALADIN" then
+            if UnitBuff(tank, "Sacred Shield") then
+                break
+            else
+                if mb_CastSpellOnFriendly(tank, "Sacred Shield") then
+                    return
+                end
+            end
         end
     end
 
@@ -100,9 +94,6 @@ function mb_Paladin_Holy_OnUpdate()
         if mb_IsMoving() and mb_RaidHeal("Flash of Light") then
             return
         end
-        if mb_RaidHeal("Holy Light") then
-            return
-        end
     end
 
     local hasValidEnemyTarget = false
@@ -117,6 +108,10 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
+    if mb_commanderUnit ~= nil and mb_followMode == "lenient" and UnitAffectingCombat("player") and CheckInteractDistance(mb_commanderUnit, 2) then
+        mb_BreakFollow()
+    end
+
     if mb_RaidHeal("Holy Light", 1.2) then
         return
     end
@@ -129,8 +124,9 @@ function mb_Paladin_Holy_OnUpdate()
         return
     end
 
-    if mainTankUnit ~= nil then
-        if mb_GetBuffTimeRemaining(mainTankUnit, "Beacon of Light") < 10 and mb_CastSpellOnFriendly(mainTankUnit, "Beacon of Light") then
+    if mb_Paladin_Holy_beaconUnit ~= nil and mb_GetBuffTimeRemaining(mb_Paladin_Holy_beaconUnit, "Beacon of Light") < 10 then
+        if tanks[1] ~= nil and mb_CastSpellOnFriendly(tanks[1], "Beacon of Light") then
+            mb_Paladin_Holy_beaconUnit = tanks[1]
             return
         end
     end
@@ -140,7 +136,7 @@ function mb_Paladin_Holy_OnUpdate()
     end
 
     if UnitAffectingCombat("player") then
-        if offTankUnit ~= nil and mb_CastSpellOnFriendly(offTankUnit, "Holy Light") then
+        if tanks[2] ~= nil and mb_CastSpellOnFriendly(tanks[2], "Holy Light") then
             return
         elseif mb_CastSpellOnFriendly("player", "Holy Light") then
             return

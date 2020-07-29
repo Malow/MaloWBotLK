@@ -71,12 +71,12 @@ end
 
 function mb_Rogue_GetPredictedEnergyIn(time)
     local energy = UnitPower("player")
-    energy = energy + time * 20
+    energy = energy + time * 10
     if mb_GetMySpecName() == "Combat" then
         local adrenalineRushDuration = mb_GetBuffTimeRemaining("player", "Adrenaline Rush")
         if adrenalineRushDuration > 0 then
             if adrenalineRushDuration > time then
-                energy = energy + time * 20
+                energy = energy + time * 10
             else
                 energy = energy + adrenalineRushDuration * 20
             end

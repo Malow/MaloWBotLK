@@ -38,6 +38,10 @@ function mb_Paladin_OnLoad()
     if not mb_isCommanding then
         mb_RegisterExclusiveRequestHandler("external", mb_Paladin_ExternalRequestAcceptor, mb_Paladin_ExternalRequestExecutor)
         mb_RegisterExclusiveRequestHandler("salvation", mb_Paladin_SalvationRequestAcceptor, mb_Paladin_SalvationRequestExecutor)
+        local _, _, _, _, improvedDivineSacrifice = GetTalentInfo(2, 9)
+        if improvedDivineSacrifice == 2 then
+            mb_RegisterExclusiveRequestHandler("impdivinesac", mb_Paladin_ImpDivineSacRequestAcceptor, mb_Paladin_ImpDivineSacRequestExecutor)
+        end
     end
 end
 
@@ -94,9 +98,6 @@ function mb_Paladin_CastAura()
 end
 
 function mb_Paladin_ExternalRequestAcceptor(message, from)
-    if message == "raid" then
-        return mb_CanCastSpell("Divine Sacrifice", nil, true)
-    end
     if mb_CanCastSpell("Hand of Sacrifice", from, true) then
         return true
     end
@@ -110,13 +111,6 @@ end
 
 function mb_Paladin_ExternalRequestExecutor(message, from)
     if not mb_IsReadyForNewCast() then
-        return false
-    end
-    if message == "raid" then
-        if mb_CastSpellWithoutTarget("Divine Sacrifice") then
-            mb_SayRaid("Casting Divine Sacrifice on raid")
-            return true
-        end
         return false
     end
 
@@ -150,7 +144,20 @@ function mb_Paladin_SalvationRequestExecutor(message, from)
     return false
 end
 
+function mb_Paladin_ImpDivineSacRequestAcceptor(message, from)
+    return mb_CanCastSpell("Divine Sacrifice", nil, true) and CheckInteractDistance(from, 4)
+end
 
+function mb_Paladin_ImpDivineSacRequestExecutor(message, from)
+    if not mb_IsReadyForNewCast() then
+        return false
+    end
+    if mb_CastSpellWithoutTarget("Divine Sacrifice") then
+        mb_SayRaid("Casting Divine Sacrifice for the raid")
+        return true
+    end
+    return false
+end
 
 
 

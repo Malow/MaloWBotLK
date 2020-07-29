@@ -20,6 +20,10 @@ function mb_Paladin_Retribution_OnUpdate()
         return
     end
 
+    if UnitBuff("player", "Righteous Fury") then
+        CancelUnitBuff("player", "Righteous Fury")
+    end
+
     if mb_Drink() then
         return
     end

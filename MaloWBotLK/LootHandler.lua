@@ -3,6 +3,7 @@ mb_LootHandler_queryRetries = 0
 
 function mb_LootHandler_OnUpdate()
     if mb_LootHandler_queryRetries > 25 then
+        mb_SayRaid("Timed for LC request trying to get link for " .. tostring(mb_LootHandler_queuedLootCouncilMsg))
         mb_LootHandler_queuedLootCouncilMsg = nil
         mb_LootHandler_queryRetries = 0
         return
@@ -18,16 +19,15 @@ function mb_LootHandler_HandleLootCouncilRequest(msg)
     if msg == nil or msg == ""or msg == " " then
         return
     end
-    local itemName, itemLink, _, itemLevel, _, _, itemSubType, _, itemEquipLoc = GetItemInfo(msg)
+    local itemName, itemLink, _, itemLevel, _, itemType, itemSubType, _, itemEquipLoc = GetItemInfo(msg)
     if itemName == nil then
         mb_LootHandler_queuedLootCouncilMsg = msg
         mb_LootHandler_queryRetries = mb_LootHandler_queryRetries + 1
-        mb_Print("a" .. msg .. "b")
         GameTooltip:SetHyperlink(msg)
         return
     end
     mb_LootHandler_queuedLootCouncilMsg = nil
-    if not mb_LootHandler_CanEquipItem(itemSubType) then
+    if not mb_LootHandler_CanEquipItem(itemSubType, itemEquipLoc) then
         return
     end
     local usableSlots = mb_LootHandler_GetUsableSlotsForItemEquipLoc(itemEquipLoc)
@@ -39,6 +39,7 @@ function mb_LootHandler_HandleLootCouncilRequest(msg)
         local currentItemLink = GetInventoryItemLink("player", v)
         if currentItemLink == nil then
             table.insert(currentItemsValues, 0)
+            isUpgrade = true
         else
             local currentItemName, _, _, currentItemLevel = GetItemInfo(currentItemLink)
             if currentItemName == itemName and currentItemLevel == itemLevel then
@@ -243,7 +244,7 @@ function mb_LootHandler_GetGoodStatName(badStatName)
     return nil
 end
 
-function mb_LootHandler_CanEquipItem(itemSubType)
+function mb_LootHandler_CanEquipItem(itemSubType, itemEquipLoc)
     local myClass = mb_GetClass("player")
     local mySpec = mb_GetMySpecName()
     -- Armors
@@ -313,7 +314,7 @@ function mb_LootHandler_CanEquipItem(itemSubType)
         return false
     end
     -- Offhands
-    if itemSubType == "Miscellaneous" then
+    if itemSubType == "Miscellaneous" and itemEquipLoc == "INVTYPE_HOLDABLE" then
         if myClass == "MAGE" or myClass == "PRIEST" or myClass == "WARLOCK" then
             return true
         end

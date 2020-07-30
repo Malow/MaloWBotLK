@@ -132,6 +132,7 @@ function mb_InitAsSlave()
     end
     SetCVar("autoSelfCast", 0) -- Disable auto self-casting to allow directly casting spells on raid-members
     SetCVar("autoLootDefault", 1) -- Enable autolooting
+    SetChatWindowSize(1, 20) -- Set chat-font in slaves to be pretty big
 
     mb_originalErrorHandler = geterrorhandler()
     seterrorhandler(mb_ErrorHandler)
@@ -280,6 +281,10 @@ function mb_OnUpdate()
         return
     end
     mb_time = GetTime()
+    if mb_isRespecing then
+        mb_Respec()
+        return
+    end
     mb_LootHandler_OnUpdate()
     mb_RequestDesiredBuffsThrottled()
     mb_FixRaidSetup()
@@ -450,8 +455,13 @@ function mb_HandleAutomaticMovement()
 end
 
 function mb_HandleCommand(msg)
-    -- remoteExecute
-    local matches, remainingString = mb_StringStartsWith(msg, "re")
+    local matches, remainingString = mb_StringStartsWith(msg, "respec")
+    if matches then
+        mb_isRespecing = true
+        return true
+    end
+
+    matches, remainingString = mb_StringStartsWith(msg, "re")
     if matches then
         mb_SendMessage("remoteExecute ", remainingString)
         return true
@@ -477,6 +487,13 @@ function mb_HandleCommand(msg)
         mb_InitAsCommander()
         return true
     end
+
+    matches, remainingString = mb_StringStartsWith(msg, "respec")
+    if matches then
+        mb_isRespecing = true
+        return true
+    end
+
     return false
 end
 
@@ -744,6 +761,10 @@ function mb_HandleReadyCheck()
         mb_SayRaid("I'm not initiated")
         ready = false
     end
+    CancelUnitBuff("player", "Earth Shield")
+    CancelUnitBuff("player", "Sacred Shield")
+    CancelUnitBuff("player", "Beacon of Light")
+    CancelUnitBuff("player", "Focus Magic")
     for _, buff in pairs(mb_desiredBuffs) do
         if (buff.singleAuraName == nil or mb_GetBuffTimeRemaining("player", buff.singleAuraName) < 540) and (buff.groupAuraName == nil or mb_GetBuffTimeRemaining("player", buff.groupAuraName) < 540) then
             if buff.singleAuraName ~= nil then
@@ -865,4 +886,52 @@ function mb_HandleInterruptTarget()
         end
     end
     return true
+end
+
+mb_isRespecing = false
+mb_respecStartedCast = 0
+mb_respecEquipAttempts = 0
+mb_lastRespecEquipAttempt = 0
+function mb_Respec()
+    if GetNumTalentGroups() == 1 then
+        mb_Print("I don't have dual-spec")
+        return
+    end
+    local currentCast = UnitCastingInfo("player")
+    if currentCast ~= nil and mb_StringStartsWith(currentCast, "Activate ") then
+        if mb_respecStartedCast == 0 then
+            mb_respecStartedCast = mb_time
+        end
+        return
+    end
+    if mb_respecStartedCast == 0 then
+        if GetActiveTalentGroup() == 1 then
+            SetActiveTalentGroup(2)
+        else
+            SetActiveTalentGroup(1)
+        end
+        return
+    end
+    if mb_respecStartedCast + 5.5 > mb_time then
+        return
+    end
+    mb_cache_specName = nil
+    local mySpec = mb_GetMySpecName()
+    local equipmentSetName = GetEquipmentSetInfoByName(mySpec)
+    if mb_respecEquipAttempts > 3 or equipmentSetName == nil then
+        mb_isRespecing = false
+        mb_lastRespecEquipAttempt = 0
+        mb_previousTalentGroupIndex = 0
+        mb_respecEquipAttempts = 0
+        mb_respecStartedCast = 0
+        mb_SayRaid("I have changed spec to " .. mySpec)
+        mb_hasInitiated = false
+        return
+    end
+    if mb_lastRespecEquipAttempt + 0.25 > mb_time then
+        return
+    end
+    mb_lastRespecEquipAttempt = mb_time
+    mb_respecEquipAttempts = mb_respecEquipAttempts + 1
+    UseEquipmentSet(mySpec)
 end

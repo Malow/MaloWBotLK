@@ -180,7 +180,7 @@ mb_config.statWeights["Paladin"]["Retribution"].spellPower = 0.09
 mb_config.statWeights["Paladin"]["Retribution"].mp5 = 0.0
 mb_config.statWeights["Paladin"]["Retribution"].dps = 0.0
 mb_config.statWeights["Paladin"]["Retribution"].socketMeta = 100
-mb_config.statWeights["Paladin"]["Retribution"].socketColored = 16
+mb_config.statWeights["Paladin"]["Retribution"].socketColored = 12.8
 
 -- Shaman
 mb_config.statWeights["Shaman"] = {}

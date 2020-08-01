@@ -36,6 +36,9 @@ Start a loot council for an item that dropped:
 Loads a boss-module which will override certain behaviour depending on the boss:  
 /mb bm \<bossname\>
 
+Switch to the other dual-spec on a character, and equip an equipment-set corresponding to the new spec's name if it exists, and perform a soft-reload to load the new spec's class-functions:  
+/mb respec  
+Command is run on the character you want to respec, can also be remote-executed through "mb_isRespecing = true".  
 
 # Some useful macros I use on my Commander:
 Make all slaves accept pending trades or guild invites:  

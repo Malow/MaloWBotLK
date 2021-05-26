@@ -26,6 +26,11 @@ function mb_Shaman_Enhancement_OnLoad()
     mb_RegisterInterruptSpell("Wind Shear")
     mb_RegisterDesiredBuff(BUFF_MIGHT)
     mb_RegisterClassSpecificReadyCheckFunction(mb_Shaman_Enhancement_ReadyCheck)
+
+    if mb_config.enableConsumablesWatch then
+        mb_CheckReagentAmount("Flask of Endless Rage", 3)
+        mb_CheckReagentAmount("Potion of Speed", 15)
+    end
 end
 
 function mb_Shaman_Enhancement_OnUpdate()
@@ -53,7 +58,7 @@ function mb_Shaman_Enhancement_OnUpdate()
         return
     end
 
-    if mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 4 then
+    if mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 5 then
         if mb_RaidHeal("Chain Heal", 0.5) then
             return
         end
@@ -84,7 +89,7 @@ function mb_Shaman_Enhancement_OnUpdate()
         if math.random(20) == 1 then -- Stagger them a bit, otherwise they will all cast at the same time
             local tanks = mb_GetTanks("Gift of the Naaru")
             if tanks[1] ~= nil and mb_GetBuffTimeRemaining(tanks[1], "Gift of the Naaru") == 0 then
-                mb_CastSpellOnFriendly(tanks[1], "Gift of the Naaru")
+                mb_CastSpellOnUnit("Gift of the Naaru", tanks[1])
             end
         end
     end
@@ -132,7 +137,7 @@ function mb_Shaman_Enhancement_OnUpdate()
         end
     end
 
-    if not mb_Shaman_Enhancement_saveProcsForHeals and mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 4 then
+    if not mb_Shaman_Enhancement_saveProcsForHeals and mb_GetBuffStackCount("player", "Maelstrom Weapon") >= 5 then
         if mb_cleaveMode > 0 and mb_CastSpellOnTarget("Chain Lightning") then
             return
         elseif mb_CastSpellOnTarget("Lightning Bolt") then

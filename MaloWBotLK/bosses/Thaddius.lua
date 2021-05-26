@@ -34,7 +34,7 @@ function mb_BossModule_Thaddius_BlanketRaidSlowFall(spell)
         local unit = mb_GetUnitFromPartyOrRaidIndex(i)
         if mb_GetBuffTimeRemaining(unit, "Slow Fall") < 3 and mb_GetBuffTimeRemaining(unit, "Levitate") < 3 then
             if mb_IsUnitValidFriendlyTarget(unit, spell) then
-                mb_CastSpellOnFriendly(unit, spell)
+                mb_CastSpellOnUnit(spell, unit)
                 return true
             end
         end
@@ -45,8 +45,15 @@ function mb_BossModule_Thaddius_BlanketRaidSlowFall(spell)
     return false
 end
 
-function mb_BossModule_Thaddius_OnLoad()
-    mb_BossModule_PreOnUpdate = mb_BossModule_Thaddius_PreOnUpdate
+mb_BossModule_Thaddius_previousFollowMode = "lenient"
+function mb_BossModule_Thaddius_Unload()
+    mb_followMode = mb_BossModule_Thaddius_previousFollowMode
 end
 
-mb_BossModule_RegisterModule("thaddius", mb_BossModule_Thaddius_OnLoad)
+function mb_BossModule_Thaddius_OnLoad()
+    mb_BossModule_PreOnUpdate = mb_BossModule_Thaddius_PreOnUpdate
+    mb_BossModule_unloadFunction = mb_BossModule_Thaddius_Unload
+    mb_BossModule_Thaddius_previousFollowMode = mb_followMode
+end
+
+mb_BossModule_RegisterModule("thaddius", mb_BossModule_Thaddius_OnLoad, "Thaddius")

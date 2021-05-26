@@ -30,7 +30,7 @@ SlashCmdList[MY_ABBREVIATION .. "COMMAND"] = function(msg)
         mb_Print("Unrecognized command: " .. msg)
     end
 end
-SLASH_MBCOMMAND1 = "/" .. MY_ABBREVIATION;
+SLASH_MBCOMMAND1 = "/" .. MY_ABBREVIATION
 
 -- Events
 local hasLoaded = false
@@ -97,8 +97,11 @@ function mb_OnEvent(self, event, arg1, arg2, arg3, arg4, ...)
             mb_HandleTargetSpellcast()
         end
     elseif event == "UNIT_TARGET" then
-        if arg1 == "player" and mb_registeredInterruptSpells ~= nil then
-            mb_HandleTargetSpellcast()
+        if arg1 == "player" then
+            mb_lastTargetChange = mb_time
+            if mb_registeredInterruptSpells ~= nil then
+                mb_HandleTargetSpellcast()
+            end
         end
     end
 end
@@ -262,11 +265,14 @@ mb_preCastFinishCallback = nil
 mb_shouldCallPreCastFinishCallback = false
 mb_currentCastTargetUnit = nil
 mb_IWTDistanceClosingRangeCheckSpell = nil
+mb_shouldPauseIWTCrawlForCasts = false
 mb_doAutoRotationAsCommander = false
-mb_lastMovementTime = GetTime()
+mb_lastMovementTime = mb_time
 mb_disabledAutomaticMovement = false
 mb_isFollowing = false
 mb_hasCheckedProfessionCooldowns = false
+mb_pauseIWTCrawlUntil = 0
+mb_lastTargetChange = mb_time
 -- OnUpdate
 function mb_OnUpdate()
     if not mb_isEnabled then
@@ -311,6 +317,7 @@ function mb_OnUpdate()
     end
 
     if mb_isCommanding then
+        mb_BossModule_AutoLoadUnload()
         if mb_doAutoRotationAsCommander then
             if mb_BossModule_PreOnUpdate() then
                 return
@@ -363,7 +370,7 @@ function mb_HandleProfessionCooldowns()
         return
     end
     mb_lastHandleProfessionCooldowns = mb_time
-    if UnitCastingInfo("player") ~= nil then
+    if mb_IsCasting() then
         return
     end
     for profession, spells in pairs(mb_config.professionCooldowns) do
@@ -386,7 +393,7 @@ end
 
 function mb_HandleAutomaticMovement()
     -- If we IWT'd recently let it run for a short while in order for the character to finish turning
-    if mb_lastIWTClickToMove + 0.2 > mb_time then
+    if mb_lastIWTClickToMove + 0.25 > mb_time then
         return
     end
     -- If we have started a movement that should stop at some point in the future then keep going until the timer is hit
@@ -400,7 +407,7 @@ function mb_HandleAutomaticMovement()
     if mb_commanderUnit ~= nil then
         -- If we're on "strict" we should only not follow if we're sitting down drinking and our commander is close
         if mb_followMode == "strict" then
-            if not mb_IsDrinking() or not CheckInteractDistance(mb_commanderUnit, 2) then
+            if not mb_IsDrinking() or not mb_IsUnitWithinRange(mb_commanderUnit, 2) then
                 mb_FollowUnit(mb_commanderUnit)
             end
             return
@@ -408,19 +415,21 @@ function mb_HandleAutomaticMovement()
         if mb_followMode == "lenient" then
             -- If we're drinking, keep drinking unless the commander is too far away
             if mb_IsDrinking() then
-                if CheckInteractDistance(mb_commanderUnit, 2) then
+                if mb_IsUnitWithinRange(mb_commanderUnit, 2) or UnitIsDeadOrGhost(mb_commanderUnit) then
                     return
                 elseif mb_FollowUnit(mb_commanderUnit) then
                     return
                 end
             end
             -- If we don't have a valid enemy target always follow, if we have a valid enemy target and IWT-crawl is disabled we make sure to stay semi-close to our commander
-            if not mb_IsValidOffensiveUnit(mb_commanderUnit .. "target", true) then
+            if not mb_IsValidOffensiveUnit(mb_commanderUnit .. "target", true) or not UnitIsUnit("target", mb_commanderUnit .. "target") then
                 if mb_FollowUnit(mb_commanderUnit) then
                     return
                 end
             elseif mb_IWTDistanceClosingRangeCheckSpell == nil then
-                if not CheckInteractDistance(mb_commanderUnit, 2) then
+                if mb_IsCasting() then
+                    return
+                elseif not mb_IsUnitWithinRange(mb_commanderUnit, 2) then
                     if mb_FollowUnit(mb_commanderUnit) then
                         return
                     end
@@ -431,26 +440,67 @@ function mb_HandleAutomaticMovement()
         end
     end
     -- If we have IWT-crawling enabled then do that
-    if mb_IWTDistanceClosingRangeCheckSpell ~= nil then
-        if mb_IsValidOffensiveUnit("target", true) then
-            if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
-                mb_GoToPosition_Reset()
-                mb_IWTClickToMove("target")
-            elseif mb_lastIWTClickToMove ~= 0 then
-                mb_lastIWTClickToMove = 0
-                MoveForwardStop()
-            end
+    if mb_CanIWTCrawl() then
+        if mb_pauseIWTCrawlUntil > mb_time then
             return
-        elseif mb_lastIWTClickToMove ~= 0 then
-            mb_lastIWTClickToMove = 0
-            MoveForwardStop()
         end
+        mb_IWTCrawl()
+        return
     end
     -- At the very end we don't have anything good to IWT towards, and our commander is out of range to follow, so we GoToPosition towards it.
-    if mb_commanderUnit ~= nil and mb_followMode ~= "none" and UnitIsVisible(mb_commanderUnit) then
+    if mb_commanderUnit ~= nil and mb_followMode ~= "none" and UnitIsVisible(mb_commanderUnit) and not UnitIsDeadOrGhost(mb_commanderUnit) and mb_IsUnitWithinRange(mb_commanderUnit, 4) then
         local commanderX, commanderY = mb_GetMapPosition(mb_commanderUnit)
         mb_GoToPosition_SetDestination(commanderX, commanderY, 0.000001, true)
         mb_GoToPosition_Update()
+        return
+    end
+    mb_StopMoving()
+end
+
+function mb_HandleOnCastMovement(spellCastTime)
+    if mb_followMode == "strict" or not UnitAffectingCombat("player") then
+        return
+    end
+
+    if spellCastTime == 0 then
+        if mb_CanIWTCrawl() then
+            mb_IWTCrawl()
+        elseif mb_followMode == "lenient" and mb_commanderUnit ~= nil then
+            mb_FollowUnit(mb_commanderUnit)
+        end
+    else
+        if mb_CanIWTCrawl() then
+            if mb_shouldPauseIWTCrawlForCasts and not mb_IsMoving() and mb_IsUnitWithinRange("target", 2) then
+                mb_pauseIWTCrawlUntil = mb_time + spellCastTime + 0.1
+            end
+        elseif mb_commanderUnit ~= nil then
+            if mb_IsUnitWithinRange(mb_commanderUnit, 1) then
+                mb_BreakFollow()
+                mb_StopMoving()
+            end
+        end
+    end
+end
+
+function mb_CanIWTCrawl()
+    if mb_IWTDistanceClosingRangeCheckSpell == nil then
+        return false
+    end
+    if not mb_IsValidOffensiveUnit("target", true) then
+        return false
+    end
+    return true
+end
+
+function mb_IWTCrawl()
+    if not mb_IsSpellInRange(mb_IWTDistanceClosingRangeCheckSpell, "target") then
+        mb_IWTClickToMove("target")
+        return
+    end
+    if mb_lastIWTClickToMove ~= 0 then
+        mb_lastIWTClickToMove = 0
+        MoveForwardStart()
+        MoveForwardStop()
     end
 end
 
@@ -498,6 +548,9 @@ function mb_HandleCommand(msg)
 end
 
 function mb_SendMessage(messageType, message)
+    if message == nil then
+        message = ""
+    end
     SendAddonMessage("MB", messageType .. " " .. tostring(message), "RAID")
 end
 
@@ -628,7 +681,7 @@ function mb_RegisterDesiredBuff(buff)
     table.insert(mb_desiredBuffs, buff)
 end
 
-mb_lastBuffRequest = GetTime()
+mb_lastBuffRequest = mb_time
 function mb_RequestDesiredBuffsThrottled()
     if mb_lastBuffRequest + 3 > mb_time then
         return
@@ -716,7 +769,7 @@ function mb_FixRaidSetup()
 
     -- TODO add fixing of subgroups
     --for raidIndex = 1, currentMembers do
-    --	local name, _, subgroup = GetRaidRosterInfo(raidIndex);
+    --	local name, _, subgroup = GetRaidRosterInfo(raidIndex)
     --	if not mb_TableContains(groupMembers, name) and subgroup ~= groupId then
     --		SwapRaidSubgroup(raidIndex)
     --	end

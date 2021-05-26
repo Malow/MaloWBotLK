@@ -64,6 +64,10 @@ function mb_SayRaid(message)
     SendChatMessage(message, "RAID")
 end
 
+function mb_IsCasting()
+    return UnitCastingInfo("player") ~= nil or UnitChannelInfo("player") ~= nil
+end
+
 function mb_CreateMacro(name, body, actionSlot)
     local macroId = GetMacroIndexByName(name)
     if macroId > 0 then
@@ -175,7 +179,7 @@ function mb_IsUsableSpell(spell, unit)
     end
 end
 
--- Checks if there's no cooldown and if the spell use useable (have mana to cast it), and that if we're moving that it doesn't have a cast time
+-- Checks if there's no cooldown and if the spell use useable (have mana to cast it)
 -- Unit is optional, if provided it will check that the spell can be cast on the unit (that it's a valid target and is in range)
 function mb_CanCastSpell(spell, unit, withinNextGlobal)
     if not mb_IsUsableSpell(spell, unit) then
@@ -188,48 +192,36 @@ function mb_CanCastSpell(spell, unit, withinNextGlobal)
     if mb_GetRemainingSpellCooldown(spell) > cd then
         return false
     end
-    if mb_IsMoving() then
-        local name, rank, icon, cost, isFunnel, powerType, castTime, minRange, maxRange = GetSpellInfo(spell)
-        if castTime > 0 then
-            return false
-        end
-    end
     return true
 end
 
--- Returns true on success
-function mb_CastSpellOnTarget(spell)
-    if not mb_CanCastSpell(spell, "target") then
-        return false
-    end
-    CastSpellByName(spell)
-    return true
-end
-
--- Returns true on success
-function mb_CastSpellWithoutTarget(spell)
-    if not mb_CanCastSpell(spell) then
-        return false
-    end
-    CastSpellByName(spell)
-    return true
-end
-
--- Casts directly without changing your current target unless required to do so. Returns true on success
-function mb_CastSpellOnFriendly(unit, spell)
+-- Returns true on success, false if not possible
+function mb_CastSpellOnUnit(spell, unit)
     if not mb_CanCastSpell(spell, unit) then
+        return false
+    end
+    -- Make casters on lenient break follow to cast a spell with cast-time if they're close to their commander
+    local castTime = mb_GetCastTime(spell)
+    if not mb_disabledAutomaticMovement then
+        mb_HandleOnCastMovement(castTime)
+    end
+    if mb_IsMoving() and castTime > 0 then
         return false
     end
     CastSpellByName(spell, unit)
     return true
 end
 
+function mb_CastSpellOnTarget(spell)
+    return mb_CastSpellOnUnit(spell, "target")
+end
+
+function mb_CastSpellWithoutTarget(spell)
+    return mb_CastSpellOnUnit(spell, nil)
+end
+
 function mb_CastSpellOnSelf(spell)
-    if not mb_CanCastSpell(spell) then
-        return false
-    end
-    CastSpellByName(spell, "player")
-    return true
+    return mb_CastSpellOnUnit(spell, "player")
 end
 
 -- Returns true/false depending on if the unit is capable of resurrecting other players
@@ -276,7 +268,7 @@ function mb_ResurrectRaid(resurrectionSpell)
         end
     end
 
-    if UnitAffectingCombat("player") or mb_IsDrinking() then
+    if UnitAffectingCombat("player") or mb_IsDrinking() or mb_IsMoving() then
         return false
     end
     if not mb_CanCastSpell(resurrectionSpell) then
@@ -290,6 +282,11 @@ function mb_ResurrectRaid(resurrectionSpell)
     CastSpellByName(resurrectionSpell)
     mb_SayRaid("I'm resurrecting " .. UnitName(resUnit))
     return true
+end
+
+function mb_GetCastTime(spell)
+    local _, _, _, _, _, _, castTime = GetSpellInfo(spell)
+    return castTime / 1000.0
 end
 
 -- Checks if unit has a buff from the spell specified that specifically you have cast
@@ -348,7 +345,7 @@ function mb_CleanseRaid(spell, debuffType1, debuffType2, debuffType3)
     for i = 1, mb_GetNumPartyOrRaidMembers() do
         local unit = mb_GetUnitFromPartyOrRaidIndex(i)
         if mb_UnitHasDebuffOfType(unit, debuffType1, debuffType2, debuffType3) and mb_IsUnitValidFriendlyTarget(unit, spell) then
-            return mb_CastSpellOnFriendly(unit, spell)
+            return mb_CastSpellOnUnit(spell, unit)
         end
     end
     return false
@@ -382,13 +379,22 @@ function mb_IsOnGCD()
     return false
 end
 
+-- Returns how many seconds you have left of your current cast. 0 if you're not casting
+function mb_GetCastTimeRemaining()
+    local spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, interrupt = UnitCastingInfo("player")
+    if spell == nil then
+        return 0
+    end
+    return (endTime / 1000) - mb_time
+end
+
 -- Returns true if you're not on GCD and not currently casting
+-- Also returns true if you're within 150ms away from being ready to cast in order to be able to queue up next cast
 function mb_IsReadyForNewCast()
-    if mb_IsOnGCD() then
+    if mb_IsCasting() then
         return false
     end
-    local spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, interrupt = UnitCastingInfo("player")
-    if spell ~= nil then
+    if mb_IsOnGCD() then
         return false
     end
     return true
@@ -469,7 +475,7 @@ function mb_GetItemCount(itemName)
             if itemLink ~= nil then
                 local name = GetItemInfo(itemLink)
                 if name == itemName then
-                    local _, itemCount = GetContainerItemInfo(bag, slot);
+                    local _, itemCount = GetContainerItemInfo(bag, slot)
                     totalItemCount = totalItemCount + itemCount
                 end
             end
@@ -510,7 +516,7 @@ function mb_RaidHeal(spell, acceptedOverheal)
     end
     local healUnit, missingHealth = mb_GetMostDamagedFriendly(spell)
     if missingHealth * (acceptedOverheal) > mb_GetSpellEffect(spell) then
-        return mb_CastSpellOnFriendly(healUnit, spell)
+        return mb_CastSpellOnUnit(spell, healUnit)
     end
     return false
 end
@@ -538,7 +544,7 @@ function mb_ShouldBuff()
     for i = 1, members do
         local unit = mb_GetUnitFromPartyOrRaidIndex(i)
         if UnitIsConnected(unit) then
-            if not mb_IsUnitValidFriendlyTarget(unit) or not CheckInteractDistance(unit, 4) then
+            if not mb_IsUnitValidFriendlyTarget(unit) or not mb_IsUnitWithinRange(unit, 4) then
                 return false
             end
             if mb_GetClass(unit) == "WARLOCK" or mb_GetClass(unit) == "HUNTER" then
@@ -677,8 +683,29 @@ function mb_SpecNotSupported(msg)
     end
 end
 
-function mb_IsTank()
-    return mb_GetMySpecName() == "Protection" or mb_GetMySpecName() == "Feral Combat" or mb_GetMySpecName() == "Frost"
+-- Parameter is optional, if omitted it defaults to player
+function mb_IsTank(unit)
+    if unit == nil or unit == "player" then
+        return mb_GetMySpecName() == "Protection" or mb_GetMySpecName() == "Feral Combat" or mb_GetMySpecName() == "Frost"
+    end
+    for _, tank in pairs(mb_config.tanks) do
+        if UnitName(unit) == tank then
+            return true
+        end
+    end
+    return false
+end
+
+-- Returns true if the unit's target has the unit as the highest threat target.
+-- Second parameter is optional and instead checks if that specific unit is being tanked by the first unit
+-- Returns a second value for tanking status:
+--      3 = securely tanking, 2 = insecurely tanking, 1 = not tanking but higher threat than tank, 0 = not tanking and lower threat than tank
+function mb_IsTanking(unit, creatureUnit)
+    if creatureUnit == nil then
+        creatureUnit = unit .. "target"
+    end
+    local isTanking, tankingStatus = UnitDetailedThreatSituation(unit, creatureUnit)
+    return isTanking == 1, tankingStatus
 end
 
 function mb_IsHealer()
@@ -740,6 +767,7 @@ function mb_GoToPosition_Reset()
     if mb_GoToPosition_destination == nil then
         return
     end
+    mb_GoToPosition_hasReachedDestination = false
     mb_GoToPosition_destination = nil
     mb_StopMoving()
     mb_EnableAutomaticMovement()
@@ -773,18 +801,22 @@ function mb_GoToPosition_Update()
         if (currentFacing + 2 * math.pi) - desiredFacing < diff then
             diff = (currentFacing + 2 * math.pi) - desiredFacing
             TurnLeftStop()
+            TurnRightStop()
             TurnRightStart()
         else
             TurnRightStop()
+            TurnLeftStop()
             TurnLeftStart()
         end
     else
         if (currentFacing - 2 * math.pi) - desiredFacing > diff then
             diff = (currentFacing - 2 * math.pi) - desiredFacing
             TurnRightStop()
+            TurnLeftStop()
             TurnLeftStart()
         else
             TurnLeftStop()
+            TurnRightStop()
             TurnRightStart()
         end
     end
@@ -797,7 +829,7 @@ function mb_GoToPosition_Update()
 end
 
 function mb_FollowUnit(unit)
-    if CheckInteractDistance(unit, 4) then
+    if mb_IsUnitWithinRange(unit, 3) then
         mb_isFollowing = true
         FollowUnit(unit)
         mb_GoToPosition_Reset()
@@ -808,9 +840,11 @@ function mb_FollowUnit(unit)
 end
 
 function mb_BreakFollow()
-    mb_isFollowing = false
-    TurnLeftStart()
-    TurnLeftStop()
+    if mb_isFollowing then
+        mb_isFollowing = false
+        TurnLeftStart()
+        TurnLeftStop()
+    end
 end
 
 mb_crowdControlSpells = {
@@ -825,7 +859,7 @@ mb_crowdControlSpells = {
 function mb_CrowdControl(unit)
     for _, ccSpell in pairs(mb_crowdControlSpells) do
         if mb_GetDebuffTimeRemaining(unit, ccSpell) > 0 then
-            if UnitCastingInfo("player") ~= nil and mb_currentCastTargetUnit == unit then
+            if mb_IsCasting() and mb_currentCastTargetUnit == unit then
                 mb_StopCast()
             end
             return false
@@ -833,8 +867,7 @@ function mb_CrowdControl(unit)
     end
 
     for _, ccSpell in pairs(mb_crowdControlSpells) do
-        if mb_CanCastSpell(ccSpell, unit) then
-            CastSpellByName(ccSpell, unit)
+        if mb_CastSpellOnUnit(ccSpell, unit) then
             return true
         end
     end
@@ -919,20 +952,78 @@ function mb_GetComboPoints()
     return GetComboPoints("player", "target")
 end
 
+mb_tanksHistoricalData = {}
+function mb_GetTanks_UpdateHistoricalData(rangeCheckSpell)
+    for _, tank in pairs(mb_config.tanks) do
+        local unit = mb_GetUnitForPlayerName(tank)
+        if unit ~= nil then
+            if mb_tanksHistoricalData[tank] == nil then
+                mb_tanksHistoricalData[tank] = {}
+                mb_tanksHistoricalData[tank].lastIsTanking = 0
+                mb_tanksHistoricalData[tank].lastInvalidUnit = 0
+            end
+            if mb_IsTanking(unit) then
+                mb_tanksHistoricalData[tank].lastIsTanking = mb_time
+            end
+            if not mb_IsUnitValidFriendlyTarget(unit, rangeCheckSpell) then
+                mb_tanksHistoricalData[tank].lastInvalidUnit = mb_time
+            end
+        end
+    end
+end
+
 -- Returns a list of unit-references of tanks, filtered by if they're valid targets and actually tanking something
 -- Filtered by in-range if rangeCheckSpell is provided
+-- They're considered valid tanks if they have tanked something in the past 20 seconds, and they have not been an invalid target in the past 10 seconds
+-- If you're out of combat it just returns the list as specified in config, but with unit-references.
+-- If no tank is found it will return the first tank defined in the config as long as that tank is a valid target in range.
 function mb_GetTanks(rangeCheckSpell)
+    mb_GetTanks_UpdateHistoricalData(rangeCheckSpell)
     local tanks = {}
     for _, tank in pairs(mb_config.tanks) do
         local unit = mb_GetUnitForPlayerName(tank)
+        if unit == nil then
+            break
+        end
+        if mb_tanksHistoricalData[tank].lastInvalidUnit + 10 > mb_time then
+            break
+        end
+        if not UnitAffectingCombat("player") then
+            table.insert(tanks, unit)
+        elseif mb_tanksHistoricalData[tank].lastIsTanking + 20 > mb_time then
+            table.insert(tanks, unit)
+        end
+    end
+    if #tanks == 0 then
+        local unit = mb_GetUnitForPlayerName(mb_config.tanks[1])
         if unit ~= nil and mb_IsUnitValidFriendlyTarget(unit, rangeCheckSpell) then
-            if not UnitAffectingCombat("player") or UnitIsUnit(unit, unit .. "targettarget") then
-                table.insert(tanks, unit)
-            end
+            table.insert(tanks, unit)
         end
     end
     return tanks
 end
 
+function mb_IsTrustedCharacter(charName)
+    for _, name in pairs(mb_config.trustedCharacters) do
+        if name == charName then
+            return true
+        end
+    end
+    return false
+end
 
-
+-- Returns true/false depending on if unit is within range. 1 = 10 yards, 2 = 11 yards, 3 = 28 yards, 4 = ~35 yards
+function mb_IsUnitWithinRange(unit, rangeIndex)
+    if rangeIndex == 1 then
+        return CheckInteractDistance(unit, 3) == 1
+    end
+    if rangeIndex == 2 then
+        return CheckInteractDistance(unit, 2) == 1
+    end
+    if rangeIndex == 3 then
+        return CheckInteractDistance(unit, 4) == 1
+    end
+    if rangeIndex == 4 then
+        return UnitInRange(unit) == 1
+    end
+end

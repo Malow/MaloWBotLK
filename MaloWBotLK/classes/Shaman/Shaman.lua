@@ -25,7 +25,7 @@ end
 function mb_Shaman_ChainHealRaid()
     local healUnit, missingHealth = mb_GetMostDamagedFriendly("Chain Heal")
     if missingHealth > mb_GetSpellEffect("Chain Heal") then
-        mb_CastSpellOnFriendly(healUnit, "Chain Heal")
+        mb_CastSpellOnUnit("Chain Heal", healUnit)
         return true
     end
     return false
@@ -120,7 +120,7 @@ function mb_Shaman_AreTotemsOutOfRange_Throttled()
     for i = 1, 4 do
         TargetTotem(i)
         if UnitExists("target") and UnitName("target") ~= previousTarget then
-            local inRange = CheckInteractDistance("target", 4) ~= 1
+            local inRange = mb_IsUnitWithinRange("target", 3)
             TargetLastTarget()
             return inRange
         end
@@ -138,7 +138,7 @@ function mb_Shaman_ShouldRecastMagmaTotem()
     local previousTarget = UnitName("target")
     TargetTotem(1)
     if UnitExists("target") and UnitName("target") ~= previousTarget then
-        local inRange = CheckInteractDistance("target", 3) ~= 1
+        local inRange = mb_IsUnitWithinRange("target", 1)
         TargetLastTarget()
         return inRange
     end

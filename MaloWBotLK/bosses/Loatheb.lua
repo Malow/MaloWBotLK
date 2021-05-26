@@ -16,9 +16,16 @@ function mb_BossModule_Loatheb_PreOnUpdate()
     return false
 end
 
-function mb_BossModule_Loatheb_OnLoad()
-    mb_GetMissingHealth = mb_BossModule_Loatheb_GetMissingHealth_Override
-    mb_BossModule_PreOnUpdate = mb_BossModule_Loatheb_PreOnUpdate
+mb_BossModule_Loatheb_originalGetMissingHealthFunction = nil
+function mb_BossModule_Loatheb_Unload()
+    mb_GetMissingHealth = mb_BossModule_Loatheb_originalGetMissingHealthFunction
 end
 
-mb_BossModule_RegisterModule("loatheb", mb_BossModule_Loatheb_OnLoad)
+function mb_BossModule_Loatheb_OnLoad()
+    mb_BossModule_Loatheb_originalGetMissingHealthFunction = mb_GetMissingHealth
+    mb_GetMissingHealth = mb_BossModule_Loatheb_GetMissingHealth_Override
+    mb_BossModule_PreOnUpdate = mb_BossModule_Loatheb_PreOnUpdate
+    mb_BossModule_unloadFunction = mb_BossModule_Loatheb_Unload
+end
+
+mb_BossModule_RegisterModule("loatheb", mb_BossModule_Loatheb_OnLoad, "Loatheb")

@@ -34,7 +34,7 @@ function mb_Warrior_CommandingShout()
     local members = mb_GetNumPartyOrRaidMembers()
     for i = 1, members do
         local unit = mb_GetUnitFromPartyOrRaidIndex(i)
-        if not UnitBuff(unit, "Commanding Shout") and CheckInteractDistance(unit, 4) then
+        if not UnitBuff(unit, "Commanding Shout") and mb_IsUnitWithinRange(unit, 4) then
             if UnitPower("player") < 10 then
                 return mb_CastSpellWithoutTarget("Bloodrage")
             end

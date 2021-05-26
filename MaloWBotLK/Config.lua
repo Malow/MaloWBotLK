@@ -1,7 +1,11 @@
 mb_config = {}
 
+
+-- Which characters in the raid should be considered tanks, and as such be paid extra attention to by the healers
 mb_config.tanks = {"Malowtank", "Elerien", "Tunbert", "Maligna"}
 
+
+-- List of character names that you trust, that your characters will accept orders, remote-executes etc. from.
 mb_config.trustedCharacters = {}
 table.insert(mb_config.trustedCharacters, "Malowtank")
 table.insert(mb_config.trustedCharacters, "Aerer")
@@ -17,19 +21,14 @@ table.insert(mb_config.trustedCharacters, "Igal")
 table.insert(mb_config.trustedCharacters, "Verne")
 table.insert(mb_config.trustedCharacters, "Carin")
 
-function mb_IsTrustedCharacter(charName)
-    for _, name in pairs(mb_config.trustedCharacters) do
-        if name == charName then
-            return true
-        end
-    end
-    return false
-end
-
 
 -- List of waters that should be drunk
 mb_config.waters = {}
 table.insert(mb_config.waters, "Conjured Mana Strudel")
+
+
+-- Decides whether characters should register consumables for reagent watch
+mb_config.enableConsumablesWatch = true
 
 
 -- List of profession CD's to use automatically (in order)
@@ -57,7 +56,6 @@ mb_config.classOrder.shadowAura = 7
 mb_config.blacklistedInterruptSpells = {}
 mb_config.blacklistedInterruptSpells["Malygos"] = { "Arcane Breath" }
 mb_config.blacklistedInterruptSpells["Sartharion"] = { "Flame Breath" }
-
 
 
 -- -----------------------------------------------
@@ -95,9 +93,6 @@ table.insert(mb_config.raidLayout["25man"][5], "Charnel")
 table.insert(mb_config.raidLayout["25man"][5], "Pestilina")
 table.insert(mb_config.raidLayout["25man"][5], "Umbria")
 table.insert(mb_config.raidLayout["25man"][5], "Igal")
-
-
-
 
 
 -- -----------------------------------------------

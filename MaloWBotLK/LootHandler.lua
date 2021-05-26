@@ -3,7 +3,7 @@ mb_LootHandler_queryRetries = 0
 
 function mb_LootHandler_OnUpdate()
     if mb_LootHandler_queryRetries > 25 then
-        mb_SayRaid("Timed for LC request trying to get link for " .. tostring(mb_LootHandler_queuedLootCouncilMsg))
+        mb_SayRaid("Timed out for LC request trying to get link for " .. tostring(mb_LootHandler_queuedLootCouncilMsg))
         mb_LootHandler_queuedLootCouncilMsg = nil
         mb_LootHandler_queryRetries = 0
         return
@@ -279,6 +279,9 @@ function mb_LootHandler_CanEquipItem(itemSubType, itemEquipLoc)
             return false
         end
         if myClass == "WARRIOR" and mySpec ~= "Protection" then
+            return false
+        end
+        if myClass == "SHAMAN" and itemSubType == "One-Handed Swords" then
             return false
         end
         return true

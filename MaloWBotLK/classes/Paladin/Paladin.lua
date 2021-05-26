@@ -22,7 +22,7 @@ function mb_Paladin_OnLoad()
     end
 
     if GetTrackingTexture() ~= "Interface\\Icons\\Spell_Holy_SenseUndead" then
-        CastSpellByName("Sense Undead")
+        mb_CastSpellWithoutTarget("Sense Undead")
     end
 
     if mb_myClassOrderIndex == mb_config.classOrder.mightBlesser then
@@ -65,10 +65,10 @@ function mb_Paladin_HandleBless(targetPlayerName, greaterSpell, singleSpell)
     if not mb_ShouldBuff() then
         return
     end
-    if mb_CastSpellOnFriendly(mb_GetUnitForPlayerName(targetPlayerName), greaterSpell) then
+    if mb_CastSpellOnUnit(greaterSpell, mb_GetUnitForPlayerName(targetPlayerName)) then
         return
     end
-    mb_CastSpellOnFriendly(mb_GetUnitForPlayerName(targetPlayerName), singleSpell)
+    mb_CastSpellOnUnit(singleSpell, mb_GetUnitForPlayerName(targetPlayerName))
 end
 
 function mb_Paladin_CastAura()
@@ -102,7 +102,7 @@ function mb_Paladin_ExternalRequestAcceptor(message, from)
         return true
     end
     if mb_CanCastSpell("Divine Sacrifice", nil, true) and UnitInParty(mb_GetUnitForPlayerName(from)) then
-        if CheckInteractDistance(from, 4) then
+        if mb_IsUnitWithinRange(from, 3) then
             return true
         end
     end
@@ -115,7 +115,7 @@ function mb_Paladin_ExternalRequestExecutor(message, from)
     end
 
     local targetUnit = mb_GetUnitForPlayerName(from)
-    if mb_CastSpellOnFriendly(targetUnit, "Hand of Sacrifice") then
+    if mb_CastSpellOnUnit("Hand of Sacrifice", targetUnit) then
         mb_SayRaid("Casting Hand of Sacrifice on " .. from)
         return true
     end
@@ -136,7 +136,7 @@ function mb_Paladin_SalvationRequestExecutor(message, from)
     end
 
     local targetUnit = mb_GetUnitForPlayerName(from)
-    if mb_CastSpellOnFriendly(targetUnit, "Hand of Salvation") then
+    if mb_CastSpellOnUnit("Hand of Salvation", targetUnit) then
         mb_SayRaid("Casting Hand of Salvation on " .. from)
         return true
     end
@@ -145,7 +145,7 @@ function mb_Paladin_SalvationRequestExecutor(message, from)
 end
 
 function mb_Paladin_ImpDivineSacRequestAcceptor(message, from)
-    return mb_CanCastSpell("Divine Sacrifice", nil, true) and CheckInteractDistance(from, 4)
+    return mb_CanCastSpell("Divine Sacrifice", nil, true) and mb_IsUnitWithinRange(from, 3)
 end
 
 function mb_Paladin_ImpDivineSacRequestExecutor(message, from)

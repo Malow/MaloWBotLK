@@ -13,6 +13,11 @@ function mb_Paladin_Retribution_OnLoad()
     mb_EnableIWTDistanceClosing("Crusader Strike")
     mb_RegisterDesiredBuff(BUFF_MIGHT)
     mb_RegisterClassSpecificReadyCheckFunction(mb_Paladin_Retribution_ReadyCheck)
+
+    if mb_config.enableConsumablesWatch then
+        mb_CheckReagentAmount("Flask of Endless Rage", 3)
+        mb_CheckReagentAmount("Potion of Speed", 15)
+    end
 end
 
 function mb_Paladin_Retribution_OnUpdate()
@@ -69,7 +74,7 @@ function mb_Paladin_Retribution_OnUpdate()
                 return
             end
         end
-        if not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnFriendly("player", "Sacred Shield") then
+        if not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnUnit("Sacred Shield", "player") then
             return
         end
         return
@@ -122,7 +127,7 @@ function mb_Paladin_Retribution_OnUpdate()
         return
     end
 
-    if not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnFriendly("player", "Sacred Shield") then
+    if not UnitBuff("player", "Sacred Shield") and mb_CastSpellOnUnit("Sacred Shield", "player") then
         return
     end
 

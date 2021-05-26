@@ -3,13 +3,16 @@
 -- Interrupt with pummel
 -- Recklessness on pre-pull
 -- Detect bleed immunity to avoid getting stuck on spemming rend.
--- Some better check for Commanding Shout than CheckInteractDistance(unit, 4), that's 28 yards, range is 45 yards.
--- 		Maybe some item you can use on friendly?
 
 function mb_Warrior_Arms_OnLoad()
     mb_EnableIWTDistanceClosing("Mortal Strike")
     mb_CombatLogModule_Enable()
     mb_RegisterClassSpecificReadyCheckFunction(mb_Warrior_Arms_ReadyCheck)
+
+    if mb_config.enableConsumablesWatch then
+        mb_CheckReagentAmount("Flask of Endless Rage", 3)
+        mb_CheckReagentAmount("Potion of Speed", 15)
+    end
 end
 
 function mb_Warrior_Arms_OnUpdate()
@@ -42,7 +45,7 @@ function mb_Warrior_Arms_OnUpdate()
         InteractUnit("target")
     end
 
-    if (mb_commanderUnit == nil or CheckInteractDistance(mb_commanderUnit, 1)) and CheckInteractDistance("target", 2) then
+    if mb_commanderUnit == nil and mb_followMode ~= "strict" and mb_IsUnitWithinRange("target", 2) then
         if mb_CastSpellOnTarget("Charge") then
             return
         end

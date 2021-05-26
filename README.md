@@ -95,9 +95,11 @@ Request a Paladin with Improved Divine Sacrifice to cast it:
 /run mb_SendExclusiveRequest("impdivinesac")
 
 Toggle auto-rotation on/off on your commander:  
-/run if mb_doAutoRotationAsCommander then mb_doAutoRotationAsCommander = false; else mb_doAutoRotationAsCommander = true; end
+/run if mb_doAutoRotationAsCommander then mb_doAutoRotationAsCommander = false; mb_Print("AutoRot disabled"); else mb_doAutoRotationAsCommander = true; mb_Print("AutoRot enabled"); end
 
 Toggle everyone in the raid using DPS cooldowns automatically on/off:  
 /run local c=mb_forceBlockDpsCooldowns;if c then c=false; mb_Print("DPS CDs free");else c=true; mb_Print("DPS CDs blocked");end mb_forceBlockDpsCooldowns=c; mb_SendMessage("remoteExecute ", "mb_forceBlockDpsCooldowns="..tostring(c));
 
+Grab conjured water from a mage table on every character:  
+/mb re InteractUnit("Refreshment Table")
 

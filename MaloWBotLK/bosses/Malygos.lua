@@ -29,5 +29,5 @@ function mb_BossModule_Malygos_OnLoad()
     mb_BossModule_PreOnUpdate = mb_BossModule_Malygos_PreOnUpdate
 end
 
-mb_BossModule_RegisterModule("malygos", mb_BossModule_Malygos_OnLoad)
+mb_BossModule_RegisterModule("malygos", mb_BossModule_Malygos_OnLoad, "Malygos")
 

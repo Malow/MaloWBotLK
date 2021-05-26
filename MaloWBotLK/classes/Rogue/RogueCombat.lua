@@ -12,6 +12,13 @@ function mb_Rogue_Combat_OnUpdate()
     --else
     --    mb_Rogue_noSnd = mb_Rogue_noSnd + 1
     --end
+
+    if mb_IsSpellInRange("Sinister Strike", "target") and mb_IsValidOffensiveUnit("target", true) then
+        if mb_Rogue_HandleTricksOfTheTrade() then
+            return
+        end
+    end
+
     if not mb_IsReadyForNewCast() then
         return
     end
@@ -83,7 +90,7 @@ function mb_Rogue_Combat_OnUpdate()
         if mb_CastSpellWithoutTarget("Blade Flurry") then
             return
         end
-        if energy < 60 and mb_GetBuffTimeRemaining("player", "Adrenaline Rush") == 0 then
+        if energy < 60 and not mb_disabledAutomaticMovement and mb_GetBuffTimeRemaining("player", "Adrenaline Rush") == 0 then
             -- Make sure SnD won't run out while we Killing Spree
             if sndDuration > 3.5 or (comboPoints > 0 and sndDuration > 2.5) then
                 if mb_CastSpellWithoutTarget("Killing Spree") then

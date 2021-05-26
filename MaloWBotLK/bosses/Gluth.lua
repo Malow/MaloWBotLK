@@ -147,4 +147,4 @@ function mb_BossModule_Gluth_OnLoad()
     mb_BossModule_PreOnUpdate = mb_BossModule_Gluth_PreOnUpdate
 end
 
-mb_BossModule_RegisterModule("gluth", mb_BossModule_Gluth_OnLoad)
+mb_BossModule_RegisterModule("gluth", mb_BossModule_Gluth_OnLoad, "Gluth")

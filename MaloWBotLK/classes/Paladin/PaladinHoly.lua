@@ -1,17 +1,22 @@
 -- TODO:
--- Add a DPS rotation if high mana
 -- Lay on Hands, is an external CD due to talent
 -- Divine Protection pre-taking damage, probably through a "use personals" macro
 -- If low on mana, and if next auto-hit on target is less than like 0.3 seconds away, delay healing until after auto-hit to proc Seal of Wisdom and Judgement of Wisdom
+-- On use healCDs, if good on mana, use a potion of speed
 
 function mb_Paladin_Holy_OnLoad()
     mb_preCastFinishCallback = mb_Paladin_Holy_PreCastFinishCallback
     mb_RegisterExclusiveRequestHandler("healcd", mb_Paladin_Holy_HealCdAcceptor, mb_Paladin_Holy_HealCdExecutor)
-    mb_CheckReagentAmount("Runic Mana Potion", 20)
     mb_RegisterClassSpecificReadyCheckFunction(mb_Paladin_Holy_ReadyCheck)
-end
+    mb_EnableIWTDistanceClosing("Judgement of Justice")
+    mb_shouldPauseIWTCrawlForCasts = true
 
-mb_Paladin_Holy_tempThrottle = 0
+    if mb_config.enableConsumablesWatch then
+        mb_CheckReagentAmount("Flask of the Frost Wyrm", 3)
+        mb_CheckReagentAmount("Runic Mana Potion", 15)
+        mb_CheckReagentAmount("Potion of Speed", 15)
+    end
+end
 
 mb_Paladin_Holy_beaconUnit = nil
 mb_Paladin_Holy_useCooldownsCommandTime = 0
@@ -36,12 +41,6 @@ function mb_Paladin_Holy_OnUpdate()
         if mb_UnitHealthPercentage("player") < 30 and mb_CastSpellWithoutTarget("Divine Shield") then
             return
         end
-        if mb_UnitPowerPercentage("player") < 10 then
-            if mb_Paladin_Holy_tempThrottle + 60 < mb_time then
-                mb_SayRaid("Used Mana Potion")
-                mb_Paladin_Holy_tempThrottle = mb_time
-            end
-        end
     end
 
     if mb_Paladin_CastAura() then
@@ -62,7 +61,7 @@ function mb_Paladin_Holy_OnUpdate()
 
     local tanks = mb_GetTanks("Flash of Light")
     if mb_Paladin_Holy_beaconUnit == nil and tanks[1] ~= nil then
-        if mb_CastSpellOnFriendly(tanks[1], "Beacon of Light") then
+        if mb_CastSpellOnUnit("Beacon of Light", tanks[1]) then
             mb_Paladin_Holy_beaconUnit = tanks[1]
             return
         end
@@ -71,10 +70,8 @@ function mb_Paladin_Holy_OnUpdate()
         if mb_GetClass(tank) ~= "PALADIN" then
             if UnitBuff(tank, "Sacred Shield") then
                 break
-            else
-                if mb_CastSpellOnFriendly(tank, "Sacred Shield") then
-                    return
-                end
+            elseif mb_CastSpellOnUnit("Sacred Shield", tank) then
+                return
             end
         end
     end
@@ -108,10 +105,6 @@ function mb_Paladin_Holy_OnUpdate()
         end
     end
 
-    if mb_commanderUnit ~= nil and mb_followMode == "lenient" and UnitAffectingCombat("player") and CheckInteractDistance(mb_commanderUnit, 2) then
-        mb_BreakFollow()
-    end
-
     if mb_RaidHeal("Holy Light", 1.2) then
         return
     end
@@ -125,20 +118,38 @@ function mb_Paladin_Holy_OnUpdate()
     end
 
     if mb_Paladin_Holy_beaconUnit ~= nil and mb_GetBuffTimeRemaining(mb_Paladin_Holy_beaconUnit, "Beacon of Light") < 10 then
-        if tanks[1] ~= nil and mb_CastSpellOnFriendly(tanks[1], "Beacon of Light") then
+        if tanks[1] ~= nil and mb_CastSpellOnUnit("Beacon of Light", tanks[1]) then
             mb_Paladin_Holy_beaconUnit = tanks[1]
             return
         end
     end
 
-    if hasValidEnemyTarget and mb_CastSpellOnTarget("Judgement of Light") then
-        return
+    if hasValidEnemyTarget and mb_UnitPowerPercentage("player") > 90 then
+        if mb_UnitHealthPercentage("target") < 20 then
+            if mb_CastSpellOnTarget("Hammer of Wrath") then
+                return
+            end
+        end
+        if mb_CastSpellOnTarget("Judgement of Light") then
+            return
+        end
+        if mb_CastSpellOnTarget("Exorcism") then
+            return
+        end
+        if UnitCreatureType("target") == "Undead" and mb_IsSpellInRange("Judgement of Justice", "target") then
+            if mb_CastSpellWithoutTarget("Holy Wrath") then
+                return
+            end
+        end
     end
 
     if UnitAffectingCombat("player") then
-        if tanks[2] ~= nil and mb_CastSpellOnFriendly(tanks[2], "Holy Light") then
-            return
-        elseif mb_CastSpellOnFriendly("player", "Holy Light") then
+        for _, tank in pairs(tanks) do
+            if tank ~= mb_Paladin_Holy_beaconUnit and mb_CastSpellOnUnit("Holy Light", tank) then
+                return
+            end
+        end
+        if mb_CastSpellOnSelf("Holy Light") then
             return
         end
     end
@@ -149,6 +160,9 @@ function mb_Paladin_Holy_PreCastFinishCallback(spell, unit)
         return
     end
     if unit == nil then
+        return
+    end
+    if spell == "Holy Light" and mb_GetBuffTimeRemaining("player", "Light's Grace") <= mb_GetCastTime("Holy Light") + 0.25 then
         return
     end
     local spellTargetUnitMissingHealth = mb_GetMissingHealth(unit)

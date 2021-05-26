@@ -109,7 +109,7 @@ function mb_BossModule_Kelthuzad_DoRangeCheckAndMindControlCC()
                 return
             end
         end
-        if not UnitIsDeadOrGhost(unit) and CheckInteractDistance(unit, 2) then
+        if not UnitIsDeadOrGhost(unit) and mb_IsUnitWithinRange(unit, 2) then
             count = count + 1
         end
     end
@@ -119,11 +119,11 @@ function mb_BossModule_Kelthuzad_DoRangeCheckAndMindControlCC()
     return
 end
 
-function mb_BossModule_Kelthuzad_CombatLogCallback(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15)
+function mb_BossModule_Kelthuzad_CombatLogCallback(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21)
     if arg6 == "Kel'Thuzad" and arg4 == "SPELL_CAST_SUCCESS" and arg12 == "Shadow Fissure" then
         local targetUnit = mb_GetUnitForPlayerName(arg9)
         if targetUnit ~= nil then
-            if CheckInteractDistance(targetUnit, 3) then
+            if mb_IsUnitWithinRange(targetUnit, 1) then
                 mb_BossModule_Kelthuzad_lastDetectedVoidZone = mb_time
                 mb_SayRaid("I'm running from Void Zone!")
             end
@@ -131,10 +131,15 @@ function mb_BossModule_Kelthuzad_CombatLogCallback(arg1, arg2, arg3, arg4, arg5,
     end
 end
 
+function mb_BossModule_Kelthuzad_Unload()
+    mb_CombatLogModule_Disable()
+end
+
 function mb_BossModule_Kelthuzad_OnLoad()
     mb_BossModule_PreOnUpdate = mb_BossModule_Kelthuzad_PreOnUpdate
     mb_CombatLogModule_Enable()
     mb_CombatLogModule_SetCallback(mb_BossModule_Kelthuzad_CombatLogCallback)
+    mb_BossModule_unloadFunction = mb_BossModule_Kelthuzad_Unload
 end
 
-mb_BossModule_RegisterModule("kelthuzad", mb_BossModule_Kelthuzad_OnLoad)
+mb_BossModule_RegisterModule("kelthuzad", mb_BossModule_Kelthuzad_OnLoad, "Kel'Thuzad")
